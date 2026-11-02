@@ -1,0 +1,9 @@
+# Archivos del sistema (macOS y Windows)
+.DS_Store
+Thumbs.db
+
+# Claves y variables de entorno
+.env
+
+# Dependencias
+node_modules/
