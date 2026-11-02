@@ -1,0 +1,145 @@
+/* ==========================================================
+   Looped · Tokens (decisiones base del design kit)
+   Fuente: manual de marca en Figma + decisiones-design-kit.md
+   ========================================================== */
+
+/* Fuentes de la marca: proyecto web de Adobe Fonts (Neulis Neue 500,
+   Neue Haas Unica 400 y 500). */
+@import url("https://use.typekit.net/mgo6vlr.css");
+/* Respaldo de Google Fonts: el navegador solo lo descarga si Adobe falla. */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500&family=Outfit:wght@500&display=swap");
+
+/* ----------------------------------------------------------
+   Tema base: oscuro, con el violeta de Looped (sin rol y artista)
+   ---------------------------------------------------------- */
+:root {
+  /* Fondos y superficies (de más profundo a más elevado) */
+  --color-fondo: #0E0D12;             /* Fondo principal de las pantallas */
+  --color-fondo-secundario: #15131B;  /* Fondo de campos y buscador */
+  --color-superficie: #1E1B26;        /* Tarjetas y diálogos */
+  --color-superficie-alta: #292532;   /* Chips, etiquetas, avatares, barras vacías */
+  --color-vidrio: rgba(41, 37, 50, .42); /* Barra de navegación y avisos flotantes */
+  --color-velo: rgba(14, 13, 18, .6); /* Capa oscura detrás de un diálogo */
+
+  /* Texto */
+  --color-texto: #F6F3F8;             /* Texto principal */
+  --color-texto-suave: #AAA4B3;       /* Subtítulos, ayudas, metadatos, placeholders */
+
+  /* Bordes */
+  --color-borde: rgba(246, 243, 248, .28);       /* Campos y botón secundario */
+  --color-borde-suave: rgba(246, 243, 248, .12); /* Tarjetas y separadores de listas */
+
+  /* Acción principal: cambia según el rol (ver más abajo) */
+  --color-primario: #9345FF;          /* Botón principal, pestaña activa, selección */
+  --color-primario-hover: #7C2BFF;    /* Primario al pasar el mouse o presionar */
+  --color-sobre-primario: #FFFFFF;    /* Texto e íconos encima del primario */
+  --color-foco: #B07BFF;              /* Contorno al navegar con teclado */
+
+  /* Reconocimiento (coral de la marca) */
+  --color-secundario: #FF6848;        /* Fan Club, insignias de reconocimiento, avisos nuevos */
+  --color-sobre-secundario: #0E0D12;  /* Texto encima del coral */
+
+  /* Estados */
+  --color-error: #FF5468;             /* Errores de formulario, advertencias, borrar */
+
+  /* Tipografía: familias (cada una termina en una fuente de respaldo) */
+  --fuente-titulos: "neulis-neue", "Outfit", Arial, sans-serif;  /* Títulos y botones */
+  --fuente-texto: "neue-haas-unica", "Manrope", Arial, sans-serif; /* Lectura y etiquetas */
+
+  /* Tipografía: escala de tamaños (con su interlineado) */
+  --texto-xs: 12px;   --interlineado-xs: 16px;   /* Etiquetas breves (mínimo de la marca) */
+  --texto-sm: 14px;   --interlineado-sm: 20px;   /* Texto secundario y énfasis informativo */
+  --texto-base: 16px; --interlineado-base: 24px; /* Texto de lectura y botones */
+  --texto-lg: 20px;   --interlineado-lg: 28px;   /* Nombres, subtítulos, títulos de sección */
+  --texto-xl: 24px;   --interlineado-xl: 32px;   /* Títulos grandes de sección */
+  --texto-2xl: 32px;  --interlineado-2xl: 40px;  /* Título principal de pantalla */
+
+  /* Tipografía: pesos (el «fuerte» de la marca es Medium, no negrita) */
+  --peso-normal: 400;
+  --peso-fuerte: 500;
+
+  /* Espacios: múltiplos de 4 px */
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;  /* También es el margen lateral de las pantallas */
+  --espacio-7: 28px;
+  --espacio-8: 32px;
+
+  /* Bordes redondeados */
+  --radio-xs: 8px;      /* Casillas de verificación */
+  --radio-sm: 12px;     /* Portadas pequeñas */
+  --radio-md: 16px;     /* Portadas, fotos y opciones de menú */
+  --radio-lg: 24px;     /* Tarjetas, áreas de texto, avisos flotantes */
+  --radio-xl: 32px;     /* Diálogos */
+  --radio-total: 999px; /* Cápsulas y círculos: botones, campos, chips, avatares */
+
+  /* Sombras */
+  --sombra-suave: 0 12px 32px rgba(0, 0, 0, .30); /* Barra flotante, avisos, diálogos */
+  --sombra-media: 0 24px 48px rgba(0, 0, 0, .35); /* Portada del reproductor */
+
+  /* Medidas fijas */
+  --alto-control: 48px;  /* Botones y botones de ícono: área táctil mínima */
+  --alto-campo: 52px;    /* Campos de texto y buscador */
+  --tamano-icono: 24px;
+  --ancho-logo: 144px;   /* Mínimo de la firma según el manual */
+  --grosor-borde: 1px;
+  --grosor-foco: 2px;
+  --desenfoque-vidrio: 24px;
+
+  /* Movimiento */
+  --duracion-rapida: 120ms;
+  --duracion-media: 200ms;
+  --curva: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* ----------------------------------------------------------
+   Rol: fan (turquesa). Texto oscuro sobre el turquesa.
+   ---------------------------------------------------------- */
+[data-rol="fan"] {
+  --color-primario: #32D6C8;
+  --color-primario-hover: #168F94;
+  --color-sobre-primario: #0E0D12;
+  --color-foco: #57E7DC;
+}
+
+/* Rol: artista (violeta). Igual al tema base; se deja explícito. */
+[data-rol="artista"] {
+  --color-primario: #9345FF;
+  --color-primario-hover: #7C2BFF;
+  --color-sobre-primario: #FFFFFF;
+  --color-foco: #B07BFF;
+}
+
+/* ----------------------------------------------------------
+   Tema claro (valores del manual). El rol conserva su acento.
+   ---------------------------------------------------------- */
+[data-tema="claro"] {
+  --color-fondo: #F7F6FA;
+  --color-fondo-secundario: #EDE8F1;
+  --color-superficie: #FFFFFF;
+  --color-superficie-alta: #E7E0EE;
+  --color-vidrio: rgba(255, 255, 255, .62);
+  --color-velo: rgba(27, 23, 35, .35);
+  --color-texto: #1B1723;
+  --color-texto-suave: #625C6D;
+  --color-borde: rgba(27, 23, 35, .24);
+  --color-borde-suave: rgba(27, 23, 35, .10);
+  --color-error: #C8233A;
+  --sombra-suave: 0 12px 32px rgba(40, 20, 70, .12);
+  --sombra-media: 0 24px 48px rgba(40, 20, 70, .18);
+}
+/* En claro, el foco turquesa claro no se ve: se usa el turquesa oscuro. */
+[data-tema="claro"][data-rol="fan"] {
+  --color-foco: #168F94;
+}
+
+/* Quien pide menos movimiento en su dispositivo lo recibe. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duracion-rapida: 0ms;
+    --duracion-media: 0ms;
+  }
+}

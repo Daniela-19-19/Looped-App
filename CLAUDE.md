@@ -1,0 +1,57 @@
+## Qué es este proyecto
+Looped: una app de música con espacios de conversación que el artista controla, para artistas independientes que quieren acercarse a sus fans sin perder el control de su tiempo. Es el MVP de un equipo del curso Lenguajes Digitales 3. Más contexto en README.md.
+
+## Documentos que debes leer antes de construir
+- spec.md: qué se construye (flujo, datos y pantallas). Si no existe o algo no está ahí, pregunta antes de inventar.
+- css/tokens.css y css/components.css: el design kit. componentes.html (en la raíz) muestra todos los componentes.
+
+## Tecnología (no cambiar sin preguntar)
+- HTML, CSS y JavaScript puro. Sin frameworks ni librerías (nada de React, Vue, Tailwind ni TypeScript) y sin paso de compilación: todo debe funcionar abriendo los archivos en el navegador.
+- La app se publicará en Vercel, conectada a este repositorio.
+- Más adelante, la base de datos será Supabase. Por ahora, los datos son simulados.
+
+## Estructura del proyecto
+- disenos/: diseños originales. Solo de referencia: nunca los modifiques.
+- assets/: todas las imágenes, logos e íconos de la app. Usa siempre las de aquí, nunca links de imágenes de internet.
+- css/: estilos. tokens.css (decisiones base), components.css (componentes) y styles.css (estilos generales de las pantallas).
+- js/: código. app.js (comportamiento) y data.js (datos simulados, separados del diseño).
+- index.html: la pantalla de inicio, la puerta de entrada de la app. Las demás pantallas van en la carpeta pages/.
+- componentes.html: en la raíz, junto a index.html. Muestra todos los componentes del design kit.
+- Nombres de archivos y carpetas: minúsculas, sin tildes, ñ ni espacios, con guiones.
+
+## Reglas de trabajo
+1. Antes de crear o modificar archivos, explica tu plan en pocas líneas y espera aprobación.
+2. Trabaja una pantalla o una función a la vez.
+3. Usa solo los tokens y componentes del design kit. Si necesitas un estilo o componente que no existe, pregunta: primero se agrega al kit y a componentes.html, y después se usa.
+4. Nunca escribas claves, contraseñas ni tokens de acceso en el código: este repositorio es público.
+5. Si algo que te pedimos contradice spec.md, avísanos antes de hacerlo.
+6. Al terminar cada tarea, explica en lenguaje simple qué cambiaste y por qué. Somos un equipo aprendiendo.
+7. Antes de cada comando de git, explica en una frase qué hace.
+
+## Componentes disponibles
+Definidos en css/components.css y mostrados en componentes.html (ahí está el HTML completo de cada uno). Decisiones en decisiones-design-kit.md.
+- Rol y apariencia: en `<html>` usa `data-rol="fan"` o `data-rol="artista"`, y `data-tema="claro"` para el tema claro (sin el atributo, la apariencia es oscura).
+- Íconos: copia el bloque `<svg>` con los `<symbol>` del inicio de componentes.html y usa `<svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>`. Variante: `.icono--pequeno`. Archivos de referencia en assets/iconos/.
+- Texto: `.titulo` (32), `.titulo--medio` (24), `.titulo--pequeno` (20), `.texto`, `.texto--pequeno`, `.texto--suave`, `.rotulo`, `.rotulo--pequeno`. Ej.: `<h1 class="titulo">Descubre</h1>`
+- `.logo` con `.logo--blanco` y `.logo--negro` (pon las dos imágenes; el CSS muestra la correcta). Ej.: `<img class="logo logo--blanco" src="assets/logo-firma-blanco.svg" alt="Looped">`
+- `.boton` (principal), `.boton--secundario`, `.boton--terciario`, `.boton--peligro`, `.boton--pequeno`, `.boton--bloque`. Ej.: `<button type="button" class="boton boton--bloque">Continuar</button>`
+- `.boton-icono`, `.boton-icono--borde`, `.boton-icono--relleno`, `.boton-icono--pequeno`, `.boton-icono--grande` (siempre con `aria-label`). Ej.: `<button type="button" class="boton-icono" aria-label="Volver">…ícono…</button>`
+- `.enlace`. Ej.: `<a class="enlace" href="#">Ver más</a>`
+- `.barra-superior` + `.barra-superior__titulo`. Ej.: `<header class="barra-superior">botón volver · <h1 class="barra-superior__titulo">Tu música</h1> · <span></span></header>`
+- `.barra-marca` + `.barra-marca__acciones`. Ej.: `<header class="barra-marca"><span>logos</span><div class="barra-marca__acciones">botones</div></header>`
+- `.encabezado-pagina` + `.encabezado-pagina__bajada`. Ej.: `<div class="encabezado-pagina"><h1 class="titulo">Descubre</h1><p class="encabezado-pagina__bajada">…</p></div>`
+- `.encabezado-seccion` + `.encabezado-seccion__titulo`. Ej.: `<div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo">Tus preguntas</h2><a class="enlace" href="#">Ver más</a></div>`
+- `.tarjeta` (`__titulo`, `__texto`, `__meta`, `__acciones`, `__info`), `.tarjeta--tocable`, `.tarjeta--fila`, `.tarjeta--acento`, `.tarjeta--destacada`, `.tarjeta--persona`. Ej.: `<div class="tarjeta"><h3 class="tarjeta__titulo">Preguntas abiertas</h3><p class="tarjeta__texto">…</p></div>`
+- `.aviso`, `.aviso--advertencia`. Ej.: `<div class="aviso">ícono<p>Mensaje</p></div>`
+- `.velo` + `.dialogo` (`__titulo`, `__texto`, `__acciones`). Ej.: `<div class="velo" hidden><div class="dialogo" role="dialog" aria-modal="true">…</div></div>`
+- `.navegacion` + `.navegacion__pestana` (la actual con `aria-current="page"`). Ej.: `<nav class="navegacion"><a class="navegacion__pestana" href="#" aria-current="page">ícono<span>Inicio</span></a>…</nav>`
+- `.campo` (`__etiqueta`, `__control`, `__ayuda`, `__mensaje-error`), `.campo--error`, `.area-texto`. Ej.: `<label class="campo"><span class="campo__etiqueta">Correo</span><input class="campo__control" type="email"></label>`
+- `.buscador`. Ej.: `<label class="buscador">ícono<input type="search" aria-label="Buscar"></label>`
+- `.casilla` + `.casilla__caja`. Ej.: `<label class="casilla"><input type="checkbox"><span class="casilla__caja">ícono check</span>Indie</label>`
+- `.chips` + `.chip`, y `.selector` (con `.boton--secundario` dentro); lo elegido lleva `aria-pressed="true"`. Ej.: `<button type="button" class="chip" aria-pressed="true">Emergentes</button>`
+- `.etiqueta`, `.etiqueta--acento`, `.etiqueta--reconocimiento`, `.etiqueta--borde`. Ej.: `<span class="etiqueta etiqueta--reconocimiento">Fan fundador</span>`
+- `.avatar`, `.avatar--pequeno`, `.avatar--grande`, `.avatar--acento`. Ej.: `<span class="avatar"><img src="assets/mara-sol.jpg" alt=""></span>`
+- `.portada`, `.portada--pequena`, `.portada--mediana`. Ej.: `<img class="portada portada--mediana" src="assets/portada-segundo-sol.jpg" alt="Portada de Segundo sol">`
+- `.fila-lista` (`__info`, `__titulo`, `__detalle`). Ej.: `<button class="fila-lista">portada<span class="fila-lista__info"><b class="fila-lista__titulo">Segundo sol</b><span class="fila-lista__detalle">Mara Sol</span></span></button>`
+- `.progreso` + `.progreso__barra`, `.progreso--fino`. Ej.: `<div class="progreso"><span class="progreso__barra" style="width: 60%"></span></div>`
+- `.toast` + `.toast__texto`. Ej.: `<div class="toast" role="status"><p class="toast__texto">Pregunta enviada.</p></div>`

@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Componentes</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    /* Estilos solo del catálogo (no son parte del kit) */
+    .cat { max-width: 960px; margin: 0 auto; padding: var(--espacio-6) var(--espacio-4) calc(var(--espacio-8) * 3); }
+    .cat-cabecera { display: grid; gap: var(--espacio-4); margin-bottom: var(--espacio-8); }
+    .cat-controles { display: grid; gap: var(--espacio-3); }
+    .cat-fuentes { display: grid; gap: var(--espacio-1); }
+    .cat-fuentes b { font-weight: var(--peso-fuerte); }
+    .cat-seccion { margin-top: calc(var(--espacio-8) * 2); }
+    .cat-seccion > h2 { margin-bottom: var(--espacio-2); }
+    .cat-seccion > p { margin-bottom: var(--espacio-6); }
+    .cat-componente { margin-top: var(--espacio-8); padding-top: var(--espacio-6); box-shadow: inset 0 var(--grosor-borde) 0 var(--color-borde-suave); }
+    .cat-componente > h3 { margin-bottom: var(--espacio-1); }
+    .cat-componente > p { margin-bottom: var(--espacio-4); }
+    .cat-variante { margin-top: var(--espacio-5); }
+    .cat-variante > .rotulo { display: block; margin-bottom: var(--espacio-2); color: var(--color-texto-suave); }
+    .demo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-3); max-width: 440px; }
+    .demo--columna { display: block; }
+    .cat pre { margin: var(--espacio-3) 0 0; padding: var(--espacio-3) var(--espacio-4); overflow-x: auto; border-radius: var(--radio-md); background: var(--color-fondo-secundario); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); color: var(--color-texto-suave); font: var(--texto-xs)/var(--interlineado-xs) ui-monospace, Menlo, Consolas, monospace; }
+    .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--espacio-3); }
+    .muestra { overflow: hidden; border-radius: var(--radio-md); background: var(--color-superficie); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); }
+    .muestra__color { height: calc(var(--alto-control) + var(--espacio-4)); box-shadow: inset 0 calc(var(--grosor-borde) * -1) 0 var(--color-borde-suave); }
+    .muestra__info { padding: var(--espacio-2) var(--espacio-3); }
+    .muestra__info code { display: block; color: var(--color-texto-suave); font-size: var(--texto-xs); line-height: var(--interlineado-xs); word-break: break-all; }
+    .tipo { padding: var(--espacio-3) 0; box-shadow: inset 0 calc(var(--grosor-borde) * -1) 0 var(--color-borde-suave); }
+    .tipo code { display: block; margin-bottom: var(--espacio-1); color: var(--color-texto-suave); font-size: var(--texto-xs); }
+    .barra-espacio { height: var(--espacio-4); border-radius: var(--radio-xs); background: var(--color-primario); }
+    .fila-medida { display: grid; grid-template-columns: 110px 1fr; gap: var(--espacio-3); align-items: center; margin-top: var(--espacio-2); }
+    .fila-medida code { color: var(--color-texto-suave); font-size: var(--texto-xs); }
+    .caja-forma { height: calc(var(--alto-control) * 2); background: var(--color-superficie-alta); }
+    .caja-sombra { height: calc(var(--alto-control) * 2); border-radius: var(--radio-lg); background: var(--color-superficie); }
+    .marco-movil { max-width: 440px; padding: var(--espacio-4); border-radius: var(--radio-lg); background: var(--color-fondo); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); }
+    .icono-muestra { display: grid; justify-items: center; gap: var(--espacio-2); padding: var(--espacio-3); border-radius: var(--radio-md); background: var(--color-superficie); }
+    .icono-muestra code { font-size: var(--texto-xs); color: var(--color-texto-suave); }
+  </style>
+</head>
+<body>
+
+<!-- Íconos (sprite): se definen una vez y se usan con <use href="#icono-nombre">.
+     Los mismos dibujos están como archivos en assets/iconos/. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-siguiente" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="icono-buscar" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M16 16l4 4"/></symbol>
+    <symbol id="icono-cerrar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="icono-inicio" viewBox="0 0 24 24"><path fill="currentColor" d="M10.6 3.5a2.2 2.2 0 0 1 2.8 0l6.4 5.4c.5.4.8 1 .8 1.7v8.2c0 1.2-1 2.2-2.2 2.2h-3.2a1 1 0 0 1-1-1v-4.4a1 1 0 0 0-1-1h-2.4a1 1 0 0 0-1 1V20a1 1 0 0 1-1 1H5.6c-1.2 0-2.2-1-2.2-2.2v-8.2c0-.7.3-1.3.8-1.7z"/></symbol>
+    <symbol id="icono-explorar" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm3.6 5.4-5 2.2-2.2 5 5-2.2z"/></symbol>
+    <symbol id="icono-comunidad" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" fill="currentColor"/><circle cx="16.6" cy="9" r="2.6" fill="currentColor"/><path fill="currentColor" d="M2.8 18.6c0-3 2.8-5.2 6.2-5.2s6.2 2.2 6.2 5.2c0 .8-.6 1.4-1.4 1.4H4.2c-.8 0-1.4-.6-1.4-1.4zM16.4 13.6c2.7.1 4.8 1.9 4.8 4.4 0 .7-.6 1.2-1.2 1.2h-3c.2-.4.3-.8.3-1.3 0-1.7-.7-3.2-1.9-4.3z"/></symbol>
+    <symbol id="icono-perfil" viewBox="0 0 24 24"><circle cx="12" cy="7.8" r="4" fill="currentColor"/><path fill="currentColor" d="M4.6 19c0-3.5 3.3-6 7.4-6s7.4 2.5 7.4 6c0 1-.8 1.8-1.8 1.8H6.4c-1 0-1.8-.8-1.8-1.8z"/></symbol>
+    <symbol id="icono-reproducir" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.6v12.8c0 .9 1 1.4 1.7.9l9.5-6.4c.6-.4.6-1.4 0-1.8L9.7 4.7C9 4.2 8 4.7 8 5.6z"/></symbol>
+    <symbol id="icono-preguntas" viewBox="0 0 24 24"><path fill="currentColor" d="M5.6 4h12.8C19.8 4 21 5.2 21 6.6v8.2c0 1.4-1.2 2.6-2.6 2.6H11l-4.4 3.3c-.7.5-1.6 0-1.6-.8v-2.5h.6C4.2 17.4 3 16.2 3 14.8V6.6C3 5.2 4.2 4 5.6 4z"/></symbol>
+    <symbol id="icono-cupo" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.3c-.3 0-.6-.1-.8-.3C6.6 16.3 3 13.3 3 9.2 3 6.4 5.1 4.3 7.8 4.3c1.7 0 3.2.8 4.2 2.1 1-1.3 2.5-2.1 4.2-2.1 2.7 0 4.8 2.1 4.8 4.9 0 4.1-3.6 7.1-8.2 10.8-.2.2-.5.3-.8.3z"/></symbol>
+    <symbol id="icono-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.2 4.2L19 7"/></symbol>
+    <symbol id="icono-agregar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icono-notificaciones" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="icono-alerta" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4.5 2.8 19.5h18.4zM12 10v4M12 17h.01"/></symbol>
+    <symbol id="icono-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="icono-tema" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.6M12 19.4V21M3 12h1.6M19.4 12H21M5.6 5.6l1.2 1.2M17.2 17.2l1.2 1.2M5.6 18.4l1.2-1.2M17.2 6.8l1.2-1.2"/></symbol>
+    <symbol id="icono-ver" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5.5c-4.6 0-8 3.4-9.4 5.6a1.7 1.7 0 0 0 0 1.8C4 15.1 7.4 18.5 12 18.5s8-3.4 9.4-5.6a1.7 1.7 0 0 0 0-1.8C20 8.9 16.6 5.5 12 5.5zm0 10a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></symbol>
+    <symbol id="icono-microfono" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+    <symbol id="icono-eliminar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4.5 7h15M9.5 7V5h5v2M6.5 7l1 12.5h9l1-12.5"/></symbol>
+  </defs>
+</svg>
+
+<main class="cat">
+
+  <header class="cat-cabecera">
+    <img class="logo logo--blanco" src="assets/logo-firma-blanco.svg" alt="Looped">
+    <img class="logo logo--negro" src="assets/logo-firma-negro.svg" alt="Looped">
+    <div>
+      <h1 class="titulo">Design kit</h1>
+      <p class="encabezado-pagina__bajada">Colores, tipografía y componentes de la app. Todo sale de <code>css/tokens.css</code> y <code>css/components.css</code>.</p>
+    </div>
+
+    <div class="cat-controles">
+      <div>
+        <span class="rotulo texto--suave">Rol</span>
+        <div class="selector" data-control="rol">
+          <button type="button" class="boton boton--secundario" data-valor="fan" aria-pressed="false">Fan</button>
+          <button type="button" class="boton boton--secundario" data-valor="artista" aria-pressed="true">Artista</button>
+        </div>
+      </div>
+      <div>
+        <span class="rotulo texto--suave">Apariencia</span>
+        <div class="selector" data-control="tema">
+          <button type="button" class="boton boton--secundario" data-valor="oscuro" aria-pressed="true">Oscuro</button>
+          <button type="button" class="boton boton--secundario" data-valor="claro" aria-pressed="false">Claro</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="aviso" id="estado-fuentes">
+      <svg class="icono" aria-hidden="true"><use href="#icono-info"></use></svg>
+      <div class="cat-fuentes">
+        <b>Comprobador de fuentes</b>
+        <span data-fuente="neulis-neue" data-peso="500" data-respaldo="Outfit">Neulis Neue · revisando…</span>
+        <span data-fuente="neue-haas-unica" data-peso="400" data-respaldo="Manrope">Neue Haas Unica Regular · revisando…</span>
+        <span data-fuente="neue-haas-unica" data-peso="500" data-respaldo="Manrope">Neue Haas Unica Medium · revisando…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== TOKENS ===================== -->
+
+  <section class="cat-seccion">
+    <h2 class="titulo titulo--medio">Colores</h2>
+    <p class="texto--suave">Nombres por función. El valor se lee en vivo: cambia el rol o la apariencia arriba y verás cómo cambian.</p>
+    <div class="rejilla" id="muestras-color"></div>
+  </section>
+
+  <section class="cat-seccion">
+    <h2 class="titulo titulo--medio">Tipografía</h2>
+    <p class="texto--suave">Títulos y botones con <code>--fuente-titulos</code> (Neulis Neue). Lectura y etiquetas con <code>--fuente-texto</code> (Neue Haas Unica). Pesos: <code>--peso-normal</code> (400) y <code>--peso-fuerte</code> (500).</p>
+    <div class="tipo"><code>--texto-2xl · 32/40 · títulos · fuerte</code><p class="titulo">Descubre algo nuevo</p></div>
+    <div class="tipo"><code>--texto-xl · 24/32 · títulos · fuerte</code><p class="titulo titulo--medio">Nuevos lanzamientos</p></div>
+    <div class="tipo"><code>--texto-lg · 20/28 · títulos · fuerte</code><p class="titulo titulo--pequeno">Conoce al artista</p></div>
+    <div class="tipo"><code>--texto-base · 16/24 · texto · normal</code><p class="texto">Pregunta al artista lo que quieras saber sobre su música.</p></div>
+    <div class="tipo"><code>--texto-sm · 14/20 · texto · normal</code><p class="texto--pequeno">Lanzamiento reciente</p></div>
+    <div class="tipo"><code>--texto-sm · 14/20 · texto · fuerte (.rotulo)</code><p class="rotulo">Pregunta enviada</p></div>
+    <div class="tipo"><code>--texto-xs · 12/16 · texto · fuerte (.rotulo--pequeno)</code><p class="rotulo rotulo--pequeno">48 h</p></div>
+  </section>
+
+  <section class="cat-seccion">
+    <h2 class="titulo titulo--medio">Espacios, radios y sombras</h2>
+    <p class="texto--suave">Espacios de 4 en 4 px. Radios del más recto al cápsula.</p>
+    <div id="muestras-espacio"></div>
+    <div class="rejilla" style="margin-top: var(--espacio-6)" id="muestras-radio"></div>
+    <div class="rejilla" style="margin-top: var(--espacio-6)">
+      <div><div class="caja-sombra" style="box-shadow: var(--sombra-suave)"></div><p class="rotulo rotulo--pequeno" style="margin-top: var(--espacio-2)">--sombra-suave</p></div>
+      <div><div class="caja-sombra" style="box-shadow: var(--sombra-media)"></div><p class="rotulo rotulo--pequeno" style="margin-top: var(--espacio-2)">--sombra-media</p></div>
+    </div>
+  </section>
+
+  <!-- ===================== COMPONENTES ===================== -->
+
+  <section class="cat-seccion">
+    <h2 class="titulo titulo--medio">Componentes</h2>
+    <p class="texto--suave">Pasa el mouse para ver <code>:hover</code> y usa la tecla Tab para ver el foco. Debajo de cada ejemplo está el HTML para copiar.</p>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Botón · <code>.boton</code></h3>
+      <p class="texto--pequeno texto--suave">Acción con texto. El principal va relleno del color del rol.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Principal</span>
+        <div class="demo"><button type="button" class="boton">Escuchar música</button></div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Secundario · .boton--secundario</span>
+        <div class="demo"><button type="button" class="boton boton--secundario">Ver perfil</button></div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Terciario · .boton--terciario</span>
+        <div class="demo"><button type="button" class="boton boton--terciario">Lo haré después</button></div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Peligro · .boton--peligro</span>
+        <div class="demo"><button type="button" class="boton boton--peligro">Eliminar lanzamiento</button></div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Pequeño · .boton--pequeno</span>
+        <div class="demo"><button type="button" class="boton boton--pequeno">Abrir cupo</button></div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con ícono y ancho completo · .boton--bloque</span>
+        <div class="demo demo--columna"><button type="button" class="boton boton--bloque"><svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-agregar"></use></svg>Publicar lanzamiento</button></div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Deshabilitado · atributo disabled</span>
+        <div class="demo"><button type="button" class="boton" disabled>Continuar</button></div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Botón de ícono · <code>.boton-icono</code></h3>
+      <p class="texto--pequeno texto--suave">Acción con solo ícono. Siempre lleva <code>aria-label</code> para quien usa lector de pantalla.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Normal · con borde · relleno</span>
+        <div class="demo">
+          <button type="button" class="boton-icono" aria-label="Volver"><svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg></button>
+          <button type="button" class="boton-icono boton-icono--borde" aria-label="Notificaciones"><svg class="icono" aria-hidden="true"><use href="#icono-notificaciones"></use></svg></button>
+          <button type="button" class="boton-icono boton-icono--relleno" aria-label="Cambiar tema"><svg class="icono" aria-hidden="true"><use href="#icono-tema"></use></svg></button>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Pequeño · grande · deshabilitado</span>
+        <div class="demo">
+          <button type="button" class="boton-icono boton-icono--borde boton-icono--pequeno" aria-label="Cerrar"><svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-cerrar"></use></svg></button>
+          <button type="button" class="boton-icono boton-icono--relleno boton-icono--grande" aria-label="Reproducir"><svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg></button>
+          <button type="button" class="boton-icono boton-icono--borde" aria-label="Grabar" disabled><svg class="icono" aria-hidden="true"><use href="#icono-microfono"></use></svg></button>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Enlace · <code>.enlace</code></h3>
+      <p class="texto--pequeno texto--suave">Acción pequeña junto a un título de sección.</p>
+      <div class="demo"><a class="enlace" href="#">Ver más</a></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Barra superior · <code>.barra-superior</code></h3>
+      <p class="texto--pequeno texto--suave">En las pantallas internas: volver, título y una acción opcional.</p>
+      <div class="demo demo--columna marco-movil">
+        <header class="barra-superior">
+          <button type="button" class="boton-icono" aria-label="Volver"><svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg></button>
+          <h1 class="barra-superior__titulo">Tu música</h1>
+          <span></span>
+        </header>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Barra de marca · <code>.barra-marca</code> + <code>.logo</code></h3>
+      <p class="texto--pequeno texto--suave">En las pantallas principales. La firma mide 144 px de ancho (mínimo del manual) y es blanca en oscuro y negra en claro: se ponen las dos imágenes y el CSS muestra la que corresponde.</p>
+      <div class="demo demo--columna marco-movil">
+        <header class="barra-marca">
+          <span>
+            <img class="logo logo--blanco" src="assets/logo-firma-blanco.svg" alt="Looped">
+            <img class="logo logo--negro" src="assets/logo-firma-negro.svg" alt="Looped">
+          </span>
+          <div class="barra-marca__acciones">
+            <button type="button" class="boton-icono boton-icono--relleno" aria-label="Cambiar tema"><svg class="icono" aria-hidden="true"><use href="#icono-tema"></use></svg></button>
+            <button type="button" class="boton-icono" aria-label="Tu perfil"><svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg></button>
+          </div>
+        </header>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Encabezados · <code>.encabezado-pagina</code> · <code>.encabezado-seccion</code></h3>
+      <p class="texto--pequeno texto--suave">Título principal de la pantalla con su bajada, y título de cada bloque con un enlace opcional.</p>
+      <div class="demo demo--columna marco-movil">
+        <div class="encabezado-pagina">
+          <h1 class="titulo">Descubre algo nuevo</h1>
+          <p class="encabezado-pagina__bajada">Lanzamientos y artistas que vale la pena conocer.</p>
+        </div>
+        <div class="encabezado-seccion">
+          <h2 class="encabezado-seccion__titulo">En sus primeras 48 h</h2>
+          <a class="enlace" href="#">Ver más</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Tarjeta · <code>.tarjeta</code></h3>
+      <p class="texto--pequeno texto--suave">Agrupa información. La de acento destaca lo más importante de la pantalla.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Base</span>
+        <div class="demo demo--columna">
+          <div class="tarjeta">
+            <h3 class="tarjeta__titulo">Preguntas abiertas</h3>
+            <p class="tarjeta__texto">Los fans pueden enviarte preguntas y votar.</p>
+          </div>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Tocable · .tarjeta--tocable (toda la tarjeta es un botón)</span>
+        <div class="demo demo--columna">
+          <button type="button" class="tarjeta tarjeta--tocable">
+            <span class="tarjeta__meta">Alex</span>
+            <p class="texto" style="margin-top: var(--espacio-2)">¿Cómo nació Aire de vuelta?</p>
+            <p class="tarjeta__texto">Selecciona una pregunta para decidir si la respondes.</p>
+          </button>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">En fila · .tarjeta--fila</span>
+        <div class="demo demo--columna">
+          <div class="tarjeta tarjeta--fila">
+            <span class="avatar"><img src="assets/mara-sol.jpg" alt=""></span>
+            <div style="flex: 1; min-width: 0">
+              <h3 class="tarjeta__titulo">Mara Sol</h3>
+              <p class="tarjeta__meta">Cupo abierto · 3 de 10</p>
+            </div>
+            <svg class="icono texto--suave" aria-hidden="true"><use href="#icono-siguiente"></use></svg>
+          </div>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Destacada de acento · .tarjeta--acento .tarjeta--destacada</span>
+        <div class="demo demo--columna">
+          <div class="tarjeta tarjeta--acento tarjeta--destacada">
+            <div class="tarjeta__info">
+              <div>
+                <h3 class="tarjeta__titulo">Segundo sol</h3>
+                <p class="tarjeta__texto">Mara Sol</p>
+                <p class="tarjeta__meta">Nuevo lanzamiento</p>
+              </div>
+              <button type="button" class="boton-icono" aria-label="Reproducir Segundo sol"><svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg></button>
+            </div>
+            <img class="portada" src="assets/portada-segundo-sol.jpg" alt="Portada de Segundo sol">
+          </div>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">De persona · .tarjeta--persona</span>
+        <div class="demo demo--columna">
+          <div class="tarjeta tarjeta--persona">
+            <div>
+              <h3 class="tarjeta__titulo">Mara Sol</h3>
+              <p class="tarjeta__texto">Preguntas abiertas</p>
+            </div>
+            <img class="portada" src="assets/mara-sol.jpg" alt="Mara Sol con su guitarra">
+          </div>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Aviso · <code>.aviso</code></h3>
+      <p class="texto--pequeno texto--suave">Mensaje fijo dentro de la pantalla. La advertencia usa el rojo de error.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Informativo</span>
+        <div class="demo demo--columna">
+          <div class="aviso">
+            <svg class="icono" aria-hidden="true"><use href="#icono-info"></use></svg>
+            <p>Esta pregunta tiene 12 votos de la comunidad.</p>
+          </div>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Advertencia · .aviso--advertencia</span>
+        <div class="demo demo--columna">
+          <div class="aviso aviso--advertencia">
+            <svg class="icono" aria-hidden="true"><use href="#icono-alerta"></use></svg>
+            <p>Tu cupo está lleno. Ciérralo o amplíalo para recibir más preguntas.</p>
+          </div>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Diálogo · <code>.velo</code> + <code>.dialogo</code></h3>
+      <p class="texto--pequeno texto--suave">Confirmación antes de una acción que no se puede deshacer. Aparece desde abajo sobre un velo oscuro.</p>
+      <div class="demo demo--columna">
+        <button type="button" class="boton boton--peligro" data-solo-catalogo data-abrir-dialogo>Abrir el diálogo de ejemplo</button>
+        <div class="velo" hidden>
+          <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-titulo">
+            <h2 class="dialogo__titulo" id="dialogo-titulo">¿Eliminar este lanzamiento?</h2>
+            <p class="dialogo__texto">Se borrará de tu perfil y de tu comunidad. Esta acción no se puede deshacer.</p>
+            <div class="dialogo__acciones">
+              <button type="button" class="boton boton--peligro" data-cerrar-dialogo>Eliminar</button>
+              <button type="button" class="boton boton--terciario" data-cerrar-dialogo>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Navegación inferior · <code>.navegacion</code></h3>
+      <p class="texto--pequeno texto--suave">Cápsula de vidrio con cuatro destinos. La pestaña actual lleva <code>aria-current="page"</code>, se rellena con el color del rol y solo muestra el ícono.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Fan</span>
+        <div class="demo demo--columna">
+          <nav class="navegacion" aria-label="Navegación principal">
+            <a class="navegacion__pestana" href="#" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-inicio"></use></svg><span>Inicio</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-explorar"></use></svg><span>Explorar</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg><span>Perfil</span></a>
+          </nav>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Artista</span>
+        <div class="demo demo--columna">
+          <nav class="navegacion" aria-label="Navegación principal">
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg><span>Música</span></a>
+            <a class="navegacion__pestana" href="#" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-preguntas"></use></svg><span>Preguntas</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-cupo"></use></svg><span>Cupo</span></a>
+          </nav>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Campo de texto · <code>.campo</code></h3>
+      <p class="texto--pequeno texto--suave">Etiqueta, control y mensaje. Para mostrar un error, agrega <code>.campo--error</code> al contenedor.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Normal, con ayuda</span>
+        <div class="demo demo--columna">
+          <label class="campo">
+            <span class="campo__etiqueta">Nombre de usuario</span>
+            <input class="campo__control" type="text" placeholder="Escribe tu usuario">
+            <span class="campo__ayuda">Así te verán los artistas.</span>
+          </label>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con error · .campo--error</span>
+        <div class="demo demo--columna">
+          <label class="campo campo--error">
+            <span class="campo__etiqueta">Correo electrónico</span>
+            <input class="campo__control" type="email" value="alex@" aria-invalid="true">
+            <span class="campo__mensaje-error">Escribe un correo válido.</span>
+          </label>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Deshabilitado</span>
+        <div class="demo demo--columna">
+          <label class="campo">
+            <span class="campo__etiqueta">Ciudad</span>
+            <input class="campo__control" type="text" value="Bogotá" disabled>
+          </label>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Área de texto · .area-texto</span>
+        <div class="demo demo--columna">
+          <label class="campo">
+            <span class="campo__etiqueta">Tu pregunta</span>
+            <textarea class="area-texto" placeholder="¿Qué te gustaría saber sobre su música?"></textarea>
+          </label>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Buscador · .buscador</span>
+        <div class="demo demo--columna">
+          <label class="buscador">
+            <svg class="icono" aria-hidden="true"><use href="#icono-buscar"></use></svg>
+            <input type="search" placeholder="Busca artistas o canciones" aria-label="Buscar">
+          </label>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Casilla · <code>.casilla</code></h3>
+      <p class="texto--pequeno texto--suave">Para elegir varias opciones, por ejemplo gustos musicales.</p>
+      <div class="demo demo--columna">
+        <label class="casilla"><input type="checkbox"><span class="casilla__caja"><svg class="icono" aria-hidden="true"><use href="#icono-check"></use></svg></span>Indie</label>
+        <label class="casilla"><input type="checkbox" checked><span class="casilla__caja"><svg class="icono" aria-hidden="true"><use href="#icono-check"></use></svg></span>Pop alternativo</label>
+        <label class="casilla"><input type="checkbox" disabled><span class="casilla__caja"><svg class="icono" aria-hidden="true"><use href="#icono-check"></use></svg></span>Opción no disponible</label>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Chip y selector · <code>.chip</code> · <code>.selector</code></h3>
+      <p class="texto--pequeno texto--suave">Filtros y opciones de una sola elección. Lo elegido lleva <code>aria-pressed="true"</code>: borde y fondo tenue del color del rol. Haz clic para probar.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Chips</span>
+        <div class="demo">
+          <div class="chips">
+            <button type="button" class="chip" aria-pressed="true">Todos los artistas</button>
+            <button type="button" class="chip" aria-pressed="false">Con cupo abierto</button>
+            <button type="button" class="chip" aria-pressed="false">Emergentes</button>
+            <button type="button" class="chip" aria-pressed="false" disabled>Cerca de ti</button>
+          </div>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Selector</span>
+        <div class="demo demo--columna">
+          <div class="selector" role="group" aria-label="Tipo de respuesta">
+            <button type="button" class="boton boton--secundario" aria-pressed="true">Texto</button>
+            <button type="button" class="boton boton--secundario" aria-pressed="false">Nota de voz</button>
+          </div>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Etiqueta · <code>.etiqueta</code></h3>
+      <p class="texto--pequeno texto--suave">Estado corto. El coral (reconocimiento) es para Fan Club y logros, no para errores.</p>
+      <div class="demo">
+        <span class="etiqueta">Pendiente</span>
+        <span class="etiqueta etiqueta--acento">Nuevo lanzamiento</span>
+        <span class="etiqueta etiqueta--reconocimiento">Fan fundador</span>
+        <span class="etiqueta etiqueta--borde">48 h</span>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Avatar · <code>.avatar</code></h3>
+      <p class="texto--pequeno texto--suave">Foto o inicial de una persona, siempre en círculo.</p>
+      <div class="demo">
+        <span class="avatar avatar--pequeno"><img src="assets/mara-sol.jpg" alt=""></span>
+        <span class="avatar"><img src="assets/mara-sol.jpg" alt=""></span>
+        <span class="avatar avatar--grande"><img src="assets/mara-sol.jpg" alt=""></span>
+        <span class="avatar avatar--acento" aria-label="Alex">A</span>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Portada · <code>.portada</code></h3>
+      <p class="texto--pequeno texto--suave">Imagen cuadrada de un lanzamiento. Las fotos se muestran con sus colores originales.</p>
+      <div class="demo">
+        <img class="portada portada--pequena" src="assets/portada-segundo-sol.jpg" alt="Portada de Segundo sol">
+        <img class="portada portada--mediana" src="assets/portada-segundo-sol.jpg" alt="Portada de Segundo sol">
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Fila de lista · <code>.fila-lista</code></h3>
+      <p class="texto--pequeno texto--suave">Canciones, ajustes y listas largas. Las filas seguidas se separan con una línea.</p>
+      <div class="demo demo--columna">
+        <button type="button" class="fila-lista">
+          <img class="portada portada--pequena" src="assets/portada-segundo-sol.jpg" alt="">
+          <span class="fila-lista__info"><b class="fila-lista__titulo">Segundo sol</b><span class="fila-lista__detalle">Mara Sol · 3:24</span></span>
+          <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+        </button>
+        <button type="button" class="fila-lista">
+          <img class="portada portada--pequena" src="assets/portada-segundo-sol.jpg" alt="">
+          <span class="fila-lista__info"><b class="fila-lista__titulo">Aire de vuelta</b><span class="fila-lista__detalle">Mara Sol · 2:58</span></span>
+          <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+        </button>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Barra de progreso · <code>.progreso</code></h3>
+      <p class="texto--pequeno texto--suave">El ancho de <code>.progreso__barra</code> marca el avance (por ejemplo <code>style="width: 60%"</code>).</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Normal · fina (.progreso--fino)</span>
+        <div class="demo demo--columna">
+          <div class="progreso" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><span class="progreso__barra" style="width: 60%"></span></div>
+          <div class="progreso progreso--fino" style="margin-top: var(--espacio-4)" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"><span class="progreso__barra" style="width: 30%"></span></div>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Dentro de una tarjeta de acento</span>
+        <div class="demo demo--columna">
+          <div class="tarjeta tarjeta--acento">
+            <p class="tarjeta__meta">Tu cupo</p>
+            <h3 class="tarjeta__titulo">7 de 10 preguntas</h3>
+            <div class="progreso" style="margin-top: var(--espacio-3)" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"><span class="progreso__barra" style="width: 70%"></span></div>
+          </div>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Aviso flotante · <code>.toast</code></h3>
+      <p class="texto--pequeno texto--suave">Confirmación breve que aparece arriba y se va sola.</p>
+      <div class="demo demo--columna">
+        <div class="toast" role="status">
+          <p class="toast__texto">Pregunta enviada a Mara Sol.</p>
+          <button type="button" class="boton boton--terciario boton--pequeno">Ver</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Íconos · <code>.icono</code></h3>
+      <p class="texto--pequeno texto--suave">24 px; <code>.icono--pequeno</code> mide 20 px. Toman el color del texto. Se usan con <code>&lt;svg class="icono" aria-hidden="true"&gt;&lt;use href="#icono-nombre"&gt;&lt;/use&gt;&lt;/svg&gt;</code>; los archivos están en <code>assets/iconos/</code>.</p>
+      <div class="rejilla" id="muestras-icono" data-solo-catalogo></div>
+    </article>
+  </section>
+</main>
+
+<script>
+/* Script solo del catálogo: interruptores, muestras y código de ejemplo. */
+(function () {
+  const html = document.documentElement;
+
+  // Interruptores de rol y apariencia
+  document.querySelectorAll('[data-control]').forEach(grupo => {
+    grupo.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      grupo.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      if (grupo.dataset.control === 'rol') html.dataset.rol = b.dataset.valor;
+      if (grupo.dataset.control === 'tema') {
+        if (b.dataset.valor === 'claro') html.dataset.tema = 'claro'; else delete html.dataset.tema;
+      }
+      pintarColores();
+    });
+  });
+
+  // Chips y selectores de ejemplo: marcar lo elegido
+  document.querySelectorAll('.chips, .selector[role="group"]').forEach(g => {
+    g.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    });
+  });
+
+  // Diálogo de ejemplo
+  const velo = document.querySelector('.velo');
+  document.querySelector('[data-abrir-dialogo]').addEventListener('click', () => { velo.hidden = false; });
+  velo.addEventListener('click', e => { if (e.target === velo || e.target.closest('[data-cerrar-dialogo]')) velo.hidden = true; });
+
+  // Muestras de color con su valor actual
+  const colores = ['fondo', 'fondo-secundario', 'superficie', 'superficie-alta', 'vidrio', 'velo', 'texto', 'texto-suave',
+    'borde', 'borde-suave', 'primario', 'primario-hover', 'sobre-primario', 'foco', 'secundario', 'sobre-secundario', 'error'];
+  const cajaColores = document.getElementById('muestras-color');
+  cajaColores.innerHTML = colores.map(c => `
+    <div class="muestra">
+      <div class="muestra__color" style="background: var(--color-${c})"></div>
+      <div class="muestra__info"><span class="rotulo rotulo--pequeno">--color-${c}</span><code data-valor="--color-${c}"></code></div>
+    </div>`).join('');
+  function pintarColores() {
+    const estilo = getComputedStyle(html);
+    cajaColores.querySelectorAll('[data-valor]').forEach(el => { el.textContent = estilo.getPropertyValue(el.dataset.valor).trim(); });
+  }
+  pintarColores();
+
+  // Espacios y radios
+  document.getElementById('muestras-espacio').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(n => `
+    <div class="fila-medida"><code>--espacio-${n} · ${n * 4}px</code><div class="barra-espacio" style="width: var(--espacio-${n})"></div></div>`).join('');
+  document.getElementById('muestras-radio').innerHTML = ['xs', 'sm', 'md', 'lg', 'xl', 'total'].map(r => `
+    <div><div class="caja-forma" style="border-radius: var(--radio-${r})"></div><p class="rotulo rotulo--pequeno" style="margin-top: var(--espacio-2)">--radio-${r}</p></div>`).join('');
+
+  // Íconos disponibles en el sprite
+  document.getElementById('muestras-icono').innerHTML = [...document.querySelectorAll('symbol')].map(s => `
+    <div class="icono-muestra"><svg class="icono" aria-hidden="true"><use href="#${s.id}"></use></svg><code>#${s.id}</code></div>`).join('');
+
+  // Código de ejemplo debajo de cada demo (sale del propio HTML de la demo)
+  document.querySelectorAll('.demo').forEach(demo => {
+    const copia = demo.cloneNode(true);
+    copia.querySelectorAll('[data-solo-catalogo]').forEach(n => n.remove());
+    copia.querySelectorAll('[hidden]').forEach(n => n.removeAttribute('hidden'));
+    const lineas = copia.innerHTML.replace(/^\n+|\s+$/g, '').split('\n');
+    const sangria = Math.min(...lineas.filter(l => l.trim()).map(l => l.match(/^ */)[0].length));
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.textContent = lineas.map(l => l.slice(sangria)).join('\n').replace(/=""/g, '');
+    pre.appendChild(code);
+    demo.after(pre);
+  });
+
+  // Comprobador de fuentes: ¿cargó la de la marca o el respaldo?
+  document.querySelectorAll('[data-fuente]').forEach(async el => {
+    const { fuente, peso, respaldo } = el.dataset;
+    const nombre = el.textContent.split(' · ')[0];
+    let cargada = false;
+    try {
+      const caras = await document.fonts.load(`${peso} 16px "${fuente}"`);
+      cargada = caras.some(c => c.status === 'loaded');
+    } catch (e) { cargada = false; }
+    el.textContent = cargada
+      ? `✔ ${nombre}: cargada desde Adobe Fonts.`
+      : `✖ ${nombre}: no cargó. Se está viendo ${respaldo} (respaldo de Google Fonts).`;
+    el.style.color = cargada ? '' : 'var(--color-error)';
+  });
+})();
+</script>
+</body>
+</html>
