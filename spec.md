@@ -2,9 +2,9 @@
 
 Plano de construcción: qué se construye, en qué orden y cuándo está lista cada pantalla.
 
-**Fuentes:** brief (`01-brief.md`), flujograma del MVP (17-10-2026) y diseños (`disenos/prototipo.html`) del repositorio del proceso https://github.com/Daniela-19-19/Looped, más las decisiones del equipo del 01-11-2026.
+**Fuentes:** brief (`01-brief.md`), flujograma del MVP (17-10-2026) y diseños (`disenos/prototipo.html`) del repositorio del proceso https://github.com/Daniela-19-19/Looped, más las decisiones del equipo del 01-11-2026 y del 02-11-2026.
 
-**Diseño:** las 49 pantallas están en un solo archivo, `disenos/prototipo.html`; cada una cuenta como pantalla aparte. Se construyen con el design kit (`css/tokens.css`, `css/components.css`, `componentes.html`).
+**Diseño:** las 49 pantallas están en un solo archivo, `disenos/prototipo.html`; cada una cuenta como pantalla aparte. Además hay una pantalla nueva sin diseño todavía: la cola de reproducción. Se construyen con el design kit (`css/tokens.css`, `css/components.css`, `componentes.html`).
 
 **Cómo leer «Qué funciona de verdad»:**
 - **Real:** funciona y se guarda en el backend.
@@ -14,37 +14,45 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
 ## Decisiones del equipo
 
 1. **Backend:** todo será Real. Las cuentas, los perfiles, la música, las preguntas, los votos, las respuestas, los cupos, las publicaciones, los niveles y las notificaciones se guardan en Supabase (la base de datos indicada en `CLAUDE.md`). Los archivos (audio, portadas, fotos y notas de voz) también.
-2. **Orden de construcción:** primero el artista y después el fan (el brief dice que el artista es el usuario prioritario del MVP).
-3. **Inicio de sesión:** fan y artista inician sesión. Así el artista conserva su información y su música publicada.
+2. **Fan y artista con la misma importancia:** los dos lados tienen que estar listos para el MVP. Se construyen a la par.
+3. **Cuentas e inicio de sesión:** la cuenta se crea por separado como fan o como artista, y un mismo correo pertenece a una sola cuenta. Al iniciar sesión, la app reconoce el rol de la cuenta y abre su lado: el fan su inicio y el artista su panel. Así el artista conserva su información y su música publicada.
 4. **Primer contacto, fan fundador y ventana de visibilidad de 48 h:** entran en el MVP.
 5. **Umbral de «Fan fundador»:** 1000 seguidores.
-6. **Nivel del fan:** 1150 minutos de escucha por nivel (unas 19 horas).
+6. **Nivel del fan:** el nivel 1 pide 15 minutos de escucha y cada nivel siguiente pide 1,5 veces lo que pidió el anterior (ver la tabla en «Datos»).
 7. **Prioridad de las preguntas:** primero las más votadas, y solo de fans con el nivel suficiente para ese cupo.
-8. **Música:** subida y reproducción de audio reales.
+8. **Música:** subida de audio real y reproductor completo: anterior, reproducir o pausar, siguiente, aleatorio, bucle y cola de reproducción que el fan puede editar.
 9. **Notificaciones al celular (push):** entran en el MVP.
 10. **Datos de ejemplo** (Mara Sol, Río Lento, Nadia Cruz, Los Faroles y sus lanzamientos y preguntas): se mantienen por ahora como datos iniciales, igual que la opción «Borrar datos de la demostración».
 
-**Pendiente:**
-- **Fan Club, pago:** [POR DECIDIR] ¿Entrar al Fan Club se cobra en el MVP? El brief lo plantea como suscripción, pero el diseño no tiene ningún paso de pago.
-- **Fan Club, contenido:** [POR DECIDIR] ¿Quién crea el contenido exclusivo («Detrás de la canción») y desde qué pantalla? En el diseño es fijo y el artista no tiene pantalla para crearlo.
+11. **Fan Club, lo más sencillo posible:**
+    - Entrar es gratis en el MVP. El cobro (suscripción) queda para Después.
+    - El contenido exclusivo lo crea el artista desde «Nueva publicación», marcando la casilla «Solo para el Fan Club». No hace falta una pantalla nueva.
 
 ## Orden de construcción
 
-Primero el artista, como se decidió. Dentro de cada bloque se sigue el flujo. El orden de los bloques es una propuesta: cada uno deja algo que se puede probar.
+Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así lo que hace uno se puede probar desde el otro. Dentro de cada bloque se sigue el flujo. El orden de los bloques es una propuesta.
 
 1. **Entrada común:** splash, bienvenida, iniciar sesión, elegir experiencia, crear cuenta.
-2. **Registro del artista:** identidad, presentación, estilo musical, proyecto musical, perfil listo.
-3. **Panel del artista** y navegación inferior del artista.
-4. **Música:** música, publicar lanzamiento, lanzamiento.
-5. **Cupo:** cupos, configurar cupo.
-6. **Preguntas:** bandeja, revisar pregunta, responder, respuesta enviada, respuesta del artista.
-7. **Comunidad del artista:** comunidad, nueva publicación.
-8. **Perfil del artista:** perfil propio, editar perfil.
+2. **Registro:**
+   - Artista: identidad, presentación, estilo musical, proyecto musical, perfil listo.
+   - Fan: perfil básico, gustos, intereses, perfil listo.
+3. **Inicio de cada lado:**
+   - Artista: panel y navegación inferior del artista.
+   - Fan: inicio, explorar y navegación inferior del fan.
+4. **Música:**
+   - Artista: música, publicar lanzamiento, lanzamiento.
+   - Fan: nuevos lanzamientos, perfil del artista, reproductor y cola de reproducción.
+5. **Cupo y preguntas:**
+   - Artista: cupos, configurar cupo, bandeja, revisar pregunta, responder, respuesta enviada, respuesta del artista.
+   - Fan: conexión activa, conectar, escribir pregunta, tu conexión.
+6. **Comunidad:**
+   - Artista: comunidad, nueva publicación (con la casilla del Fan Club).
+   - Fan: comunidad.
+7. **Perfiles:**
+   - Artista: perfil propio, editar perfil.
+   - Fan: perfil, tu recorrido, editar perfil.
+8. **Fan Club:** conocer y contenido.
 9. **Compartidas:** configuración, apariencia, notificaciones, accesibilidad.
-10. **Registro del fan:** perfil básico, gustos, intereses, perfil listo.
-11. **Descubrimiento:** inicio, explorar, nuevos lanzamientos, conexión activa, perfil del artista, reproductor.
-12. **Conexión:** comunidad, conectar, escribir pregunta, tu conexión.
-13. **Perfil del fan:** perfil, tu recorrido, Fan Club (conocer y contenido), editar perfil.
 
 ## Flujo
 
@@ -58,7 +66,7 @@ splash → bienvenida → ¿ya tienes cuenta?
 **Flujo fan** (navegación inferior: Inicio · Explorar · Comunidad · Perfil)
 - inicio → nuevos lanzamientos (ventana de 48 h) o conexión activa → perfil del artista.
 - explorar (buscador y filtros) → perfil del artista.
-- perfil del artista → escuchar música (reproductor) · conocer al artista · comunidad · conectar.
+- perfil del artista → escuchar música (reproductor y cola de reproducción) · conocer al artista · comunidad · conectar.
   - Si el artista está por debajo de 1000 seguidores, el fan recibe el reconocimiento «Fan fundador».
 - conectar → ¿ya sigues al artista?
   - **No:** primer contacto (puede interactuar sin seguirlo).
@@ -77,14 +85,14 @@ splash → bienvenida → ¿ya tienes cuenta?
 - panel → bandeja de preguntas → revisar pregunta → ¿responder?
   - **No:** mantener en cola o descartar.
   - **Sí:** responder con texto o nota de voz → respuesta enviada (se notifica al fan) → ver la respuesta.
-- panel → comunidad → nueva publicación.
+- panel → comunidad → nueva publicación (para todos o solo para el Fan Club).
 - panel → cupo → configurar cupo → abrir cupo → cupo activo → recibir preguntas y votos hasta completarlo → cupo completo o cerrado → abrir nuevo cupo.
 - panel → perfil propio → editar perfil · configuración.
 
 **Compartidas por los dos perfiles**
 configuración → apariencia · notificaciones · accesibilidad · cerrar sesión (detiene la música y vuelve a bienvenida).
 
-**Nivel del fan** (en segundo plano): cada 1150 minutos de escucha sube un nivel → nuevos beneficios → invitación al Fan Club.
+**Nivel del fan** (en segundo plano): los minutos de escucha suben el nivel (15 minutos el primero, y cada nivel pide 1,5 veces más que el anterior) → nuevos beneficios → invitación al Fan Club.
 
 ## Datos
 
@@ -104,16 +112,31 @@ Lo que la app muestra o guarda, tal como aparece en los diseños. Todo se guarda
 
 **respuestas**: pregunta, tipo (texto o nota de voz), texto o archivo de audio, duración del audio, fecha.
 
-**publicaciones** (comunidad del artista): artista, texto, lanzamiento relacionado (opcional), fecha.
+**publicaciones** (comunidad del artista): artista, texto, lanzamiento relacionado (opcional), si es solo para el Fan Club, fecha. Las que son solo para el Fan Club son el contenido exclusivo.
 
-**contenido del Fan Club**: artista, título, texto. [POR DECIDIR] Quién lo crea y desde dónde (ver «Pendiente»).
+**cola de reproducción** (una por fan): canciones en orden, canción actual, aleatorio (sí o no), bucle (apagado, una canción o toda la cola).
 
 **notificaciones**: para quién (fan o artista), texto, acción (a qué pantalla lleva), fecha, si fue leída, si se envió al celular.
 
 **preferencias** (por persona): apariencia (clara u oscura), reducir movimiento, reducir transparencia, notificaciones activadas.
 
 **Reglas:**
-- Nivel del fan: 1150 minutos de escucha por nivel.
+- Un correo pertenece a una sola cuenta, de fan o de artista. Al iniciar sesión, la app lee el rol guardado y abre su lado.
+- Nivel del fan: el nivel 1 pide 15 minutos de escucha y cada nivel siguiente pide 1,5 veces lo que pidió el anterior, redondeado al minuto. El fan empieza en el nivel 0.
+
+  | Nivel | Minutos de ese nivel | Total acumulado |
+  |---|---|---|
+  | 1 | 15 | 15 |
+  | 2 | 23 | 38 |
+  | 3 | 34 | 72 |
+  | 4 | 51 | 123 |
+  | 5 | 76 | 199 (unas 3 h) |
+  | 6 | 114 | 313 |
+  | 7 | 171 | 484 |
+  | 8 | 256 | 740 |
+  | 9 | 384 | 1124 |
+  | 10 | 577 | 1701 (unas 28 h) |
+- Fan Club: entrar es gratis en el MVP.
 - «Fan fundador»: se otorga al visitar a un artista con menos de 1000 seguidores.
 - Ventana de visibilidad: 48 h desde la publicación.
 - Tamaño del cupo: de 1 a 100 preguntas.
@@ -153,7 +176,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   3. Botón «Iniciar sesión».
   4. Enlace «Crear una cuenta».
 - **Qué funciona de verdad:**
-  - Iniciar sesión: Real. El fan llega a su inicio y el artista a su panel.
+  - Iniciar sesión: Real. La app reconoce si la cuenta es de fan o de artista: el fan llega a su inicio y el artista a su panel.
   - Mostrar u ocultar la contraseña: Real.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
@@ -399,23 +422,45 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 
 ### Reproductor (minirreproductor y vista ampliada)
 - **Archivo de diseño:** capa que aparece sobre las demás pantallas.
-- **Objetivo:** Esta pantalla existe para que el fan pueda escuchar música mientras navega. Sabemos que funciona si una canción suena, se puede pausar y se abre en grande.
+- **Objetivo:** Esta pantalla existe para que el fan pueda escuchar música mientras navega. Sabemos que funciona si una canción suena, se puede pausar, se abre en grande y sigue con la cola.
 - **Contenido:**
   1. Portada.
   2. Canción y artista.
   3. Barra de avance con tiempos.
   4. Controles: anterior, reproducir o pausar, siguiente.
-  5. Minirreproductor sobre la navegación.
+  5. Aleatorio y bucle. **Nuevo, no está en el diseño.**
+  6. Botón para abrir la cola de reproducción. **Nuevo, no está en el diseño.**
+  7. Minirreproductor sobre la navegación.
 - **Qué funciona de verdad:**
-  - Reproducir, pausar y avanzar: Real (audio subido por los artistas).
+  - Reproducir, pausar, anterior, siguiente y mover la barra de avance: Real (audio subido por los artistas).
+  - Aleatorio: Real (mezcla el orden de la cola).
+  - Bucle: Real (apagado, repetir una canción o repetir toda la cola).
   - Sumar minutos de escucha al nivel: Real.
 - **Está lista cuando:**
-  - Se ve igual al diseño aprobado.
+  - Se ve igual al diseño aprobado, más los controles nuevos aprobados por el equipo.
   - El audio suena y se pausa.
+  - Al terminar una canción suena la siguiente de la cola.
+  - Con bucle en «una canción», la misma canción vuelve a empezar; con bucle en «toda la cola», al terminar la última vuelve la primera.
   - El minirreproductor abre la vista ampliada.
   - Cerrar sesión detiene la música.
   - Funciona en celular (375 px).
-- **Nota:** el reproductor no está todavía en el design kit; hay que agregarlo antes de construirlo.
+- **Nota:** el reproductor, el minirreproductor y los íconos de aleatorio, bucle y cola no están todavía en el design kit. Hay que agregarlos al kit y a `componentes.html` antes de construirlo.
+
+### Cola de reproducción (pantalla nueva)
+- **Archivo de diseño:** no tiene diseño todavía. El equipo debe diseñarla o aprobarla antes de construirla.
+- **Objetivo:** Esta pantalla existe para que el fan pueda ver y ordenar lo que va a sonar. Sabemos que funciona si cambia el orden o quita una canción y el reproductor lo respeta.
+- **Contenido:**
+  1. Canción que suena ahora.
+  2. Lista «A continuación», cada canción con portada, nombre y artista.
+  3. Cada canción se puede mover de lugar y quitar.
+  4. «Agregar a la cola», desde las canciones del perfil del artista y de los lanzamientos.
+- **Qué funciona de verdad:**
+  - Agregar, quitar y reordenar canciones: Real (la cola queda guardada).
+- **Está lista cuando:**
+  - Al reordenar o quitar canciones, el reproductor sigue el nuevo orden.
+  - Con aleatorio activado, la lista muestra el orden mezclado.
+  - Se puede usar con el dedo en celular y con teclado.
+  - Funciona en celular (375 px).
 
 ### F04 · Comunidad
 - **Objetivo:** Esta pantalla existe para que el fan pueda leer las publicaciones del artista y las preguntas ya respondidas. Sabemos que funciona si abre una respuesta o pregunta algo desde aquí.
@@ -515,7 +560,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   3. «Nuevos beneficios».
   4. «Continuar escuchando».
 - **Qué funciona de verdad:**
-  - Nivel por minutos de escucha: Real (1150 minutos por nivel).
+  - Nivel por minutos de escucha: Real (15 minutos para el nivel 1; cada nivel siguiente pide 1,5 veces lo del anterior).
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - La barra de progreso refleja los minutos escuchados hacia el siguiente nivel.
@@ -528,8 +573,8 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   2. Beneficios: «Contenido exclusivo» y «Prioridad en preguntas».
   3. Botones «Entrar al Fan Club» y «Continuar normalmente».
 - **Qué funciona de verdad:**
-  - Entrar al Fan Club: Real (queda guardado).
-  - Pago: [POR DECIDIR] ¿Se cobra en el MVP?
+  - Entrar al Fan Club: Real (queda guardado). Gratis en el MVP.
+  - Pago: Después.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - «Entrar» lleva al contenido del Fan Club.
@@ -545,7 +590,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   4. «Conectar con …»
   5. «Salir del Fan Club», con diálogo de confirmación.
 - **Qué funciona de verdad:**
-  - Ver el contenido: Real. [POR DECIDIR] Quién lo crea y desde qué pantalla.
+  - Ver el contenido: Real. Son las publicaciones que el artista marcó «Solo para el Fan Club» en «Nueva publicación».
   - Salir del Fan Club: Real.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
@@ -729,13 +774,16 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   1. «Acerca tu proceso.»
   2. Área de texto «Tu publicación».
   3. Lanzamiento relacionado (si viene de compartir).
-  4. «Publicar».
+  4. Casilla «Solo para el Fan Club». **Nuevo, no está en el diseño** (usa el componente `.casilla` del kit).
+  5. «Publicar».
 - **Qué funciona de verdad:**
   - Publicar: Real.
+  - Solo para el Fan Club: Real.
 - **Está lista cuando:**
-  - Se ve igual al diseño aprobado.
+  - Se ve igual al diseño aprobado, más la casilla.
   - No deja publicar un texto vacío.
-  - Aparece en la comunidad del artista y en la que ven los fans.
+  - Sin la casilla, aparece en la comunidad del artista y en la que ven los fans.
+  - Con la casilla, aparece solo en el contenido del Fan Club de ese artista.
   - Funciona en celular (375 px).
 
 ### R08 · Cupos

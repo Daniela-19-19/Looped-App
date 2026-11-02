@@ -8,13 +8,13 @@ Looped: una app de música con espacios de conversación que el artista controla
 ## Tecnología (no cambiar sin preguntar)
 - HTML, CSS y JavaScript puro. Sin frameworks ni librerías (nada de React, Vue, Tailwind ni TypeScript) y sin paso de compilación: todo debe funcionar abriendo los archivos en el navegador.
 - La app se publicará en Vercel, conectada a este repositorio.
-- Más adelante, la base de datos será Supabase. Por ahora, los datos son simulados.
+- La base de datos es Supabase: cuentas, música, preguntas y todo lo demás se guardan ahí de verdad. Los datos de ejemplo (Mara Sol y los demás artistas) son solo los datos iniciales.
 
 ## Estructura del proyecto
 - disenos/: diseños originales. Solo de referencia: nunca los modifiques.
 - assets/: todas las imágenes, logos e íconos de la app. Usa siempre las de aquí, nunca links de imágenes de internet.
 - css/: estilos. tokens.css (decisiones base), components.css (componentes) y styles.css (estilos generales de las pantallas).
-- js/: código. app.js (comportamiento) y data.js (datos simulados, separados del diseño).
+- js/: código. app.js (comportamiento) y data.js (datos de ejemplo iniciales, separados del diseño).
 - index.html: la pantalla de inicio, la puerta de entrada de la app. Las demás pantallas van en la carpeta pages/.
 - componentes.html: en la raíz, junto a index.html. Muestra todos los componentes del design kit.
 - Nombres de archivos y carpetas: minúsculas, sin tildes, ñ ni espacios, con guiones.
