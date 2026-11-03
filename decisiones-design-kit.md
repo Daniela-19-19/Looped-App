@@ -57,10 +57,16 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Portadas:** la de 46 px pasa a 48. (64)
 - **Botones del panel del artista:** los cuatro rellenos de acento, como en el manual. (70)
 - **Logo:** blanco puro en oscuro y negro puro en claro. La firma mide al menos 144 px de ancho. (68, 69)
-- **Fuera del kit por ahora:** reproductor, minirreproductor y atmósferas de fondo. Se agregan cuando se construyan esas pantallas.
+- **Logo animado** (`.logo-animado`): solo en el splash, a 240 px. Con «reducir movimiento», aparece quieto.
+- **Logo mediano** (`.logo--medio`): 200 px, en la bienvenida.
+- **Atmósferas** (`.atmosfera`): violeta sin rol y para artista; turquesa y azul para fan; más suaves en claro. El violeta oscuro queda en una sola transparencia, `.35`. Por ahora solo la variante inferior; la superior y la lateral se agregan cuando una pantalla las use. (11)
+- **Ancho de pantalla** (`--ancho-pantalla`): 440 px como máximo para el contenido en pantallas grandes.
+- **Fuera del kit por ahora:** reproductor y minirreproductor. Se agregan cuando se construyan esas pantallas.
 
 ## Historial de cambios
 
 | fecha | cambio | por qué |
 |---|---|---|
 | 2026-11-01 | Primera versión del kit: `css/tokens.css`, `css/components.css` y `componentes.html` | Decisiones de la auditoría y del manual de marca |
+| 2026-11-03 | Logo animado, color del logo, color del brillo y tiempos de la animación | Construcción del splash (A00) |
+| 2026-11-03 | Logo mediano, atmósfera inferior y ancho de pantalla | Construcción de la bienvenida (A01) |

@@ -40,6 +40,9 @@
     .marco-movil { max-width: 440px; padding: var(--espacio-4); border-radius: var(--radio-lg); background: var(--color-fondo); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); }
     .icono-muestra { display: grid; justify-items: center; gap: var(--espacio-2); padding: var(--espacio-3); border-radius: var(--radio-md); background: var(--color-superficie); }
     .icono-muestra code { font-size: var(--texto-xs); color: var(--color-texto-suave); }
+    [data-demo-logo] { display: grid; justify-items: center; gap: var(--espacio-8); padding-bottom: var(--espacio-8); }
+    [data-demo-logo] [data-repetir-logo] { justify-self: start; }
+    [data-demo-atmosfera] { position: relative; isolation: isolate; overflow: hidden; min-height: calc(var(--alto-control) * 6); }
   </style>
 </head>
 <body>
@@ -215,6 +218,52 @@
           </div>
         </header>
       </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Logo mediano · <code>.logo--medio</code></h3>
+      <p class="texto--pequeno texto--suave">La firma a 200 px, en la bienvenida. Igual que <code>.logo</code>: se ponen las dos imágenes.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Firma de 200 px</span>
+        <div class="demo">
+          <img class="logo logo--medio logo--blanco" src="assets/logo-firma-blanco.svg" alt="Looped">
+          <img class="logo logo--medio logo--negro" src="assets/logo-firma-negro.svg" alt="Looped">
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Atmósfera · <code>.atmosfera</code></h3>
+      <p class="texto--pequeno texto--suave">Manchas difuminadas de fondo. Violeta sin rol y para artista; turquesa y azul para fan; más suaves en claro. Va como primer hijo de un contenedor con <code>position: relative</code> e <code>isolation: isolate</code> (en las pantallas, <code>.pantalla</code>).</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Inferior · .atmosfera--inferior</span>
+        <div class="demo demo--columna marco-movil" data-demo-atmosfera>
+          <div class="atmosfera atmosfera--inferior" aria-hidden="true"></div>
+          <p class="texto--pequeno texto--suave">El contenido queda encima de las manchas.</p>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Logo animado · <code>.logo-animado</code></h3>
+      <p class="texto--pequeno texto--suave">Solo en el splash. Entran los dos arcos, el símbolo se corre a la izquierda y aparece «Looped», con un brillo violeta detrás. La firma va dibujada en el HTML (no como imagen) para animar cada parte. Con «reducir movimiento», aparece quieta.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Firma de 240 px</span>
+        <div class="demo demo--columna marco-movil" data-demo-logo>
+          <button type="button" class="boton boton--secundario boton--pequeno" data-solo-catalogo data-repetir-logo>Repetir animación</button>
+          <div class="logo-animado" role="img" aria-label="Looped">
+            <span class="logo-animado__brillo" aria-hidden="true"></span>
+            <svg viewBox="0 0 240 49" aria-hidden="true">
+              <g class="logo-animado__isotipo">
+                <path class="logo-animado__arco" d="M0 17.1211C0 7.38536 7.52638 0 17.4084 0C23.9789 0 29.4997 3.28006 32.3201 8.28895C33.396 10.2006 31.9649 12.5614 29.7713 12.5614C28.7162 12.5614 27.7447 11.9816 27.2381 11.0519C25.3944 7.67785 21.733 5.51029 17.4084 5.51029C10.8848 5.51029 5.90202 10.4983 5.90202 17.1159C5.90202 23.7334 10.89 28.7214 17.4084 28.7214C21.733 28.7214 25.3944 26.5539 27.2381 23.1798C27.7447 22.2501 28.7162 21.6703 29.7713 21.6703C31.9649 21.6703 33.3908 24.0312 32.3201 25.9428C29.4997 30.9517 23.9789 34.2317 17.4084 34.2317C7.52638 34.2369 0 26.8516 0 17.1211Z" fill="currentColor"/>
+                <path class="logo-animado__arco" d="M48.4123 31.2911C48.4123 41.0269 40.8859 48.4122 31.0039 48.4122C24.4333 48.4122 18.9126 45.1322 16.0922 40.1233C15.0162 38.2117 16.4473 35.8508 18.641 35.8508C19.6961 35.8508 20.6675 36.4306 21.1742 37.3603C23.0179 40.7344 26.6792 42.9019 31.0039 42.9019C37.5275 42.9019 42.5102 37.9139 42.5102 31.2964C42.5102 24.6788 37.5222 19.6908 31.0039 19.6908C26.6792 19.6908 23.0179 21.8584 21.1742 25.2324C20.6675 26.1621 19.6961 26.7419 18.641 26.7419C16.4473 26.7419 15.0214 24.3811 16.0922 22.4695C18.9126 17.4606 24.4333 14.1805 31.0039 14.1805C40.8859 14.1753 48.4123 21.5606 48.4123 31.2911Z" fill="currentColor"/>
+              </g>
+              <g class="logo-animado__palabra">
+                <path d="M62.1526 1.67786H62.5698C64.4255 1.67786 65.9361 3.18838 65.9361 5.04416V28.8817C65.9361 29.8743 66.7417 30.6799 67.7343 30.6799H77.639C79.4948 30.6799 81.0053 32.1904 81.0053 34.0462C81.0053 35.902 79.4948 37.4125 77.639 37.4125H63.9436C61.0952 37.4125 58.7863 35.1036 58.7863 32.2551V5.04416C58.7863 3.18838 60.2968 1.67786 62.1526 1.67786Z" fill="currentColor"/>
+                <path d="M83.5988 24.2062C83.5988 16.3371 89.7128 10.3741 97.7905 10.3741C105.868 10.3741 111.982 16.3299 111.982 24.2062C111.982 32.0825 105.868 38.0383 97.7905 38.0383C89.7128 38.0383 83.5988 32.0825 83.5988 24.2062ZM105.041 24.2062C105.041 20.0631 101.984 16.9054 97.7905 16.9054C93.597 16.9054 90.54 20.0631 90.54 24.2062C90.54 28.3494 93.6473 31.5071 97.7905 31.5071C101.934 31.5071 105.041 28.3494 105.041 24.2062Z" fill="currentColor"/>
+                <path d="M115.44 24.2062C115.44 16.3371 121.554 10.3741 129.632 10.3741C137.71 10.3741 143.824 16.3299 143.824 24.2062C143.824 32.0825 137.71 38.0383 129.632 38.0383C121.554 38.0383 115.44 32.0825 115.44 24.2062ZM136.882 24.2062C136.882 20.0631 133.825 16.9054 129.632 16.9054C125.438 16.9054 122.381 20.0631 122.381 24.2062C122.381 28.3494 125.489 31.5071 129.632 31.5071C133.775 31.5071 136.882 28.3494 136.882 24.2062Z" fill="currentColor"/>
+                <path d="M149.524 10.9999H150.042C151.762 10.9999 153.15 12.3882 153.15 14.1073C155.272 11.7768 158.228 10.3813 161.745 10.3813C169.097 10.3813 174.592 16.3371 174.592 24.2134C174.592 32.0897 169.104 38.0455 161.745 38.0455C158.221 38.0455 155.272 36.6501 153.15 34.3195V44.1595C153.15 45.8786 151.762 47.2669 150.042 47.2669H149.524C147.805 47.2669 146.417 45.8786 146.417 44.1595V14.1217C146.417 12.4026 147.805 11.0143 149.524 11.0143V10.9999ZM167.651 24.2062C167.651 20.0847 164.623 16.9341 160.458 16.9054C156.293 16.8766 153.272 19.9048 153.15 23.9545C153.02 28.2199 156.171 31.5071 160.4 31.5071C164.63 31.5071 167.651 28.3494 167.651 24.2062Z" fill="currentColor"/>
+                <path d="M177.618 24.2062C177.618 16.3371 183.732 10.3741 191.81 10.3741C199.887 10.3741 206.001 16.3299 206.001 24.3069C206.001 24.3141 206.001 24.3213 206.001 24.3285C206.001 25.5513 204.987 26.5367 203.764 26.5367H184.818C185.696 29.9534 188.443 32.1832 192.069 32.1832C194.32 32.1832 196.255 31.3488 197.535 30.1044C198.111 29.5434 198.873 29.2341 199.679 29.2341C202.592 29.2341 203.851 32.8809 201.592 34.7223C199.053 36.8011 195.687 38.0383 191.91 38.0383C183.725 38.0383 177.618 32.0825 177.618 24.2062ZM184.876 21.6168H198.808C197.981 18.4087 195.284 16.2292 191.817 16.2292C188.35 16.2292 185.811 18.3511 184.876 21.6168Z" fill="currentColor"/>
+                <path d="M209.027 24.2062C209.027 16.3371 214.573 10.3741 221.924 10.3741C225.449 10.3741 228.398 11.7695 230.52 14.1001V3.48325C230.52 1.62747 232.03 0.116943 233.886 0.116943C235.742 0.116943 237.252 1.62747 237.252 3.48325V28.6586C237.252 30.0541 238.029 30.8884 239.482 30.8884H240V35.4991C240 36.5565 239.144 37.4125 238.087 37.4125C234.461 37.4125 232.131 36.1177 231.095 33.5786C228.973 36.3263 225.758 38.0311 221.924 38.0311C214.573 38.0311 209.027 32.0753 209.027 24.199V24.2062ZM230.527 24.2062C230.527 19.4804 226.492 16.035 221.406 17.0923C219.148 17.5599 216.781 19.8544 216.234 22.0914C214.983 27.2272 218.399 31.507 223.226 31.507C227.419 31.507 230.527 28.3493 230.527 24.2062Z" fill="currentColor"/>
+              </g>
+            </svg>
+          </div>
+        </div></div>
     </article>
 
     <article class="cat-componente">
@@ -538,9 +587,15 @@
   document.querySelector('[data-abrir-dialogo]').addEventListener('click', () => { velo.hidden = false; });
   velo.addEventListener('click', e => { if (e.target === velo || e.target.closest('[data-cerrar-dialogo]')) velo.hidden = true; });
 
+  // Logo animado: volver a ponerlo hace que la animación empiece de nuevo
+  document.querySelector('[data-repetir-logo]').addEventListener('click', () => {
+    const logo = document.querySelector('[data-demo-logo] .logo-animado');
+    logo.replaceWith(logo.cloneNode(true));
+  });
+
   // Muestras de color con su valor actual
   const colores = ['fondo', 'fondo-secundario', 'superficie', 'superficie-alta', 'vidrio', 'velo', 'texto', 'texto-suave',
-    'borde', 'borde-suave', 'primario', 'primario-hover', 'sobre-primario', 'foco', 'secundario', 'sobre-secundario', 'error'];
+    'borde', 'borde-suave', 'primario', 'primario-hover', 'sobre-primario', 'foco', 'secundario', 'sobre-secundario', 'error', 'logo', 'brillo', 'atmosfera-1', 'atmosfera-2'];
   const cajaColores = document.getElementById('muestras-color');
   cajaColores.innerHTML = colores.map(c => `
     <div class="muestra">

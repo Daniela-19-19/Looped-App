@@ -42,6 +42,14 @@
   /* Estados */
   --color-error: #FF5468;             /* Errores de formulario, advertencias, borrar */
 
+  /* Marca */
+  --color-logo: #FFFFFF;              /* Logo dibujado en código: blanco en oscuro, negro en claro */
+  --color-brillo: rgba(147, 69, 255, .55); /* Brillo violeta detrás del logo animado */
+
+  /* Atmósferas: manchas difuminadas del fondo (cambian según el rol) */
+  --color-atmosfera-1: rgba(147, 69, 255, .55); /* Mancha principal */
+  --color-atmosfera-2: rgba(124, 43, 255, .35); /* Mancha de acompañamiento */
+
   /* Tipografía: familias (cada una termina en una fuente de respaldo) */
   --fuente-titulos: "neulis-neue", "Outfit", Arial, sans-serif;  /* Títulos y botones */
   --fuente-texto: "neue-haas-unica", "Manrope", Arial, sans-serif; /* Lectura y etiquetas */
@@ -85,14 +93,36 @@
   --alto-campo: 52px;    /* Campos de texto y buscador */
   --tamano-icono: 24px;
   --ancho-logo: 144px;   /* Mínimo de la firma según el manual */
+  --ancho-logo-medio: 200px;  /* Firma de la bienvenida */
+  --ancho-logo-grande: 240px; /* Firma del splash */
+  --ancho-pantalla: 440px;    /* Ancho máximo del contenido en pantallas grandes */
   --grosor-borde: 1px;
   --grosor-foco: 2px;
   --desenfoque-vidrio: 24px;
 
+  /* Atmósferas: tamaño de las dos manchas */
+  --desenfoque-atmosfera: 64px;
+  --atmosfera-ancho-1: 420px;
+  --atmosfera-alto-1: 240px;
+  --atmosfera-ancho-2: 300px;
+  --atmosfera-alto-2: 200px;
+
   /* Movimiento */
   --duracion-rapida: 120ms;
   --duracion-media: 200ms;
+  --duracion-salida: 450ms;  /* Desvanecido al salir de una pantalla */
+  --duracion-larga: 1100ms;  /* Entradas de más de 1 s (arcos del logo) */
   --curva: cubic-bezier(.2, .8, .2, 1);
+  --curva-salida: cubic-bezier(.4, 0, .2, 1);
+
+  /* Movimiento: coreografía del logo animado (splash) */
+  --logo-retraso-arco: 120ms;      /* El segundo arco entra un poco después */
+  --logo-duracion-isotipo: 900ms;  /* El símbolo se corre a la izquierda */
+  --logo-retraso-isotipo: 1350ms;
+  --logo-duracion-palabra: 800ms;  /* Aparece «Looped» */
+  --logo-retraso-palabra: 1750ms;
+  --logo-duracion-brillo: 2400ms;  /* El brillo crece y se apaga */
+  --logo-retraso-brillo: 600ms;
 }
 
 /* ----------------------------------------------------------
@@ -103,6 +133,8 @@
   --color-primario-hover: #168F94;
   --color-sobre-primario: #0E0D12;
   --color-foco: #57E7DC;
+  --color-atmosfera-1: rgba(50, 214, 200, .42); /* Turquesa */
+  --color-atmosfera-2: rgba(39, 141, 255, .45); /* Azul */
 }
 
 /* Rol: artista (violeta). Igual al tema base; se deja explícito. */
@@ -111,6 +143,8 @@
   --color-primario-hover: #7C2BFF;
   --color-sobre-primario: #FFFFFF;
   --color-foco: #B07BFF;
+  --color-atmosfera-1: rgba(147, 69, 255, .55);
+  --color-atmosfera-2: rgba(124, 43, 255, .35);
 }
 
 /* ----------------------------------------------------------
@@ -128,12 +162,17 @@
   --color-borde: rgba(27, 23, 35, .24);
   --color-borde-suave: rgba(27, 23, 35, .10);
   --color-error: #C8233A;
+  --color-logo: #000000;
+  --color-atmosfera-1: rgba(147, 69, 255, .26);
+  --color-atmosfera-2: rgba(124, 43, 255, .16);
   --sombra-suave: 0 12px 32px rgba(40, 20, 70, .12);
   --sombra-media: 0 24px 48px rgba(40, 20, 70, .18);
 }
 /* En claro, el foco turquesa claro no se ve: se usa el turquesa oscuro. */
 [data-tema="claro"][data-rol="fan"] {
   --color-foco: #168F94;
+  --color-atmosfera-1: rgba(50, 214, 200, .30);
+  --color-atmosfera-2: rgba(39, 141, 255, .26);
 }
 
 /* Quien pide menos movimiento en su dispositivo lo recibe. */
@@ -141,5 +180,7 @@
   :root {
     --duracion-rapida: 0ms;
     --duracion-media: 0ms;
+    --duracion-salida: 0ms;
+    --duracion-larga: 0ms;
   }
 }

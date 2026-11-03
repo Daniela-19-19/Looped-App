@@ -1,0 +1,48 @@
+/* ==========================================================
+   Looped · Estilos de las pantallas
+   Acomoda los componentes en cada pantalla. Usa solo variables
+   de tokens.css y componentes de components.css.
+   ========================================================== */
+
+/* ---------- Pantalla (contenedor común) ---------- */
+/* Ocupa todo el alto. isolation deja la atmósfera detrás del contenido. */
+.pantalla {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+/* Columna de contenido: margen lateral de 24 y ancho máximo en pantallas grandes. */
+.pantalla__contenido {
+  width: 100%;
+  max-width: calc(var(--ancho-pantalla) + var(--espacio-6) * 2);
+  margin: 0 auto;
+  padding: var(--espacio-4) var(--espacio-6) var(--espacio-8);
+}
+
+/* ---------- A00 · Splash ---------- */
+.splash {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+.splash--saliendo { animation: desvanecer var(--duracion-salida) var(--curva-salida) both; }
+
+@keyframes desvanecer { to { opacity: 0; } }
+
+/* ---------- A01 · Bienvenida ---------- */
+.bienvenida { justify-content: center; }
+.bienvenida__logo { width: fit-content; margin: 0 auto calc(var(--espacio-8) * 2 + var(--espacio-2)); }
+.bienvenida__titulo, .bienvenida__bajada { text-align: center; }
+.bienvenida__bajada { margin-top: var(--espacio-2); }
+.bienvenida__acciones {
+  display: grid;
+  gap: var(--espacio-3);
+  margin-top: calc(var(--espacio-8) + var(--espacio-2));
+}

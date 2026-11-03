@@ -61,6 +61,86 @@ button, input, textarea { font: inherit; color: inherit; }
 .logo--negro { display: none; }
 [data-tema="claro"] .logo--blanco { display: none; }
 [data-tema="claro"] .logo--negro { display: block; }
+.logo--medio { width: var(--ancho-logo-medio); }
+
+/* ---------- Atmósfera (manchas de fondo) ----------
+   Va como primer hijo de un contenedor con position: relative
+   e isolation: isolate, así queda detrás del contenido. */
+.atmosfera {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.atmosfera::before, .atmosfera::after {
+  content: "";
+  position: absolute;
+  border-radius: var(--radio-total);
+  filter: blur(var(--desenfoque-atmosfera));
+}
+/* Inferior: las dos manchas salen desde las esquinas de abajo. */
+.atmosfera--inferior::before {
+  left: 0;
+  bottom: 0;
+  width: var(--atmosfera-ancho-1);
+  height: var(--atmosfera-alto-1);
+  transform: translate(-14%, 71%);
+  background: var(--color-atmosfera-1);
+  opacity: .9;
+}
+.atmosfera--inferior::after {
+  right: 0;
+  bottom: 0;
+  width: var(--atmosfera-ancho-2);
+  height: var(--atmosfera-alto-2);
+  transform: translate(40%, 60%);
+  background: var(--color-atmosfera-2);
+  opacity: .8;
+}
+
+/* ---------- Logo animado (splash) ----------
+   Entran los dos arcos, el símbolo se corre a la izquierda y
+   aparece «Looped», con un brillo detrás. El SVG va en el HTML
+   para poder animar cada parte. */
+.logo-animado { position: relative; width: var(--ancho-logo-grande); color: var(--color-logo); }
+.logo-animado svg { display: block; width: 100%; height: auto; overflow: visible; }
+.logo-animado__arco {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: logo-arco-1 var(--duracion-larga) var(--curva) both;
+}
+.logo-animado__arco + .logo-animado__arco { animation-name: logo-arco-2; animation-delay: var(--logo-retraso-arco); }
+.logo-animado__isotipo {
+  transform-box: view-box;
+  animation: logo-isotipo var(--logo-duracion-isotipo) var(--curva) var(--logo-retraso-isotipo) both;
+}
+.logo-animado__palabra { animation: logo-palabra var(--logo-duracion-palabra) var(--curva) var(--logo-retraso-palabra) both; }
+.logo-animado__brillo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--ancho-logo-grande) * 4 / 3);
+  aspect-ratio: 1;
+  border-radius: var(--radio-total);
+  background: radial-gradient(circle, var(--color-brillo), transparent 65%);
+  filter: blur(calc(var(--desenfoque-vidrio) * 1.25));
+  pointer-events: none;
+  animation: logo-brillo var(--logo-duracion-brillo) ease-in-out var(--logo-retraso-brillo) both;
+}
+@keyframes logo-arco-1 { from { opacity: 0; transform: translate(calc(var(--espacio-4) * -1), calc(var(--espacio-5) / 2)) rotate(-90deg) scale(.6); } }
+@keyframes logo-arco-2 { from { opacity: 0; transform: translate(var(--espacio-4), calc(var(--espacio-5) / -2)) rotate(90deg) scale(.6); } }
+@keyframes logo-isotipo { from { transform: translateX(calc(var(--ancho-logo-grande) * .4)) scale(1.4); } }
+@keyframes logo-palabra { from { opacity: 0; transform: translateX(calc(var(--espacio-2) * -1)); } }
+@keyframes logo-brillo {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: .35; transform: translate(-50%, -50%) scale(1.25); }
+}
+/* Con «reducir movimiento», todo queda quieto en su lugar final. */
+@media (prefers-reduced-motion: reduce) {
+  .logo-animado, .logo-animado * { animation-duration: var(--duracion-media) !important; animation-delay: 0ms !important; }
+}
 
 /* ---------- Botón ---------- */
 .boton {
