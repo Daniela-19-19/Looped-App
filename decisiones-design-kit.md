@@ -10,6 +10,7 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - Se cargan desde **Adobe Fonts**, proyecto web `https://use.typekit.net/mgo6vlr.css`, al inicio de `css/tokens.css`.
 - Respaldo de **Google Fonts**: Outfit (títulos) y Manrope (texto). El navegador solo los usa si Adobe no carga.
 - Respaldo final: Arial.
+- **Excepción aprobada (03-11-2026):** las fuentes de la marca se cargan desde Adobe Fonts y no desde Google Fonts ni desde `assets/fuentes/`, porque Neulis Neue y Neue Haas Unica no están en Google Fonts. Se comprobó que el proyecto web `mgo6vlr` carga desde cualquier dominio, incluido Vercel, sin registrarlo. Pendiente: revisarlo en la app publicada. Si Adobe falla, se usan Outfit y Manrope de Google Fonts.
 
 ## Color
 

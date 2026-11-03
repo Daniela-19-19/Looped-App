@@ -18,7 +18,8 @@ Artistas independientes, sin disquera ni equipo, que quieren acercarse a sus fan
 
 ## Links
 
-- App publicada: pendiente
+- App publicada: https://looped-app-three.vercel.app
+- Brief: https://claude.ai/artifact/C1TEygu5fcRExWRhUxSXjX
 - Repositorio del proceso: https://github.com/Daniela-19-19/Looped
 
 ## Cómo está organizado este repo
