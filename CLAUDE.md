@@ -34,7 +34,7 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - Íconos: copia el bloque `<svg>` con los `<symbol>` del inicio de componentes.html y usa `<svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>`. Variante: `.icono--pequeno`. Para mostrar u ocultar: `#icono-ver` y `#icono-ocultar`. Archivos de referencia en assets/iconos/.
 - Texto: `.titulo` (32), `.titulo--medio` (24), `.titulo--pequeno` (20), `.texto`, `.texto--pequeno`, `.texto--suave`, `.rotulo`, `.rotulo--pequeno`. Ej.: `<h1 class="titulo">Descubre</h1>`
 - `.logo` con `.logo--blanco` y `.logo--negro` (pon las dos imágenes; el CSS muestra la correcta). Ej.: `<img class="logo logo--blanco" src="assets/logo-firma-blanco.svg" alt="Looped">`
-- `.boton` (principal), `.boton--secundario`, `.boton--terciario`, `.boton--peligro`, `.boton--pequeno`, `.boton--bloque`. Ej.: `<button type="button" class="boton boton--bloque">Continuar</button>`
+- `.boton` (principal), `.boton--secundario`, `.boton--terciario`, `.boton--peligro`, `.boton--pequeno`, `.boton--bloque`, `.boton--rellenar` (con `.boton--secundario`: se llena del color del rol al pasar el mouse o enfocarlo; con `data-rol="fan"` o `"artista"` en el botón toma el color de ese rol). Ej.: `<button type="button" class="boton boton--bloque">Continuar</button>`
 - `.boton-icono`, `.boton-icono--borde`, `.boton-icono--relleno`, `.boton-icono--pequeno`, `.boton-icono--grande` (siempre con `aria-label`). Ej.: `<button type="button" class="boton-icono" aria-label="Volver">…ícono…</button>`
 - `.enlace`. Ej.: `<a class="enlace" href="#">Ver más</a>`
 - `.barra-superior` + `.barra-superior__titulo`. Ej.: `<header class="barra-superior">botón volver · <h1 class="barra-superior__titulo">Tu música</h1> · <span></span></header>`
@@ -47,7 +47,7 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - `.navegacion` + `.navegacion__pestana` (la actual con `aria-current="page"`). Ej.: `<nav class="navegacion"><a class="navegacion__pestana" href="#" aria-current="page">ícono<span>Inicio</span></a>…</nav>`
 - `.campo` (`__etiqueta`, `__control`, `__ayuda`, `__mensaje-error`), `.campo--error`, `.area-texto`. Ej.: `<label class="campo"><span class="campo__etiqueta">Correo</span><input class="campo__control" type="email"></label>`
 - Campo con botón adentro (mostrar la contraseña): `.campo__grupo` + `.campo__boton`. Ej.: `<div class="campo"><label class="campo__etiqueta" for="clave">Contraseña</label><div class="campo__grupo"><input class="campo__control" id="clave" type="password"><button type="button" class="boton-icono boton-icono--relleno campo__boton" aria-label="Mostrar contraseña">ícono</button></div></div>`
-- `.atmosfera` (manchas de fondo, primer hijo de `.pantalla`): `.atmosfera--inferior`, `.atmosfera--lateral`. Ej.: `<div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>`
+- `.atmosfera` (manchas de fondo, primer hijo de `.pantalla`): `.atmosfera--inferior`, `.atmosfera--lateral`, `.atmosfera--centro`. Ej.: `<div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>`
 - `.buscador`. Ej.: `<label class="buscador">ícono<input type="search" aria-label="Buscar"></label>`
 - `.casilla` + `.casilla__caja`. Ej.: `<label class="casilla"><input type="checkbox"><span class="casilla__caja">ícono check</span>Indie</label>`
 - `.chips` + `.chip`, y `.selector` (con `.boton--secundario` dentro); lo elegido lleva `aria-pressed="true"`. Ej.: `<button type="button" class="chip" aria-pressed="true">Emergentes</button>`

@@ -110,6 +110,7 @@
   --atmosfera-alto-3: 300px;
   --atmosfera-ancho-4: 280px;  /* Lateral: mancha de arriba */
   --atmosfera-alto-4: 220px;
+  --atmosfera-tamano-centro: 280px; /* Centro: una sola mancha redonda */
 
   /* Movimiento */
   --duracion-rapida: 120ms;

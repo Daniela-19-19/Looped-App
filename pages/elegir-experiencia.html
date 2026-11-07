@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Crear cuenta</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="elegir-experiencia">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- A03 · Crear cuenta: elegir experiencia -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--centro" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="bienvenida.html" aria-label="Volver">
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span></span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">¿Cómo quieres registrarte?</h1>
+      <p class="encabezado-pagina__bajada">Elige el perfil que vas a crear.</p>
+    </div>
+
+    <section class="tarjeta" aria-labelledby="opcion-fan">
+      <h2 class="tarjeta__titulo" id="opcion-fan">Como fan</h2>
+      <p class="tarjeta__texto">Descubre música, conoce artistas y participa.</p>
+      <div class="tarjeta__acciones">
+        <a class="boton boton--secundario boton--rellenar boton--bloque" data-rol="fan" href="crear-cuenta.html?rol=fan" data-elegir-rol="fan">Registrarme como fan</a>
+      </div>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="opcion-artista">
+      <h2 class="tarjeta__titulo" id="opcion-artista">Como artista</h2>
+      <p class="tarjeta__texto">Comparte tu música y gestiona tu comunidad.</p>
+      <div class="tarjeta__acciones">
+        <a class="boton boton--secundario boton--rellenar boton--bloque" data-rol="artista" href="crear-cuenta.html?rol=artista" data-elegir-rol="artista">Registrarme como artista</a>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

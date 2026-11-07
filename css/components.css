@@ -117,6 +117,17 @@ button, input, textarea { font: inherit; color: inherit; }
   background: var(--color-atmosfera-2);
   opacity: .8;
 }
+/* Centro: una sola mancha suave detrás del contenido (elegir experiencia). */
+.atmosfera--centro::before {
+  left: 50%;
+  top: 42%;
+  width: var(--atmosfera-tamano-centro);
+  height: var(--atmosfera-tamano-centro);
+  transform: translate(-50%, -50%);
+  background: var(--color-atmosfera-1);
+  opacity: .45;
+}
+.atmosfera--centro::after { content: none; }
 
 /* ---------- Logo animado (splash) ----------
    Entran los dos arcos, el símbolo se corre a la izquierda y
@@ -207,6 +218,14 @@ button, input, textarea { font: inherit; color: inherit; }
   box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-error);
 }
 .boton--peligro:hover { background: var(--color-borde-suave); }
+/* Rellenar: un secundario que se llena del color primario al pasar el mouse
+   o al enfocarlo. Con data-rol en el botón, toma el color de ese rol. */
+.boton--rellenar:hover,
+.boton--rellenar:focus-visible {
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
+  box-shadow: none;
+}
 .boton:disabled {
   background: var(--color-superficie-alta);
   color: var(--color-texto-suave);

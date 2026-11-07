@@ -123,10 +123,25 @@ function pantallaIniciarSesion() {
   });
 }
 
+// ---------- A03 · Crear cuenta: elegir experiencia ----------
+// Cada opción es un enlace a crear-cuenta.html?rol=fan o ?rol=artista.
+// Al tocarla, la app toma el color del rol (turquesa o violeta) y
+// recuerda el rol para el resto del registro.
+function pantallaElegirExperiencia() {
+  document.querySelectorAll('[data-elegir-rol]').forEach(enlace => {
+    enlace.addEventListener('click', () => {
+      const rol = enlace.dataset.elegirRol;
+      document.documentElement.dataset.rol = rol;
+      try { sessionStorage.setItem('looped-registro-rol', rol); } catch (e) { /* sin almacenamiento */ }
+    });
+  });
+}
+
 // ---------- Arranque ----------
 const PANTALLAS = {
   'index': pantallaIndex,
-  'iniciar-sesion': pantallaIniciarSesion
+  'iniciar-sesion': pantallaIniciarSesion,
+  'elegir-experiencia': pantallaElegirExperiencia
 };
 
 document.addEventListener('DOMContentLoaded', () => {
