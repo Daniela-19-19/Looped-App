@@ -214,13 +214,12 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que una persona nueva pueda crear su cuenta con correo y contraseña. Sabemos que funciona si avanza al perfil básico sin errores.
 - **Contenido:**
   1. «Crea tu cuenta de fan» o «… de artista».
-  2. Foto de perfil opcional.
-  3. Campos de correo y contraseña.
-  4. Botón «Continuar».
-  5. Enlace «Ya tengo una cuenta».
+  2. Campos de correo y contraseña.
+  3. Botón «Continuar».
+  4. Enlace «Ya tengo una cuenta».
 - **Qué funciona de verdad:**
   - Crear la cuenta: Real.
-  - Subir la foto: Real.
+- **Nota:** la foto de perfil opcional va en el paso siguiente («Dale tu nombre» o «Tu identidad como artista»), como en el diseño (decisión del equipo del 07-11-2026).
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Valida el correo y la contraseña y muestra el error debajo del campo.
@@ -232,10 +231,12 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que el fan pueda decir cómo quiere que lo vean. Sabemos que funciona si completa su nombre y su usuario y continúa.
 - **Contenido:**
   1. «Dale tu nombre.»
-  2. Campos «Nombre de perfil» y «Nombre de usuario».
-  3. Botón «Continuar».
+  2. Foto de perfil opcional.
+  3. Campos «Nombre de perfil» y «Nombre de usuario».
+  4. Botón «Continuar».
 - **Qué funciona de verdad:**
   - Guardar el nombre y el usuario: Real.
+  - Subir la foto: Real.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - No deja continuar con campos vacíos.
@@ -281,10 +282,12 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que el artista pueda decir cómo lo van a encontrar. Sabemos que funciona si completa su nombre artístico y su usuario.
 - **Contenido:**
   1. «Tu identidad como artista.»
-  2. Campos «Nombre artístico» y «Nombre de usuario».
-  3. Botón «Continuar».
+  2. Foto de perfil opcional.
+  3. Campos «Nombre artístico» y «Nombre de usuario».
+  4. Botón «Continuar».
 - **Qué funciona de verdad:**
   - Guardar la identidad: Real.
+  - Subir la foto: Real.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - No deja continuar con campos vacíos.

@@ -48,6 +48,43 @@ function mostrarError(nombreCampo, mensaje) {
   else control.removeAttribute('aria-invalid');
 }
 
+// Botón del ojo: muestra u oculta la contraseña de un campo.
+function activarMostrarContrasena(control, boton) {
+  boton.addEventListener('click', () => {
+    const mostrar = control.type === 'password';
+    control.type = mostrar ? 'text' : 'password';
+    boton.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    boton.querySelector('use').setAttribute('href', mostrar ? '#icono-ocultar' : '#icono-ver');
+  });
+}
+
+// ¿Este correo ya tiene una cuenta, de fan o de artista?
+function correoRegistrado(correo) {
+  const buscado = correo.toLowerCase();
+  return obtenerDatos('fans').some(f => f.correo.toLowerCase() === buscado) ||
+    obtenerDatos('artistas').some(a => a.correo.toLowerCase() === buscado);
+}
+
+// ---------- Registro en curso ----------
+// Lo que la persona va llenando en los pasos del registro (rol, correo…),
+// guardado solo en esta pestaña. Nunca se guarda la contraseña.
+// SIMULADO: con Supabase, la cuenta se crea de verdad al continuar.
+function leerRegistro() {
+  try { return JSON.parse(sessionStorage.getItem('looped-registro')) || {}; } catch (e) { return {}; }
+}
+function guardarRegistro(cambios) {
+  const registro = Object.assign(leerRegistro(), cambios);
+  try { sessionStorage.setItem('looped-registro', JSON.stringify(registro)); } catch (e) { /* sin almacenamiento */ }
+  return registro;
+}
+
+// Rol del registro: primero el de la dirección (?rol=fan o ?rol=artista),
+// si no, el que ya se había elegido. Devuelve null si no hay ninguno.
+function rolDelRegistro() {
+  const rol = new URLSearchParams(location.search).get('rol') || leerRegistro().rol;
+  return rol === 'fan' || rol === 'artista' ? rol : null;
+}
+
 // ---------- A00 · Splash ----------
 // A los 3,5 s pasa sola a la bienvenida; un toque (o una tecla) lo adelanta.
 // Con «reducir movimiento», pasa en menos de 1 s.
@@ -78,15 +115,7 @@ function pantallaIniciarSesion() {
   const formulario = document.getElementById('formulario-sesion');
   const correo = document.getElementById('correo');
   const contrasena = document.getElementById('contrasena');
-  const botonVer = document.querySelector('[data-mostrar-contrasena]');
-
-  // Mostrar u ocultar la contraseña
-  botonVer.addEventListener('click', () => {
-    const mostrar = contrasena.type === 'password';
-    contrasena.type = mostrar ? 'text' : 'password';
-    botonVer.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
-    botonVer.querySelector('use').setAttribute('href', mostrar ? '#icono-ocultar' : '#icono-ver');
-  });
+  activarMostrarContrasena(contrasena, document.querySelector('[data-mostrar-contrasena]'));
 
   // Al volver a escribir, el error de ese campo se borra
   correo.addEventListener('input', () => mostrarError('correo', ''));
@@ -132,8 +161,51 @@ function pantallaElegirExperiencia() {
     enlace.addEventListener('click', () => {
       const rol = enlace.dataset.elegirRol;
       document.documentElement.dataset.rol = rol;
-      try { sessionStorage.setItem('looped-registro-rol', rol); } catch (e) { /* sin almacenamiento */ }
+      guardarRegistro({ rol });
     });
+  });
+}
+
+// ---------- A03f / A03r · Crear cuenta ----------
+function pantallaCrearCuenta() {
+  // Sin rol elegido no se puede crear la cuenta: vuelve a elegir.
+  const rol = rolDelRegistro();
+  if (!rol) {
+    location.replace('elegir-experiencia.html');
+    return;
+  }
+  // La pantalla toma el color y el texto del rol.
+  document.documentElement.dataset.rol = rol;
+  document.querySelector('[data-nombre-rol]').textContent = rol;
+  guardarRegistro({ rol });
+
+  const formulario = document.getElementById('formulario-cuenta');
+  const correo = document.getElementById('correo');
+  const contrasena = document.getElementById('contrasena');
+  correo.value = leerRegistro().correo || '';
+
+  activarMostrarContrasena(contrasena, document.querySelector('[data-mostrar-contrasena]'));
+  correo.addEventListener('input', () => mostrarError('correo', ''));
+  contrasena.addEventListener('input', () => mostrarError('contrasena', ''));
+
+  formulario.addEventListener('submit', evento => {
+    evento.preventDefault();
+    const textoCorreo = correo.value.trim();
+
+    if (!correoValido(textoCorreo)) mostrarError('correo', 'Escribe un correo válido.');
+    else if (correoRegistrado(textoCorreo)) mostrarError('correo', 'Este correo ya tiene una cuenta. Inicia sesión.');
+    if (contrasena.value.length < 6) mostrarError('contrasena', 'La contraseña necesita al menos 6 caracteres.');
+
+    const conError = formulario.querySelector('[aria-invalid="true"]');
+    if (conError) {
+      conError.focus();
+      return;
+    }
+
+    // SIMULADO: aquí se creará la cuenta en Supabase. Por ahora solo se
+    // recuerda el correo para los pasos siguientes (la contraseña no).
+    guardarRegistro({ correo: textoCorreo });
+    location.href = rol === 'artista' ? 'identidad-artista.html' : 'perfil-basico-fan.html';
   });
 }
 
@@ -141,7 +213,8 @@ function pantallaElegirExperiencia() {
 const PANTALLAS = {
   'index': pantallaIndex,
   'iniciar-sesion': pantallaIniciarSesion,
-  'elegir-experiencia': pantallaElegirExperiencia
+  'elegir-experiencia': pantallaElegirExperiencia,
+  'crear-cuenta': pantallaCrearCuenta
 };
 
 document.addEventListener('DOMContentLoaded', () => {

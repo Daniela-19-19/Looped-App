@@ -33,7 +33,7 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 | A01 | Bienvenida | `pages/bienvenida.html` | ✅ | — | |
 | A02 | Iniciar sesión | `pages/iniciar-sesion.html` | ✅ | ✅ | |
 | A03 | Crear cuenta: elegir experiencia | `pages/elegir-experiencia.html` | ✅ | — | |
-| A03f / A03r | Crear cuenta | `pages/crear-cuenta.html` | | | |
+| A03f / A03r | Crear cuenta | `pages/crear-cuenta.html` | ✅ | ✅ | |
 
 ### 2 · Registro
 
