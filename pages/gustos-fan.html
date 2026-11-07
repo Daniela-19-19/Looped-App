@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es" data-rol="fan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Gustos musicales</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="gustos-fan">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.2 4.2L19 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- A06f · Gustos musicales -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="perfil-basico-fan.html" aria-label="Volver">
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span></span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo" id="titulo-generos">¿Qué te gusta escuchar?</h1>
+      <p class="encabezado-pagina__bajada">Elige los géneros que disfrutas. Puedes marcar varios.</p>
+    </div>
+
+    <form id="formulario-generos" novalidate>
+      <!-- Las casillas las dibuja js/app.js con obtenerDatos("generos") -->
+      <fieldset class="casillas casillas--dos-columnas" aria-labelledby="titulo-generos" data-lista-generos></fieldset>
+    </form>
+
+    <p class="texto--pequeno texto--suave pantalla__nota">Son un punto de partida. También podrás descubrir música fuera de tus gustos.</p>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="submit" class="boton boton--bloque" form="formulario-generos">Continuar</button>
+    <button type="button" class="boton boton--terciario boton--bloque" data-despues>Lo haré después</button>
+  </footer>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

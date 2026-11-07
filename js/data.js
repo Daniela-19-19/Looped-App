@@ -7,6 +7,18 @@
    Las rutas de imágenes son desde la raíz del proyecto.
    ========================================================== */
 const DATOS = {
+  // generos: los que se pueden marcar en el registro, el perfil y los filtros.
+  generos: [
+    { id: 'pop', nombre: 'Pop' },
+    { id: 'rock', nombre: 'Rock' },
+    { id: 'indie', nombre: 'Indie' },
+    { id: 'electronica', nombre: 'Electrónica' },
+    { id: 'hip-hop', nombre: 'Hip hop' },
+    { id: 'rnb', nombre: 'R&B' },
+    { id: 'jazz', nombre: 'Jazz' },
+    { id: 'musica-latina', nombre: 'Música latina' }
+  ],
+
   // fans: una cuenta de ejemplo para probar el inicio de sesión del fan.
   fans: [
     {
@@ -15,7 +27,7 @@ const DATOS = {
       nombreUsuario: 'alex',
       correo: 'alex@ejemplo.com',
       foto: null,
-      gustosMusicales: ['Indie', 'Pop'],
+      gustosMusicales: ['indie', 'pop'], // ids de DATOS.generos
       intereses: [],
       minutosEscucha: 0,
       artistasQueSigue: [],
@@ -35,7 +47,7 @@ const DATOS = {
       foto: 'assets/mara-sol.jpg',
       presentacion: 'Canciones íntimas y melodías que encuentran su espacio.',
       ciudad: 'Bogotá',
-      generos: ['Indie', 'Pop'],
+      generos: ['indie', 'pop'], // ids de DATOS.generos
       roles: ['Solista', 'Compositor o compositora'],
       seguidores: 312,
       emergente: true

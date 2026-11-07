@@ -593,6 +593,18 @@ button, input, textarea { font: inherit; color: inherit; }
   cursor: pointer;
 }
 .casilla input { position: absolute; opacity: 0; pointer-events: none; }
+
+/* Grupo de casillas: es un <fieldset>, así el lector de pantalla
+   anuncia que las opciones van juntas. Una columna, o dos con la variante. */
+.casillas {
+  display: grid;
+  gap: var(--espacio-1) var(--espacio-4);
+  min-width: 0;
+  margin: var(--espacio-2) 0 0;
+  padding: 0;
+  border: 0;
+}
+.casillas--dos-columnas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .casilla__caja {
   display: grid;
   place-items: center;

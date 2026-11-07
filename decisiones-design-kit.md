@@ -64,6 +64,7 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Ancho de pantalla** (`--ancho-pantalla`): 440 px como máximo para el contenido en pantallas grandes.
 - **Selector de foto** (`.selector-foto`): avatar de 64 px con «Foto de perfil» al lado; toda la fila abre la galería. Al pasar el mouse, el círculo toma el borde del color del rol.
 - **Contador de caracteres** (`.campo__contador`): «0/160» en 12 px, gris y a la derecha, debajo del área de texto.
+- **Grupo de casillas** (`.casillas`): un `<fieldset>` sin borde; una columna, o dos con `.casillas--dos-columnas` (géneros).
 - **Fuera del kit por ahora:** reproductor y minirreproductor. Se agregan cuando se construyan esas pantallas.
 
 ## Historial de cambios
@@ -78,3 +79,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Botón que se rellena al pasar (`.boton--rellenar`) | Pedido del equipo: en elegir experiencia, cada opción se pinta del color de su rol (turquesa o violeta) |
 | 2026-11-07 | Selector de foto (`.selector-foto`) | Construcción de identidad del artista (A05r) y perfil básico del fan (A05f) |
 | 2026-11-07 | Contador de caracteres (`.campo__contador`) | Construcción de presentación (A06r); también lo usará escribir pregunta (F05e) |
+| 2026-11-07 | Grupo de casillas (`.casillas`, `.casillas--dos-columnas`) | Construcción de estilo musical (A07r) y gustos musicales (A06f) |

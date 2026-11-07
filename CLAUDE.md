@@ -50,6 +50,7 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - `.atmosfera` (manchas de fondo, primer hijo de `.pantalla`): `.atmosfera--inferior`, `.atmosfera--lateral`, `.atmosfera--centro`. Ej.: `<div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>`
 - `.buscador`. Ej.: `<label class="buscador">ícono<input type="search" aria-label="Buscar"></label>`
 - `.casilla` + `.casilla__caja`. Ej.: `<label class="casilla"><input type="checkbox"><span class="casilla__caja">ícono check</span>Indie</label>`
+- `.casillas` (un `<fieldset>` que agrupa casillas), `.casillas--dos-columnas`. Ej.: `<fieldset class="casillas casillas--dos-columnas" aria-labelledby="id-del-titulo">…casillas…</fieldset>`
 - `.chips` + `.chip`, y `.selector` (con `.boton--secundario` dentro); lo elegido lleva `aria-pressed="true"`. Ej.: `<button type="button" class="chip" aria-pressed="true">Emergentes</button>`
 - `.etiqueta`, `.etiqueta--acento`, `.etiqueta--reconocimiento`, `.etiqueta--borde`. Ej.: `<span class="etiqueta etiqueta--reconocimiento">Fan fundador</span>`
 - `.avatar`, `.avatar--pequeno`, `.avatar--grande`, `.avatar--acento`. Ej.: `<span class="avatar"><img src="assets/mara-sol.jpg" alt=""></span>`
