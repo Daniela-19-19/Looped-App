@@ -19,11 +19,26 @@ function obtenerDatos(tipo) {
 // Con Supabase, aquí se llamará al inicio de sesión real.
 function iniciarSesion(correo, contrasena) {
   const buscado = correo.toLowerCase();
+  // Primero, la cuenta creada en el registro (guardada en este navegador).
+  const propia = perfilGuardado();
+  if (propia && propia.correo.toLowerCase() === buscado && contrasena) {
+    return { rol: rolDelPerfil(propia), id: propia.id };
+  }
   const fan = obtenerDatos('fans').find(f => f.correo.toLowerCase() === buscado);
   if (fan && contrasena) return { rol: 'fan', id: fan.id };
   const artista = obtenerDatos('artistas').find(a => a.correo.toLowerCase() === buscado);
   if (artista && contrasena) return { rol: 'artista', id: artista.id };
   return null;
+}
+
+// La cuenta creada al terminar el registro, guardada en este navegador
+// (SIMULADO hasta conectar Supabase). null si no hay ninguna.
+function perfilGuardado() {
+  try { return JSON.parse(localStorage.getItem('looped-perfil')); } catch (e) { return null; }
+}
+// Un perfil de artista tiene nombre artístico; uno de fan, nombre de perfil.
+function rolDelPerfil(perfil) {
+  return perfil.nombreArtistico ? 'artista' : 'fan';
 }
 
 // Guarda quién entró, en este navegador. Si el navegador no deja
@@ -61,6 +76,8 @@ function activarMostrarContrasena(control, boton) {
 // ¿Este correo ya tiene una cuenta, de fan o de artista?
 function correoRegistrado(correo) {
   const buscado = correo.toLowerCase();
+  const propia = perfilGuardado();
+  if (propia && propia.correo.toLowerCase() === buscado) return true;
   return obtenerDatos('fans').some(f => f.correo.toLowerCase() === buscado) ||
     obtenerDatos('artistas').some(a => a.correo.toLowerCase() === buscado);
 }
