@@ -72,6 +72,7 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Encabezado de tarjeta** (`.tarjeta__encabezado`) y **votos** (`.votos`, ícono `votos`): para las preguntas («Lucía · Fan Club | ♥ 6») y el cupo («Preguntas abiertas | 3 de 5»). El ícono `votos` es el mismo corazón de `cupo`, con nombre propio para que el código se entienda.
 - **Enlaces con forma de chip o tarjeta:** `.chip` y `.tarjeta--tocable` pueden ser `<a>` sin subrayado. En `.tarjeta--fila`, el texto va en `.tarjeta__info`.
 - **Chips a 48 px de alto** (antes 36): cumplen el área táctil mínima de la revisión responsive.
+- **Menú desplegable** (`.desplegable`, `.menu`, `.menu__opcion`): vidrio como la navegación, opciones de 48 px y ✓ en la elegida; se cierra al tocar fuera o con Esc. Ícono `filtro`. El buscador puede llevar una ✕ para borrar lo escrito.
 - **Fuera del kit por ahora:** reproductor y minirreproductor. Se agregan cuando se construyan esas pantallas.
 
 ## Historial de cambios
@@ -93,3 +94,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Chips de 36 a 48 px de alto | Revisión responsive: área táctil mínima de 48 px |
 | 2026-11-07 | Responsive: tokens de ancho, títulos más grandes en computador, navegación adaptable (barra lateral) y rejilla de tarjetas | Pedido del equipo: la app debe aprovechar tablet y computador |
 | 2026-11-07 | Panel del artista: solo «Mi música» relleno, los otros tres con borde | Pedido del equipo |
+| 2026-11-07 | Menú desplegable, ícono `filtro` y ✕ del buscador | Construcción de explorar (F01b) |

@@ -151,3 +151,20 @@
     gap: var(--espacio-6);
   }
 }
+
+/* ---------- F01b · Explorar ---------- */
+.explorar__busqueda {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  max-width: var(--ancho-pantalla-media);
+}
+.explorar__busqueda .buscador { flex: 1; min-width: 0; }
+.explorar__filtro-activo {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-3);
+}
+.explorar__filtro-activo[hidden] { display: none; }
+.explorar__seccion { margin-top: var(--espacio-6); }

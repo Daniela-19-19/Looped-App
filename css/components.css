@@ -680,6 +680,54 @@ button, input, textarea { font: inherit; color: inherit; }
   font-size: var(--texto-base);
 }
 .buscador input::placeholder { color: var(--color-texto-suave); }
+.buscador input::-webkit-search-cancel-button { display: none; } /* usamos nuestro botón ✕ */
+/* Botón ✕ para borrar lo escrito (un .boton-icono--pequeno dentro del buscador). */
+.buscador .boton-icono .icono { color: var(--color-texto); }
+.buscador .boton-icono[hidden] { display: none; }
+
+/* ---------- Menú desplegable (p. ej. filtros) ----------
+   .desplegable envuelve el botón que lo abre y el menú, que aparece
+   debajo, alineado a la derecha. La opción elegida lleva aria-checked. */
+.desplegable { position: relative; }
+.menu {
+  position: absolute;
+  top: calc(100% + var(--espacio-2));
+  right: 0;
+  z-index: 20;
+  min-width: calc(var(--alto-control) * 5);
+  padding: var(--espacio-2);
+  border-radius: var(--radio-lg);
+  background: var(--color-vidrio);
+  -webkit-backdrop-filter: blur(var(--desenfoque-vidrio)) saturate(140%);
+  backdrop-filter: blur(var(--desenfoque-vidrio)) saturate(140%);
+  box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde), var(--sombra-suave);
+  transform-origin: top right;
+  animation: menu-entra var(--duracion-media) var(--curva) both;
+}
+.menu[hidden] { display: none; }
+@keyframes menu-entra { from { opacity: 0; transform: scale(.92); } }
+.menu__opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  width: 100%;
+  min-height: var(--alto-control);
+  padding: 0 var(--espacio-3);
+  border: 0;
+  border-radius: var(--radio-md);
+  background: transparent;
+  color: var(--color-texto);
+  font-family: var(--fuente-texto);
+  font-weight: var(--peso-fuerte);
+  font-size: var(--texto-sm);
+  line-height: var(--interlineado-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.menu__opcion:hover { background: var(--color-borde-suave); }
+.menu__opcion .icono { color: var(--color-primario); visibility: hidden; }
+.menu__opcion[aria-checked="true"] .icono { visibility: visible; }
 
 /* ---------- Casilla de verificación ---------- */
 .casilla {

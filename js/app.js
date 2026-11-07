@@ -906,6 +906,40 @@ function htmlPortada(lanzamiento, clases = '') {
     : `<div class="portada ${clases}" role="img" aria-label="${escapar(lanzamiento.nombreLanzamiento)}, sin portada"></div>`;
 }
 
+// Tarjeta de un artista que lleva a su perfil (inicio y explorar).
+function htmlTarjetaArtista(artista) {
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+  const estado = cupo && cupo.estado === 'abierto'
+    ? `Preguntas abiertas · ${textoNivelMinimo(cupo.nivelMinimo)}`
+    : 'Cupo cerrado';
+  const avatar = artista.foto
+    ? `<span class="avatar"><img src="${escapar(rutaRecurso(artista.foto))}" alt=""></span>`
+    : `<span class="avatar avatar--acento">${escapar(iniciales(artista.nombreArtistico))}</span>`;
+  return `
+    <a class="tarjeta tarjeta--tocable tarjeta--fila" href="perfil-artista-fan.html?id=${encodeURIComponent(artista.id)}">
+      ${avatar}
+      <div class="tarjeta__info">
+        <h3 class="tarjeta__titulo">${escapar(artista.nombreArtistico)}</h3>
+        <p class="tarjeta__meta">${escapar(estado)}</p>
+      </div>
+      <svg class="icono texto--suave" aria-hidden="true"><use href="#icono-siguiente"></use></svg>
+    </a>`;
+}
+
+// Fila de una canción con su botón ▶ (inicio y explorar).
+function htmlFilaCancion(lanzamiento) {
+  const artista = obtenerDatos('artistas').find(a => a.id === lanzamiento.artista);
+  return `
+    <div class="fila-lista">
+      ${htmlPortada(lanzamiento, 'portada--pequena')}
+      <span class="fila-lista__info">
+        <b class="fila-lista__titulo">${escapar(lanzamiento.nombreCancion)}</b>
+        <span class="fila-lista__detalle">${escapar(artista ? artista.nombreArtistico : '')} · ${escapar(lanzamiento.nombreLanzamiento)}</span>
+      </span>
+      ${botonReproducir(lanzamiento, 'boton-icono--relleno boton-icono--pequeno')}
+    </div>`;
+}
+
 // ---------- F01a · Inicio del fan ----------
 // Filtros de «Explora a tu manera» (spec.md): filtran la lista «Artistas».
 const FILTROS_ARTISTAS = [
@@ -1047,24 +1081,7 @@ function pantallaInicioFan() {
         </div>`;
       return;
     }
-    cajaArtistas.innerHTML = lista.map(a => {
-      const cupo = cupoDe(a.id);
-      const estado = cupo && cupo.estado === 'abierto'
-        ? `Preguntas abiertas · ${textoNivelMinimo(cupo.nivelMinimo)}`
-        : 'Cupo cerrado';
-      const avatar = a.foto
-        ? `<span class="avatar"><img src="${escapar(rutaRecurso(a.foto))}" alt=""></span>`
-        : `<span class="avatar avatar--acento">${escapar(iniciales(a.nombreArtistico))}</span>`;
-      return `
-        <a class="tarjeta tarjeta--tocable tarjeta--fila" href="perfil-artista-fan.html?id=${encodeURIComponent(a.id)}">
-          ${avatar}
-          <div class="tarjeta__info">
-            <h3 class="tarjeta__titulo">${escapar(a.nombreArtistico)}</h3>
-            <p class="tarjeta__meta">${escapar(estado)}</p>
-          </div>
-          <svg class="icono texto--suave" aria-hidden="true"><use href="#icono-siguiente"></use></svg>
-        </a>`;
-    }).join('');
+    cajaArtistas.innerHTML = lista.map(htmlTarjetaArtista).join('');
   }
   cajaFiltros.innerHTML = FILTROS_ARTISTAS.map(f =>
     `<button type="button" class="chip" data-filtro="${f.id}" aria-pressed="false">${escapar(f.nombre)}</button>`).join('');
@@ -1075,18 +1092,7 @@ function pantallaInicioFan() {
   pintarArtistas('todos');
 
   // Canciones: una fila por lanzamiento, cada una se puede reproducir.
-  document.querySelector('[data-lista-canciones]').innerHTML = lanzamientos.map(l => {
-    const artista = artistaDe(l.artista);
-    return `
-      <div class="fila-lista">
-        ${htmlPortada(l, 'portada--pequena')}
-        <span class="fila-lista__info">
-          <b class="fila-lista__titulo">${escapar(l.nombreCancion)}</b>
-          <span class="fila-lista__detalle">${escapar(artista ? artista.nombreArtistico : '')} · ${escapar(l.nombreLanzamiento)}</span>
-        </span>
-        ${botonReproducir(l, 'boton-icono--relleno boton-icono--pequeno')}
-      </div>`;
-  }).join('');
+  document.querySelector('[data-lista-canciones]').innerHTML = lanzamientos.map(htmlFilaCancion).join('');
 
   // Tu recorrido: nivel y progreso al siguiente (tabla de spec.md).
   const minutos = fan.minutosEscucha || 0;
@@ -1108,6 +1114,157 @@ function pantallaInicioFan() {
   activarBotonesReproducir(document.querySelector('main'));
 }
 
+// ---------- F01b · Explorar ----------
+// Para buscar sin importar tildes ni mayúsculas: «Río» → «rio».
+function normalizar(texto) {
+  return String(texto || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function pantallaExplorarFan() {
+  // Sin sesión de fan, a iniciar sesión.
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  activarCambioDeTema(document.querySelector('[data-cambiar-tema]'));
+  pintarAvatar(document.querySelector('[data-avatar-sesion]'), rutaRecurso(fan.foto), fan.nombrePerfil);
+
+  const artistas = obtenerDatos('artistas');
+  const generos = obtenerDatos('generos');
+  const lanzamientos = obtenerDatos('lanzamientos');
+  const cupos = obtenerDatos('cupos');
+  const nombreGenero = id => (generos.find(g => g.id === id) || {}).nombre || '';
+
+  // Filtros del menú (spec.md): Pop · Indie · Rock · preguntas abiertas.
+  const filtros = [
+    ...['pop', 'indie', 'rock'].map(id => ({ id, nombre: nombreGenero(id), cumple: a => a.generos.includes(id) })),
+    { id: 'preguntas-abiertas', nombre: 'Preguntas abiertas', cumple: a => (cupos.find(c => c.artista === a.id) || {}).estado === 'abierto' }
+  ];
+
+  const busqueda = document.querySelector('[data-busqueda]');
+  const borrar = document.querySelector('[data-borrar-busqueda]');
+  const botonFiltros = document.querySelector('[data-abrir-filtros]');
+  const menu = document.querySelector('[data-menu-filtros]');
+  const filtroActivo = document.querySelector('[data-filtro-activo]');
+  const resultados = document.querySelector('[data-resultados]');
+  let filtro = null; // id del filtro elegido, o null
+
+  // Resultados: artistas que coinciden con la búsqueda y el filtro; canciones si se busca.
+  function pintarResultados() {
+    const texto = busqueda.value.trim();
+    const buscado = normalizar(texto.replace(/^@/, ''));
+    const elegido = filtros.find(f => f.id === filtro);
+    const coincide = a => !buscado ||
+      normalizar(a.nombreArtistico).includes(buscado) ||
+      normalizar(a.nombreUsuario).includes(buscado) ||
+      normalizar(a.ciudad).includes(buscado) ||
+      a.generos.some(id => normalizar(nombreGenero(id)).includes(buscado));
+    const encontrados = artistas.filter(a => coincide(a) && (!elegido || elegido.cumple(a)));
+    const canciones = buscado
+      ? lanzamientos.filter(l => normalizar(l.nombreCancion).includes(buscado) || normalizar(l.nombreLanzamiento).includes(buscado))
+      : [];
+
+    borrar.hidden = !texto;
+    filtroActivo.hidden = !elegido;
+    if (elegido) document.querySelector('[data-nombre-filtro]').textContent = elegido.nombre;
+
+    // Si no hay artistas pero sí canciones, solo se muestran las canciones.
+    let html = '';
+    if (encontrados.length) {
+      html += `
+        <section class="explorar__seccion" aria-labelledby="titulo-resultados">
+          <div class="encabezado-seccion">
+            <h2 class="encabezado-seccion__titulo" id="titulo-resultados">${buscado ? 'Artistas' : 'Artistas para descubrir'}</h2>
+          </div>
+          <div class="rejilla-tarjetas">${encontrados.map(htmlTarjetaArtista).join('')}</div>
+        </section>`;
+    } else if (!canciones.length) {
+      html += `
+        <section class="explorar__seccion" aria-labelledby="titulo-resultados">
+          <h2 class="encabezado-seccion__titulo" id="titulo-resultados" hidden>Resultados</h2>
+        <div class="tarjeta">
+          <h3 class="tarjeta__titulo">Sin resultados</h3>
+          <p class="tarjeta__texto">No encontramos artistas${texto ? ` para «${escapar(texto)}»` : ''}${elegido ? ' con este filtro' : ''}.
+            Revisa los filtros o prueba con otro nombre o género.</p>
+          ${elegido ? '<div class="tarjeta__acciones"><button type="button" class="boton boton--secundario boton--bloque" data-quitar-filtro>Quitar filtro</button></div>' : ''}
+        </div>
+        </section>`;
+    }
+    if (canciones.length) {
+      html += `
+        <section class="explorar__seccion" aria-labelledby="titulo-canciones">
+          <div class="encabezado-seccion">
+            <h2 class="encabezado-seccion__titulo" id="titulo-canciones">Canciones</h2>
+          </div>
+          <div class="tarjeta">${canciones.map(htmlFilaCancion).join('')}</div>
+        </section>`;
+    }
+    resultados.innerHTML = html;
+    activarBotonesReproducir(resultados);
+  }
+
+  // Menú de filtros: se abre con el botón; se cierra al elegir, al tocar fuera o con Esc.
+  function pintarMenu() {
+    menu.innerHTML = filtros.map(f => `
+      <button type="button" class="menu__opcion" role="menuitemradio" aria-checked="${f.id === filtro}" data-filtro="${f.id}">
+        ${escapar(f.nombre)}<svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-check"></use></svg>
+      </button>`).join('');
+  }
+  function abrirMenu() {
+    pintarMenu();
+    menu.hidden = false;
+    botonFiltros.setAttribute('aria-expanded', 'true');
+    (menu.querySelector('[aria-checked="true"]') || menu.querySelector('.menu__opcion')).focus();
+  }
+  function cerrarMenu(devolverFoco) {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    botonFiltros.setAttribute('aria-expanded', 'false');
+    if (devolverFoco) botonFiltros.focus();
+  }
+  function quitarFiltro() {
+    filtro = null;
+    pintarResultados();
+  }
+
+  botonFiltros.addEventListener('click', () => (menu.hidden ? abrirMenu() : cerrarMenu(true)));
+  menu.addEventListener('click', evento => {
+    const opcion = evento.target.closest('.menu__opcion');
+    if (!opcion) return;
+    // Tocar el filtro que ya estaba elegido lo quita.
+    filtro = opcion.dataset.filtro === filtro ? null : opcion.dataset.filtro;
+    cerrarMenu(true);
+    pintarResultados();
+  });
+  // Flechas arriba y abajo para moverse entre opciones; Esc para cerrar.
+  menu.addEventListener('keydown', evento => {
+    const opciones = [...menu.querySelectorAll('.menu__opcion')];
+    const actual = opciones.indexOf(document.activeElement);
+    if (evento.key === 'ArrowDown') { evento.preventDefault(); opciones[(actual + 1) % opciones.length].focus(); }
+    if (evento.key === 'ArrowUp') { evento.preventDefault(); opciones[(actual - 1 + opciones.length) % opciones.length].focus(); }
+  });
+  document.addEventListener('keydown', evento => { if (evento.key === 'Escape') cerrarMenu(true); });
+  document.addEventListener('click', evento => {
+    if (!evento.target.closest('.desplegable')) cerrarMenu(false);
+  });
+
+  // Buscar mientras se escribe
+  busqueda.addEventListener('input', pintarResultados);
+  busqueda.addEventListener('keydown', evento => { if (evento.key === 'Enter') busqueda.blur(); });
+  borrar.addEventListener('click', () => {
+    busqueda.value = '';
+    busqueda.focus();
+    pintarResultados();
+  });
+  // «Quitar filtro» (arriba o en el mensaje de sin resultados)
+  document.querySelector('main').addEventListener('click', evento => {
+    if (evento.target.closest('[data-quitar-filtro]')) quitarFiltro();
+  });
+
+  pintarResultados();
+}
+
 // ---------- Arranque ----------
 // El tema guardado se aplica en todas las páginas apenas carga este archivo.
 aplicarTema();
@@ -1126,7 +1283,8 @@ const PANTALLAS = {
   'perfil-listo-artista': pantallaPerfilListoArtista,
   'perfil-listo-fan': pantallaPerfilListoFan,
   'panel-artista': pantallaPanelArtista,
-  'inicio-fan': pantallaInicioFan
+  'inicio-fan': pantallaInicioFan,
+  'explorar-fan': pantallaExplorarFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {

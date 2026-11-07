@@ -25,6 +25,7 @@
     .demo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-3); max-width: 440px; }
     .demo--columna { display: block; }
     .demo--ancha { max-width: none; }
+    [data-solo-catalogo-menu] { display: flex; justify-content: flex-end; margin-top: var(--espacio-3); min-height: calc(var(--alto-control) * 5); }
     .cat pre { margin: var(--espacio-3) 0 0; padding: var(--espacio-3) var(--espacio-4); overflow-x: auto; border-radius: var(--radio-md); background: var(--color-fondo-secundario); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); color: var(--color-texto-suave); font: var(--texto-xs)/var(--interlineado-xs) ui-monospace, Menlo, Consolas, monospace; }
     .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--espacio-3); }
     .muestra { overflow: hidden; border-radius: var(--radio-md); background: var(--color-superficie); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); }
@@ -56,6 +57,7 @@
     <symbol id="icono-siguiente" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></symbol>
     <symbol id="icono-buscar" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M16 16l4 4"/></symbol>
     <symbol id="icono-cerrar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="icono-filtro" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="icono-inicio" viewBox="0 0 24 24"><path fill="currentColor" d="M10.6 3.5a2.2 2.2 0 0 1 2.8 0l6.4 5.4c.5.4.8 1 .8 1.7v8.2c0 1.2-1 2.2-2.2 2.2h-3.2a1 1 0 0 1-1-1v-4.4a1 1 0 0 0-1-1h-2.4a1 1 0 0 0-1 1V20a1 1 0 0 1-1 1H5.6c-1.2 0-2.2-1-2.2-2.2v-8.2c0-.7.3-1.3.8-1.7z"/></symbol>
     <symbol id="icono-explorar" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm3.6 5.4-5 2.2-2.2 5 5-2.2z"/></symbol>
     <symbol id="icono-comunidad" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" fill="currentColor"/><circle cx="16.6" cy="9" r="2.6" fill="currentColor"/><path fill="currentColor" d="M2.8 18.6c0-3 2.8-5.2 6.2-5.2s6.2 2.2 6.2 5.2c0 .8-.6 1.4-1.4 1.4H4.2c-.8 0-1.4-.6-1.4-1.4zM16.4 13.6c2.7.1 4.8 1.9 4.8 4.4 0 .7-.6 1.2-1.2 1.2h-3c.2-.4.3-.8.3-1.3 0-1.7-.7-3.2-1.9-4.3z"/></symbol>
@@ -535,6 +537,22 @@
             <svg class="icono" aria-hidden="true"><use href="#icono-buscar"></use></svg>
             <input type="search" placeholder="Busca artistas o canciones" aria-label="Buscar">
           </label>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Buscador con ✕ y menú de filtros · .desplegable + .menu + .menu__opcion</span>
+        <div class="demo demo--columna">
+          <label class="buscador">
+            <svg class="icono" aria-hidden="true"><use href="#icono-buscar"></use></svg>
+            <input type="search" value="Mara" aria-label="Buscar artistas">
+            <button type="button" class="boton-icono boton-icono--pequeno" aria-label="Borrar búsqueda"><svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-cerrar"></use></svg></button>
+          </label>
+          <div class="desplegable" data-solo-catalogo-menu>
+            <button type="button" class="boton-icono boton-icono--relleno" aria-label="Filtros" aria-haspopup="true" aria-expanded="true"><svg class="icono" aria-hidden="true"><use href="#icono-filtro"></use></svg></button>
+            <div class="menu" role="menu" aria-label="Filtros">
+              <button type="button" class="menu__opcion" role="menuitemradio" aria-checked="true">Pop<svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-check"></use></svg></button>
+              <button type="button" class="menu__opcion" role="menuitemradio" aria-checked="false">Indie<svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-check"></use></svg></button>
+              <button type="button" class="menu__opcion" role="menuitemradio" aria-checked="false">Rock<svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-check"></use></svg></button>
+            </div>
+          </div>
         </div></div>
     </article>
 
