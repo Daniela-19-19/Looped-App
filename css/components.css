@@ -400,6 +400,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .tarjeta--tocable {
   width: 100%;
   border: 0;
+  text-decoration: none; /* también puede ser un enlace <a> */
   text-align: left;
   font: inherit;
   cursor: pointer;
@@ -408,6 +409,8 @@ button, input, textarea { font: inherit; color: inherit; }
 .tarjeta--tocable:hover { background: var(--color-superficie-alta); }
 .tarjeta--tocable:active { transform: scale(.99); }
 .tarjeta--fila { display: flex; align-items: center; gap: var(--espacio-3); }
+/* En una tarjeta en fila, el texto ocupa el espacio que sobra. */
+.tarjeta--fila > .tarjeta__info { flex: 1; min-width: 0; }
 .tarjeta--acento {
   background: var(--color-primario);
   color: var(--color-sobre-primario);
@@ -686,7 +689,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .chip {
   display: inline-flex;
   align-items: center;
-  min-height: calc(var(--alto-control) - var(--espacio-3));
+  min-height: var(--alto-control); /* 48 px: área táctil mínima */
   padding: 0 var(--espacio-4);
   border: 0;
   border-radius: var(--radio-total);
@@ -696,6 +699,7 @@ button, input, textarea { font: inherit; color: inherit; }
   font-weight: var(--peso-fuerte);
   font-size: var(--texto-xs);
   line-height: var(--interlineado-xs);
+  text-decoration: none; /* también puede ser un enlace <a> */
   cursor: pointer;
   transition: background var(--duracion-rapida) var(--curva);
 }

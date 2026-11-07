@@ -831,6 +831,283 @@ function pantallaPanelArtista() {
   }
 }
 
+// ---------- Fan de la sesión y su nivel ----------
+// El fan de la sesión: uno de data.js o el recién registrado. null si no hay.
+function fanActual() {
+  const sesion = leerSesion();
+  if (!sesion || sesion.rol !== 'fan') return null;
+  const deEjemplo = obtenerDatos('fans').find(f => f.id === sesion.id);
+  if (deEjemplo) return deEjemplo;
+  const propia = perfilGuardado();
+  return propia && propia.id === sesion.id ? propia : null;
+}
+
+// Dónde está el fan dentro de su nivel: minutos al empezar el nivel
+// actual y al llegar al siguiente (tabla de spec.md).
+function progresoNivel(minutos) {
+  const nivel = nivelPorMinutos(minutos);
+  let inicio = 0;
+  for (let n = 0; n < nivel; n++) inicio += Math.round(15 * Math.pow(1.5, n));
+  const fin = inicio + Math.round(15 * Math.pow(1.5, nivel));
+  return { nivel, inicio, fin, faltan: fin - minutos, porcentaje: ((minutos - inicio) / (fin - inicio)) * 100 };
+}
+
+// ---------- Reproducir un lanzamiento ----------
+// Por ahora solo suena y se pausa. El minirreproductor, la cola y sumar
+// minutos al nivel llegan con el reproductor (tramo 4).
+const reproduccion = { audio: null, id: null };
+
+// Los botones con data-reproducir="id" muestran ▶ o ⏸ según lo que suena.
+function actualizarBotonesReproducir() {
+  document.querySelectorAll('[data-reproducir]').forEach(boton => {
+    const sonando = reproduccion.id === boton.dataset.reproducir && reproduccion.audio && !reproduccion.audio.paused;
+    boton.querySelector('use').setAttribute('href', sonando ? '#icono-pausa' : '#icono-reproducir');
+    boton.setAttribute('aria-label', `${sonando ? 'Pausar' : 'Reproducir'} ${boton.dataset.titulo}`);
+  });
+}
+
+function alternarReproduccion(lanzamiento) {
+  if (reproduccion.id === lanzamiento.id && reproduccion.audio) {
+    if (reproduccion.audio.paused) reproduccion.audio.play();
+    else reproduccion.audio.pause();
+  } else {
+    if (reproduccion.audio) reproduccion.audio.pause();
+    reproduccion.audio = new Audio(rutaRecurso(lanzamiento.audio));
+    reproduccion.id = lanzamiento.id;
+    ['play', 'pause', 'ended'].forEach(evento => reproduccion.audio.addEventListener(evento, actualizarBotonesReproducir));
+    reproduccion.audio.play();
+  }
+  actualizarBotonesReproducir();
+}
+
+// Activa todos los botones data-reproducir que hay dentro de un contenedor.
+function activarBotonesReproducir(contenedor) {
+  const lanzamientos = obtenerDatos('lanzamientos');
+  contenedor.querySelectorAll('[data-reproducir]').forEach(boton => {
+    boton.addEventListener('click', () => {
+      const lanzamiento = lanzamientos.find(l => l.id === boton.dataset.reproducir);
+      if (lanzamiento) alternarReproduccion(lanzamiento);
+    });
+  });
+  actualizarBotonesReproducir();
+}
+
+// HTML de un botón de reproducir (▶) para un lanzamiento.
+function botonReproducir(lanzamiento, clases) {
+  return `<button type="button" class="boton-icono ${clases}" data-reproducir="${escapar(lanzamiento.id)}"
+    data-titulo="${escapar(lanzamiento.nombreCancion)}" aria-label="Reproducir ${escapar(lanzamiento.nombreCancion)}">
+    <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg></button>`;
+}
+
+// Portada de un lanzamiento (o un cuadro vacío si no tiene).
+function htmlPortada(lanzamiento, clases = '') {
+  return lanzamiento.portada
+    ? `<img class="portada ${clases}" src="${escapar(rutaRecurso(lanzamiento.portada))}" alt="Portada de ${escapar(lanzamiento.nombreLanzamiento)}">`
+    : `<div class="portada ${clases}" role="img" aria-label="${escapar(lanzamiento.nombreLanzamiento)}, sin portada"></div>`;
+}
+
+// ---------- F01a · Inicio del fan ----------
+// Filtros de «Explora a tu manera» (spec.md): filtran la lista «Artistas».
+const FILTROS_ARTISTAS = [
+  { id: 'todos', nombre: 'Todos los artistas' },
+  { id: 'cupo-abierto', nombre: 'Con cupo abierto' },
+  { id: 'nuevo-lanzamiento', nombre: 'Con nuevo lanzamiento' },
+  { id: 'emergentes', nombre: 'Emergentes' }
+];
+
+function textoEstadoPregunta(pregunta, artista) {
+  const nombre = artista ? artista.nombreArtistico.split(' ')[0] : 'El artista';
+  return {
+    nueva: 'En cola. El artista decide qué responder.',
+    pendiente: 'En cola. El artista decide qué responder.',
+    seleccionada: `${nombre} seleccionó esta pregunta. Espera su respuesta.`,
+    respondida: 'La respuesta está disponible.',
+    descartada: 'No fue seleccionada en este cupo.'
+  }[pregunta.estado] || '';
+}
+
+function pantallaInicioFan() {
+  // Sin sesión de fan, a iniciar sesión.
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const artistas = obtenerDatos('artistas');
+  const cupos = obtenerDatos('cupos');
+  const lanzamientos = obtenerDatos('lanzamientos')
+    .slice()
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+  const artistaDe = id => artistas.find(a => a.id === id);
+  const cupoDe = id => cupos.find(c => c.artista === id);
+
+  // Barra de marca
+  activarCambioDeTema(document.querySelector('[data-cambiar-tema]'));
+  pintarAvatar(document.querySelector('[data-avatar-sesion]'), rutaRecurso(fan.foto), fan.nombrePerfil);
+
+  // Lanzamiento destacado: el más nuevo en su ventana de 48 h; si no hay, el último.
+  const enVentana = lanzamientos.filter(l => horasRestantesVentana(l) > 0);
+  const destacado = enVentana[0] || lanzamientos[0];
+  if (destacado) {
+    const artista = artistaDe(destacado.artista);
+    const horas = horasRestantesVentana(destacado);
+    document.querySelector('[data-titulo-destacado]').textContent = horas > 0 ? 'En sus primeras 48 h' : 'Último lanzamiento';
+    document.querySelector('[data-destacado]').innerHTML = `
+      <article class="tarjeta tarjeta--acento tarjeta--destacada">
+        <div class="tarjeta__info">
+          <div>
+            <h3 class="tarjeta__titulo">${escapar(destacado.nombreLanzamiento)}</h3>
+            <p class="tarjeta__texto">${escapar(artista ? artista.nombreArtistico : '')}</p>
+            <p class="tarjeta__meta">${horas > 0 ? `Nuevo lanzamiento · Quedan ${horas} h de ventana` : 'Lanzamiento'}</p>
+          </div>
+          ${botonReproducir(destacado, '')}
+        </div>
+        ${htmlPortada(destacado)}
+      </article>`;
+  } else {
+    document.querySelector('[data-seccion-destacado]').remove();
+  }
+
+  // Una conexión real: un artista con cupo abierto (con foto y menos seguidores primero).
+  const conCupo = artistas
+    .filter(a => (cupoDe(a.id) || {}).estado === 'abierto')
+    .sort((a, b) => (Boolean(b.foto) - Boolean(a.foto)) || (a.seguidores - b.seguidores));
+  const persona = conCupo[0];
+  if (persona) {
+    const cupo = cupoDe(persona.id);
+    const quedan = Math.max(0, cupo.totalPreguntas - cupo.preguntasUsadas);
+    const foto = persona.foto
+      ? `<img class="portada" src="${escapar(rutaRecurso(persona.foto))}" alt="">`
+      : `<span class="avatar avatar--grande avatar--acento">${escapar(iniciales(persona.nombreArtistico))}</span>`;
+    document.querySelector('[data-conexion]').innerHTML = `
+      <a class="tarjeta tarjeta--tocable tarjeta--persona" href="perfil-artista-fan.html?id=${encodeURIComponent(persona.id)}">
+        <div>
+          <h3 class="tarjeta__titulo">${escapar(persona.nombreArtistico)}</h3>
+          <p class="tarjeta__texto">Preguntas abiertas</p>
+          <div class="etiquetas inicio__etiquetas"><span class="etiqueta etiqueta--borde">Quedan ${quedan} respuestas</span></div>
+        </div>
+        ${foto}
+      </a>`;
+  } else {
+    document.querySelector('[data-seccion-conexion]').remove();
+  }
+
+  // Tus preguntas (las 2 más recientes)
+  const mias = obtenerDatos('preguntas')
+    .filter(p => p.autor === fan.id)
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    .slice(0, 2);
+  const cajaPreguntas = document.querySelector('[data-tus-preguntas]');
+  if (mias.length) {
+    cajaPreguntas.innerHTML = mias.map(p => {
+      const artista = artistaDe(p.artista);
+      const respondida = p.estado === 'respondida';
+      const etiqueta = respondida
+        ? '<span class="etiqueta etiqueta--reconocimiento">Respondida</span>'
+        : p.estado === 'seleccionada' ? '<span class="etiqueta etiqueta--borde">Seleccionada</span>' : '';
+      return `
+        <article class="tarjeta">
+          <div class="tarjeta__encabezado">
+            <span class="tarjeta__meta">Para ${escapar(artista ? artista.nombreArtistico : '')}</span>${etiqueta}
+          </div>
+          <p class="tarjeta__texto tarjeta__texto--principal">${escapar(p.texto)}</p>
+          <p class="tarjeta__texto">${escapar(textoEstadoPregunta(p, artista))}</p>
+          <div class="tarjeta__acciones">
+            <a class="boton ${respondida ? 'boton--secundario' : 'boton--terciario'} boton--bloque" href="tu-conexion-fan.html?id=${encodeURIComponent(p.id)}">${respondida ? 'Ver respuesta' : 'Ver mi pregunta'}</a>
+          </div>
+        </article>`;
+    }).join('');
+  } else {
+    document.querySelector('[data-ver-todas-preguntas]').remove(); // nada que ver todavía
+    cajaPreguntas.innerHTML = `
+      <div class="tarjeta">
+        <h3 class="tarjeta__titulo">Aún no has preguntado.</h3>
+        <p class="tarjeta__texto">Cuando un artista abre su cupo, puedes enviarle una pregunta o votar las de otros fans.</p>
+        <div class="tarjeta__acciones"><a class="boton boton--secundario boton--bloque" href="conexion-activa-fan.html">Ver conexión activa</a></div>
+      </div>`;
+  }
+
+  // Explora a tu manera: los chips filtran la lista «Artistas» (Real).
+  const cajaFiltros = document.querySelector('[data-filtros-artistas]');
+  const cajaArtistas = document.querySelector('[data-lista-artistas]');
+  const cumpleFiltro = {
+    'todos': () => true,
+    'cupo-abierto': a => (cupoDe(a.id) || {}).estado === 'abierto',
+    'nuevo-lanzamiento': a => lanzamientos.some(l => l.artista === a.id && horasRestantesVentana(l) > 0),
+    'emergentes': a => a.emergente
+  };
+  function pintarArtistas(filtro) {
+    cajaFiltros.querySelectorAll('.chip').forEach(chip => chip.setAttribute('aria-pressed', String(chip.dataset.filtro === filtro)));
+    const lista = artistas.filter(cumpleFiltro[filtro]);
+    if (!lista.length) {
+      cajaArtistas.innerHTML = `
+        <div class="tarjeta">
+          <h3 class="tarjeta__titulo">Sin resultados</h3>
+          <p class="tarjeta__texto">No hay artistas con este filtro por ahora. Prueba con otro.</p>
+        </div>`;
+      return;
+    }
+    cajaArtistas.innerHTML = lista.map(a => {
+      const cupo = cupoDe(a.id);
+      const estado = cupo && cupo.estado === 'abierto'
+        ? `Preguntas abiertas · ${textoNivelMinimo(cupo.nivelMinimo)}`
+        : 'Cupo cerrado';
+      const avatar = a.foto
+        ? `<span class="avatar"><img src="${escapar(rutaRecurso(a.foto))}" alt=""></span>`
+        : `<span class="avatar avatar--acento">${escapar(iniciales(a.nombreArtistico))}</span>`;
+      return `
+        <a class="tarjeta tarjeta--tocable tarjeta--fila" href="perfil-artista-fan.html?id=${encodeURIComponent(a.id)}">
+          ${avatar}
+          <div class="tarjeta__info">
+            <h3 class="tarjeta__titulo">${escapar(a.nombreArtistico)}</h3>
+            <p class="tarjeta__meta">${escapar(estado)}</p>
+          </div>
+          <svg class="icono texto--suave" aria-hidden="true"><use href="#icono-siguiente"></use></svg>
+        </a>`;
+    }).join('');
+  }
+  cajaFiltros.innerHTML = FILTROS_ARTISTAS.map(f =>
+    `<button type="button" class="chip" data-filtro="${f.id}" aria-pressed="false">${escapar(f.nombre)}</button>`).join('');
+  cajaFiltros.addEventListener('click', evento => {
+    const chip = evento.target.closest('.chip');
+    if (chip) pintarArtistas(chip.dataset.filtro);
+  });
+  pintarArtistas('todos');
+
+  // Canciones: una fila por lanzamiento, cada una se puede reproducir.
+  document.querySelector('[data-lista-canciones]').innerHTML = lanzamientos.map(l => {
+    const artista = artistaDe(l.artista);
+    return `
+      <div class="fila-lista">
+        ${htmlPortada(l, 'portada--pequena')}
+        <span class="fila-lista__info">
+          <b class="fila-lista__titulo">${escapar(l.nombreCancion)}</b>
+          <span class="fila-lista__detalle">${escapar(artista ? artista.nombreArtistico : '')} · ${escapar(l.nombreLanzamiento)}</span>
+        </span>
+        ${botonReproducir(l, 'boton-icono--relleno boton-icono--pequeno')}
+      </div>`;
+  }).join('');
+
+  // Tu recorrido: nivel y progreso al siguiente (tabla de spec.md).
+  const minutos = fan.minutosEscucha || 0;
+  const progreso = progresoNivel(minutos);
+  document.querySelector('[data-recorrido]').innerHTML = `
+    <div class="tarjeta">
+      <div class="tarjeta__encabezado">
+        <h3 class="tarjeta__titulo">Nivel ${progreso.nivel}</h3>
+        <span class="etiqueta">${minutos} min escuchados</span>
+      </div>
+      <div class="progreso" role="progressbar" aria-label="Progreso al nivel ${progreso.nivel + 1}" aria-valuemin="0"
+        aria-valuemax="100" aria-valuenow="${Math.round(progreso.porcentaje)}"><span class="progreso__barra"></span></div>
+      <p class="tarjeta__texto">Te faltan ${progreso.faltan} min de escucha para el nivel ${progreso.nivel + 1}.</p>
+      <div class="tarjeta__acciones"><a class="boton boton--terciario boton--bloque" href="recorrido-fan.html">Ver mi recorrido</a></div>
+    </div>`;
+  document.querySelector('[data-recorrido] .progreso__barra').style.width = `${progreso.porcentaje}%`;
+
+  // Todos los botones ▶ de la página (destacado y canciones)
+  activarBotonesReproducir(document.querySelector('main'));
+}
+
 // ---------- Arranque ----------
 // El tema guardado se aplica en todas las páginas apenas carga este archivo.
 aplicarTema();
@@ -848,7 +1125,8 @@ const PANTALLAS = {
   'intereses-fan': pantallaInteresesFan,
   'perfil-listo-artista': pantallaPerfilListoArtista,
   'perfil-listo-fan': pantallaPerfilListoFan,
-  'panel-artista': pantallaPanelArtista
+  'panel-artista': pantallaPanelArtista,
+  'inicio-fan': pantallaInicioFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {

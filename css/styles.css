@@ -91,3 +91,9 @@
 }
 .panel__accesos .boton { padding-inline: var(--espacio-3); }
 .panel__seccion { margin-top: var(--espacio-8); }
+
+/* ---------- F01a · Inicio del fan ---------- */
+.inicio__atajos { margin-top: var(--espacio-3); }
+.inicio__seccion { margin-top: var(--espacio-8); }
+.inicio__seccion .chips + * { margin-top: var(--espacio-3); }
+.inicio__etiquetas { margin-top: var(--espacio-3); }

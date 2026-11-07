@@ -69,6 +69,8 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Grupo de etiquetas** (`.etiquetas`): etiquetas en fila con 8 px entre ellas; pasan a la línea siguiente si no caben.
 - **Aviso en la navegación** (`.navegacion__aviso`): punto coral de 8 px sobre el ícono cuando hay novedades; el `aria-label` de la pestaña dice cuántas.
 - **Encabezado de tarjeta** (`.tarjeta__encabezado`) y **votos** (`.votos`, ícono `votos`): para las preguntas («Lucía · Fan Club | ♥ 6») y el cupo («Preguntas abiertas | 3 de 5»). El ícono `votos` es el mismo corazón de `cupo`, con nombre propio para que el código se entienda.
+- **Enlaces con forma de chip o tarjeta:** `.chip` y `.tarjeta--tocable` pueden ser `<a>` sin subrayado. En `.tarjeta--fila`, el texto va en `.tarjeta__info`.
+- **Chips a 48 px de alto** (antes 36): cumplen el área táctil mínima de la revisión responsive.
 - **Fuera del kit por ahora:** reproductor y minirreproductor. Se agregan cuando se construyan esas pantallas.
 
 ## Historial de cambios
@@ -86,3 +88,5 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Grupo de casillas (`.casillas`, `.casillas--dos-columnas`) | Construcción de estilo musical (A07r) y gustos musicales (A06f) |
 | 2026-11-07 | Cabecera de tarjeta (`.tarjeta__cabecera`) y grupo de etiquetas (`.etiquetas`) | Construcción de perfil listo del artista (A09r) y del fan (A08f) |
 | 2026-11-07 | Atmósfera superior, aviso en la navegación, encabezado de tarjeta, texto principal de tarjeta, votos e ícono `votos` | Construcción del panel del artista (R01) |
+| 2026-11-07 | Ícono `pausa`; `.chip` y `.tarjeta--tocable` como enlaces; `.tarjeta--fila > .tarjeta__info` | Construcción del inicio del fan (F01a) |
+| 2026-11-07 | Chips de 36 a 48 px de alto | Revisión responsive: área táctil mínima de 48 px |

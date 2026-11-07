@@ -47,8 +47,8 @@ const DATOS = {
       foto: null,
       gustosMusicales: ['indie', 'pop'], // ids de DATOS.generos
       intereses: [],
-      minutosEscucha: 0,
-      artistasQueSigue: [],
+      minutosEscucha: 45, // nivel 2
+      artistasQueSigue: ['nadia-cruz'],
       fanClubs: [],
       fanFundadorDe: [],
       fechaRegistro: '2026-11-01'
@@ -210,6 +210,7 @@ const DATOS = {
   preguntas: [
     { id: 'pregunta-tomas', artista: 'mara-sol', autor: 'fan-tomas', autorEsFanClub: false, primerContacto: false, texto: '¿Cómo nació Aire de vuelta?', votos: 14, estado: 'nueva', fecha: new Date(Date.now() - 2 * 3600000).toISOString() },
     { id: 'pregunta-lucia', artista: 'mara-sol', autor: 'fan-lucia', autorEsFanClub: true, primerContacto: false, texto: '¿Vas a tocar Segundo sol en vivo este año?', votos: 6, estado: 'nueva', fecha: new Date(Date.now() - 1 * 3600000).toISOString() },
+    { id: 'pregunta-alex', artista: 'nadia-cruz', autor: 'fan-alex', autorEsFanClub: false, primerContacto: false, texto: '¿Qué canción te gustaría que escucháramos primero?', votos: 2, estado: 'pendiente', fecha: new Date(Date.now() - 6 * 3600000).toISOString() },
     { id: 'pregunta-sebastian', artista: 'mara-sol', autor: 'fan-sebastian', autorEsFanClub: false, primerContacto: false, texto: '¿Qué instrumento usaste para la introducción?', votos: 3, estado: 'respondida', fecha: new Date(Date.now() - 40 * 3600000).toISOString() }
   ],
 
