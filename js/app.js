@@ -209,12 +209,162 @@ function pantallaCrearCuenta() {
   });
 }
 
+// ---------- Foto y nombre de usuario (pasos de identidad) ----------
+// Iniciales de un nombre: «Mara Sol» → «MS».
+function iniciales(nombre) {
+  return nombre.trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase();
+}
+
+// Nombre de usuario: sin @, minúsculas, sin tildes, solo letras, números y _.
+function limpiarUsuario(texto) {
+  return texto.replace(/^@+/, '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9_]/g, '').slice(0, 20);
+}
+
+// Achica una imagen para que su lado más largo mida como máximo «lado» px.
+// Devuelve la imagen como texto (data URL) para poder mostrarla y recordarla.
+function reducirImagen(archivo, lado) {
+  return new Promise((resolver, rechazar) => {
+    const url = URL.createObjectURL(archivo);
+    const imagen = new Image();
+    imagen.onload = () => {
+      const escala = Math.min(1, lado / Math.max(imagen.width, imagen.height));
+      const lienzo = document.createElement('canvas');
+      lienzo.width = Math.round(imagen.width * escala);
+      lienzo.height = Math.round(imagen.height * escala);
+      lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+      URL.revokeObjectURL(url);
+      resolver(lienzo.toDataURL('image/jpeg', 0.85));
+    };
+    imagen.onerror = () => { URL.revokeObjectURL(url); rechazar(new Error('imagen')); };
+    imagen.src = url;
+  });
+}
+
+// Pinta el círculo: la foto si hay, si no las iniciales, si no el ícono.
+function pintarAvatar(avatar, foto, nombre) {
+  avatar.replaceChildren();
+  if (foto) {
+    const img = document.createElement('img');
+    img.src = foto;
+    img.alt = '';
+    avatar.append(img);
+  } else if (nombre.trim()) {
+    avatar.textContent = iniciales(nombre);
+  } else {
+    avatar.innerHTML = '<svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg>';
+  }
+}
+
+// Pasos de identidad (A05r artista y A05f fan): foto opcional, nombre y usuario.
+// SIMULADO: con Supabase, aquí se guardan el perfil y la foto de verdad.
+function pasoIdentidad({ rol, campoNombre, errorNombre, usuarioAutomatico, destino }) {
+  // Solo se llega aquí después de crear la cuenta con este rol.
+  const registro = leerRegistro();
+  if (registro.rol !== rol || !registro.correo) {
+    location.replace('elegir-experiencia.html');
+    return;
+  }
+
+  const formulario = document.getElementById('formulario-identidad');
+  const nombre = document.getElementById('nombre');
+  const usuario = document.getElementById('usuario');
+  const entradaFoto = document.querySelector('[data-foto-entrada]');
+  const avatar = document.querySelector('[data-foto-avatar]');
+  const textoFoto = document.querySelector('[data-foto-texto]');
+  let foto = registro.foto || null;
+  // El usuario se llena solo con el nombre hasta que la persona lo cambia.
+  let usuarioTocado = Boolean(registro.nombreUsuario) || !usuarioAutomatico;
+
+  // Si vuelve a este paso, encuentra lo que ya había escrito.
+  nombre.value = registro[campoNombre] || '';
+  usuario.value = registro.nombreUsuario ? '@' + registro.nombreUsuario : '';
+  pintarAvatar(avatar, foto, nombre.value);
+  if (foto) textoFoto.textContent = 'Toca para cambiarla.';
+
+  entradaFoto.addEventListener('change', async () => {
+    const archivo = entradaFoto.files[0];
+    if (!archivo) return;
+    try {
+      foto = await reducirImagen(archivo, 512);
+      pintarAvatar(avatar, foto, nombre.value);
+      textoFoto.textContent = 'Toca para cambiarla.';
+      guardarRegistro({ foto });
+    } catch (e) {
+      textoFoto.textContent = 'No pudimos usar esa imagen. Prueba con otra.';
+    }
+    entradaFoto.value = '';
+  });
+
+  nombre.addEventListener('input', () => {
+    mostrarError('nombre', '');
+    if (!foto) pintarAvatar(avatar, null, nombre.value);
+    if (!usuarioTocado) {
+      const sugerido = limpiarUsuario(nombre.value);
+      usuario.value = sugerido ? '@' + sugerido : '';
+      mostrarError('usuario', '');
+    }
+  });
+  usuario.addEventListener('input', () => {
+    usuarioTocado = true;
+    mostrarError('usuario', '');
+  });
+  // Al salir del campo, el usuario queda limpio y con su @.
+  usuario.addEventListener('blur', () => {
+    const limpio = limpiarUsuario(usuario.value);
+    usuario.value = limpio ? '@' + limpio : '';
+  });
+
+  formulario.addEventListener('submit', evento => {
+    evento.preventDefault();
+    const textoNombre = nombre.value.trim();
+    const textoUsuario = limpiarUsuario(usuario.value);
+
+    if (!textoNombre) mostrarError('nombre', errorNombre);
+    if (!textoUsuario) mostrarError('usuario', 'Elige un nombre de usuario.');
+
+    const conError = formulario.querySelector('[aria-invalid="true"]');
+    if (conError) {
+      conError.focus();
+      return;
+    }
+
+    guardarRegistro({ [campoNombre]: textoNombre, nombreUsuario: textoUsuario, foto });
+    location.href = destino;
+  });
+}
+
+// ---------- A05r · Identidad del artista ----------
+function pantallaIdentidadArtista() {
+  pasoIdentidad({
+    rol: 'artista',
+    campoNombre: 'nombreArtistico',
+    errorNombre: 'Escribe tu nombre artístico.',
+    usuarioAutomatico: false,
+    destino: 'presentacion-artista.html'
+  });
+}
+
+// ---------- A05f · Perfil básico del fan ----------
+function pantallaPerfilBasicoFan() {
+  pasoIdentidad({
+    rol: 'fan',
+    campoNombre: 'nombrePerfil',
+    errorNombre: 'Escribe cómo quieres que te vean.',
+    usuarioAutomatico: true,
+    destino: 'gustos-fan.html'
+  });
+}
+
 // ---------- Arranque ----------
 const PANTALLAS = {
   'index': pantallaIndex,
   'iniciar-sesion': pantallaIniciarSesion,
   'elegir-experiencia': pantallaElegirExperiencia,
-  'crear-cuenta': pantallaCrearCuenta
+  'crear-cuenta': pantallaCrearCuenta,
+  'identidad-artista': pantallaIdentidadArtista,
+  'perfil-basico-fan': pantallaPerfilBasicoFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {

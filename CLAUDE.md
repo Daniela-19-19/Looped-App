@@ -53,6 +53,7 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - `.chips` + `.chip`, y `.selector` (con `.boton--secundario` dentro); lo elegido lleva `aria-pressed="true"`. Ej.: `<button type="button" class="chip" aria-pressed="true">Emergentes</button>`
 - `.etiqueta`, `.etiqueta--acento`, `.etiqueta--reconocimiento`, `.etiqueta--borde`. Ej.: `<span class="etiqueta etiqueta--reconocimiento">Fan fundador</span>`
 - `.avatar`, `.avatar--pequeno`, `.avatar--grande`, `.avatar--acento`. Ej.: `<span class="avatar"><img src="assets/mara-sol.jpg" alt=""></span>`
+- `.selector-foto` (`__entrada`, `__titulo`, `__texto`) con un `.avatar--grande` adentro: foto de perfil opcional. Ej.: `<label class="selector-foto"><input class="selector-foto__entrada" type="file" accept="image/*"><span class="avatar avatar--grande">iniciales o img</span><span><span class="selector-foto__titulo">Foto de perfil</span><span class="selector-foto__texto">Puedes añadirla después.</span></span></label>`
 - `.portada`, `.portada--pequena`, `.portada--mediana`. Ej.: `<img class="portada portada--mediana" src="assets/portada-segundo-sol.jpg" alt="Portada de Segundo sol">`
 - `.fila-lista` (`__info`, `__titulo`, `__detalle`). Ej.: `<button class="fila-lista">portada<span class="fila-lista__info"><b class="fila-lista__titulo">Segundo sol</b><span class="fila-lista__detalle">Mara Sol</span></span></button>`
 - `.progreso` + `.progreso__barra`, `.progreso--fino`. Ej.: `<div class="progreso"><span class="progreso__barra" style="width: 60%"></span></div>`

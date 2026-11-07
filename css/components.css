@@ -672,6 +672,34 @@ button, input, textarea { font: inherit; color: inherit; }
   font-size: var(--texto-sm);
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- Selector de foto (foto de perfil opcional) ----------
+   Una etiqueta que envuelve un input de archivo invisible: al tocarla
+   abre la galería o los archivos. El foco de teclado se ve en el conjunto. */
+.selector-foto {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-4);
+  width: fit-content;
+  margin: var(--espacio-6) 0;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+}
+.selector-foto__entrada { position: absolute; opacity: 0; width: var(--grosor-borde); height: var(--grosor-borde); pointer-events: none; }
+.selector-foto:has(.selector-foto__entrada:focus-visible) {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: var(--grosor-foco);
+}
+.selector-foto:hover .avatar { box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-primario); }
+.selector-foto__titulo,
+.selector-foto__texto {
+  display: block;
+  font-size: var(--texto-sm);
+  line-height: var(--interlineado-sm);
+}
+.selector-foto__titulo { font-weight: var(--peso-fuerte); }
+.selector-foto__texto { color: var(--color-texto-suave); }
 .avatar--pequeno { width: var(--espacio-8); height: var(--espacio-8); font-size: var(--texto-xs); }
 .avatar--grande {
   width: calc(var(--alto-control) + var(--espacio-4));

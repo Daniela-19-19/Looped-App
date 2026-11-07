@@ -39,12 +39,12 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| A05r | Identidad del artista | `pages/identidad-artista.html` | | | |
+| A05r | Identidad del artista | `pages/identidad-artista.html` | ✅ | — | |
 | A06r | Presentación | `pages/presentacion-artista.html` | | | |
 | A07r | Estilo musical | `pages/estilo-musical-artista.html` | | | |
 | A08r | Proyecto musical | `pages/proyecto-musical-artista.html` | | | |
 | A09r | Perfil del artista listo | `pages/perfil-listo-artista.html` | | | |
-| A05f | Perfil básico del fan | `pages/perfil-basico-fan.html` | | | |
+| A05f | Perfil básico del fan | `pages/perfil-basico-fan.html` | ✅ | — | |
 | A06f | Gustos musicales | `pages/gustos-fan.html` | | | |
 | A07f | Intereses | `pages/intereses-fan.html` | | | |
 | A08f | Perfil del fan listo | `pages/perfil-listo-fan.html` | | | |

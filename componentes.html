@@ -518,6 +518,27 @@
     </article>
 
     <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Selector de foto · <code>.selector-foto</code></h3>
+      <p class="texto--pequeno texto--suave">Foto de perfil opcional. Toda la fila abre la galería o los archivos; sin foto muestra las iniciales (o el ícono de perfil). El círculo es un <code>.avatar--grande</code>.</p>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Sin foto</span>
+        <div class="demo demo--columna">
+          <label class="selector-foto">
+            <input class="selector-foto__entrada" type="file" accept="image/*">
+            <span class="avatar avatar--grande"><svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg></span>
+            <span><span class="selector-foto__titulo">Foto de perfil</span><span class="selector-foto__texto">Puedes añadirla después.</span></span>
+          </label>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con foto</span>
+        <div class="demo demo--columna">
+          <label class="selector-foto">
+            <input class="selector-foto__entrada" type="file" accept="image/*">
+            <span class="avatar avatar--grande"><img src="assets/mara-sol.jpg" alt=""></span>
+            <span><span class="selector-foto__titulo">Foto de perfil</span><span class="selector-foto__texto">Toca para cambiarla.</span></span>
+          </label>
+        </div></div>
+    </article>
+
+    <article class="cat-componente">
       <h3 class="titulo titulo--pequeno">Portada · <code>.portada</code></h3>
       <p class="texto--pequeno texto--suave">Imagen cuadrada de un lanzamiento. Las fotos se muestran con sus colores originales.</p>
       <div class="demo">
