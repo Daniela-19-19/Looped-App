@@ -422,10 +422,12 @@ function casillasMarcadas(contenedor) {
   return [...contenedor.querySelectorAll('input:checked')].map(casilla => casilla.value);
 }
 
-// Pasos de géneros (A07r artista y A06f fan).
-// «Continuar» guarda lo marcado; «Lo haré después» avanza sin guardar.
-// SIMULADO: con Supabase, aquí se guardan los géneros de verdad.
-function pasoGeneros({ rol, pasoAnterior, campo, destino }) {
+// Pasos de casillas del registro: géneros (A07r, A06f), roles (A08r)
+// e intereses (A07f). Muestra la lista de datos indicada en el grupo
+// .casillas del formulario de la pantalla.
+// El botón principal guarda lo marcado; «Lo haré después» avanza sin guardar.
+// SIMULADO: con Supabase, aquí se guarda lo marcado de verdad.
+function pasoCasillas({ rol, pasoAnterior, lista, campo, destino }) {
   // Solo se llega aquí después del paso anterior del registro.
   const registro = leerRegistro();
   if (registro.rol !== rol || !registro[pasoAnterior]) {
@@ -433,13 +435,13 @@ function pasoGeneros({ rol, pasoAnterior, campo, destino }) {
     return;
   }
 
-  const formulario = document.getElementById('formulario-generos');
-  const lista = document.querySelector('[data-lista-generos]');
-  dibujarCasillas(lista, obtenerDatos('generos'), 'generos', registro[campo] || []);
+  const formulario = document.querySelector('main form');
+  const grupo = formulario.querySelector('.casillas');
+  dibujarCasillas(grupo, obtenerDatos(lista), lista, registro[campo] || []);
 
   formulario.addEventListener('submit', evento => {
     evento.preventDefault();
-    guardarRegistro({ [campo]: casillasMarcadas(lista) });
+    guardarRegistro({ [campo]: casillasMarcadas(grupo) });
     location.href = destino;
   });
 
@@ -451,9 +453,10 @@ function pasoGeneros({ rol, pasoAnterior, campo, destino }) {
 
 // ---------- A07r · Estilo musical ----------
 function pantallaEstiloMusicalArtista() {
-  pasoGeneros({
+  pasoCasillas({
     rol: 'artista',
     pasoAnterior: 'presentacion',
+    lista: 'generos',
     campo: 'generos',
     destino: 'proyecto-musical-artista.html'
   });
@@ -461,11 +464,34 @@ function pantallaEstiloMusicalArtista() {
 
 // ---------- A06f · Gustos musicales ----------
 function pantallaGustosFan() {
-  pasoGeneros({
+  pasoCasillas({
     rol: 'fan',
     pasoAnterior: 'nombrePerfil',
+    lista: 'generos',
     campo: 'gustosMusicales',
     destino: 'intereses-fan.html'
+  });
+}
+
+// ---------- A08r · Proyecto musical ----------
+function pantallaProyectoMusicalArtista() {
+  pasoCasillas({
+    rol: 'artista',
+    pasoAnterior: 'generos',
+    lista: 'roles',
+    campo: 'roles',
+    destino: 'perfil-listo-artista.html'
+  });
+}
+
+// ---------- A07f · Intereses ----------
+function pantallaInteresesFan() {
+  pasoCasillas({
+    rol: 'fan',
+    pasoAnterior: 'gustosMusicales',
+    lista: 'intereses',
+    campo: 'intereses',
+    destino: 'perfil-listo-fan.html'
   });
 }
 
@@ -479,7 +505,9 @@ const PANTALLAS = {
   'perfil-basico-fan': pantallaPerfilBasicoFan,
   'presentacion-artista': pantallaPresentacionArtista,
   'estilo-musical-artista': pantallaEstiloMusicalArtista,
-  'gustos-fan': pantallaGustosFan
+  'gustos-fan': pantallaGustosFan,
+  'proyecto-musical-artista': pantallaProyectoMusicalArtista,
+  'intereses-fan': pantallaInteresesFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {

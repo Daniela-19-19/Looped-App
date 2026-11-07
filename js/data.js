@@ -19,6 +19,23 @@ const DATOS = {
     { id: 'musica-latina', nombre: 'Música latina' }
   ],
 
+  // roles: cómo hace música un artista (proyecto musical y perfil).
+  roles: [
+    { id: 'solista', nombre: 'Solista' },
+    { id: 'integrante-banda', nombre: 'Integrante de una banda' },
+    { id: 'compositor', nombre: 'Compositor o compositora' },
+    { id: 'productor', nombre: 'Productor o productora' },
+    { id: 'instrumentista', nombre: 'Instrumentista' }
+  ],
+
+  // intereses: qué busca un fan en Looped (registro y perfil).
+  intereses: [
+    { id: 'descubrir-artistas', nombre: 'Descubrir nuevos artistas' },
+    { id: 'nuevos-lanzamientos', nombre: 'Escuchar nuevos lanzamientos' },
+    { id: 'conocer-artistas', nombre: 'Conocer a los artistas' },
+    { id: 'comunidades', nombre: 'Participar en comunidades' }
+  ],
+
   // fans: una cuenta de ejemplo para probar el inicio de sesión del fan.
   fans: [
     {
@@ -48,7 +65,7 @@ const DATOS = {
       presentacion: 'Canciones íntimas y melodías que encuentran su espacio.',
       ciudad: 'Bogotá',
       generos: ['indie', 'pop'], // ids de DATOS.generos
-      roles: ['Solista', 'Compositor o compositora'],
+      roles: ['solista', 'compositor'], // ids de DATOS.roles
       seguidores: 312,
       emergente: true
     }
