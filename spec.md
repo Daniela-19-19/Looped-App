@@ -637,7 +637,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que el artista pueda ver de un vistazo su música, sus preguntas, su comunidad y su cupo. Sabemos que funciona si llega desde aquí a la sección que necesita.
 - **Contenido:**
   1. «Tu panel de artista».
-  2. Cuatro botones rellenos: Mi música · Preguntas de fans · Comunidad · Disponibilidad.
+  2. Cuatro botones: Mi música · Preguntas de fans · Comunidad · Disponibilidad. «Mi música» va relleno de violeta (el panel es la sección Música) y los otros tres, con borde (decisión del equipo del 07-11-2026).
   3. «Tu último lanzamiento» y «Publicar lanzamiento».
   4. «Disponibilidad» (estado del cupo).
   5. «Preguntas».
@@ -647,7 +647,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   - Aviso de preguntas nuevas: Real.
   - Botones: Real (navegan).
 - **Está lista cuando:**
-  - Se ve igual al diseño aprobado, con los cuatro botones rellenos de violeta.
+  - Se ve igual al diseño aprobado, con «Mi música» relleno de violeta y los otros tres botones con borde.
   - Cada botón lleva a su sección.
   - Muestra el último lanzamiento y el estado del cupo reales del artista.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
