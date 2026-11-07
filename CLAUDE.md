@@ -41,7 +41,7 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - `.barra-marca` + `.barra-marca__acciones`. Ej.: `<header class="barra-marca"><span>logos</span><div class="barra-marca__acciones">botones</div></header>`
 - `.encabezado-pagina` + `.encabezado-pagina__bajada`. Ej.: `<div class="encabezado-pagina"><h1 class="titulo">Descubre</h1><p class="encabezado-pagina__bajada">…</p></div>`
 - `.encabezado-seccion` + `.encabezado-seccion__titulo`. Ej.: `<div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo">Tus preguntas</h2><a class="enlace" href="#">Ver más</a></div>`
-- `.tarjeta` (`__titulo`, `__texto`, `__meta`, `__acciones`, `__info`), `.tarjeta--tocable`, `.tarjeta--fila`, `.tarjeta--acento`, `.tarjeta--destacada`, `.tarjeta--persona`. Ej.: `<div class="tarjeta"><h3 class="tarjeta__titulo">Preguntas abiertas</h3><p class="tarjeta__texto">…</p></div>`
+- `.tarjeta` (`__titulo`, `__texto`, `__meta`, `__acciones`, `__info`, `__cabecera`: foto + nombre en fila), `.tarjeta--tocable`, `.tarjeta--fila`, `.tarjeta--acento`, `.tarjeta--destacada`, `.tarjeta--persona`. Ej.: `<div class="tarjeta"><h3 class="tarjeta__titulo">Preguntas abiertas</h3><p class="tarjeta__texto">…</p></div>`
 - `.aviso`, `.aviso--advertencia`. Ej.: `<div class="aviso">ícono<p>Mensaje</p></div>`
 - `.velo` + `.dialogo` (`__titulo`, `__texto`, `__acciones`). Ej.: `<div class="velo" hidden><div class="dialogo" role="dialog" aria-modal="true">…</div></div>`
 - `.navegacion` + `.navegacion__pestana` (la actual con `aria-current="page"`). Ej.: `<nav class="navegacion"><a class="navegacion__pestana" href="#" aria-current="page">ícono<span>Inicio</span></a>…</nav>`
@@ -52,7 +52,7 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - `.casilla` + `.casilla__caja`. Ej.: `<label class="casilla"><input type="checkbox"><span class="casilla__caja">ícono check</span>Indie</label>`
 - `.casillas` (un `<fieldset>` que agrupa casillas), `.casillas--dos-columnas`. Ej.: `<fieldset class="casillas casillas--dos-columnas" aria-labelledby="id-del-titulo">…casillas…</fieldset>`
 - `.chips` + `.chip`, y `.selector` (con `.boton--secundario` dentro); lo elegido lleva `aria-pressed="true"`. Ej.: `<button type="button" class="chip" aria-pressed="true">Emergentes</button>`
-- `.etiqueta`, `.etiqueta--acento`, `.etiqueta--reconocimiento`, `.etiqueta--borde`. Ej.: `<span class="etiqueta etiqueta--reconocimiento">Fan fundador</span>`
+- `.etiquetas` (grupo en fila). `.etiqueta`, `.etiqueta--acento`, `.etiqueta--reconocimiento`, `.etiqueta--borde`. Ej.: `<span class="etiqueta etiqueta--reconocimiento">Fan fundador</span>`
 - `.avatar`, `.avatar--pequeno`, `.avatar--grande`, `.avatar--acento`. Ej.: `<span class="avatar"><img src="assets/mara-sol.jpg" alt=""></span>`
 - `.selector-foto` (`__entrada`, `__titulo`, `__texto`) con un `.avatar--grande` adentro: foto de perfil opcional. Ej.: `<label class="selector-foto"><input class="selector-foto__entrada" type="file" accept="image/*"><span class="avatar avatar--grande">iniciales o img</span><span><span class="selector-foto__titulo">Foto de perfil</span><span class="selector-foto__texto">Puedes añadirla después.</span></span></label>`
 - `.portada`, `.portada--pequena`, `.portada--mediana`. Ej.: `<img class="portada portada--mediana" src="assets/portada-segundo-sol.jpg" alt="Portada de Segundo sol">`

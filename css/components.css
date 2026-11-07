@@ -340,6 +340,11 @@ button, input, textarea { font: inherit; color: inherit; }
   box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave);
 }
 .tarjeta + .tarjeta { margin-top: var(--espacio-3); }
+/* Cabecera: foto a la izquierda y nombre con detalle a la derecha.
+   Los textos largos (como un @usuario) se parten en vez de salirse. */
+.tarjeta__cabecera { display: flex; align-items: center; gap: var(--espacio-3); }
+.tarjeta__cabecera > :last-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.tarjeta__cabecera + .etiquetas { margin-top: var(--espacio-3); }
 .tarjeta__titulo {
   font-family: var(--fuente-titulos);
   font-weight: var(--peso-fuerte);
@@ -660,6 +665,8 @@ button, input, textarea { font: inherit; color: inherit; }
 .chip:disabled { color: var(--color-texto-suave); cursor: not-allowed; }
 
 /* ---------- Etiqueta (insignia de estado) ---------- */
+/* Grupo de etiquetas: en fila, pasan a la línea siguiente si no caben. */
+.etiquetas { display: flex; flex-wrap: wrap; gap: var(--espacio-2); }
 .etiqueta {
   display: inline-flex;
   align-items: center;

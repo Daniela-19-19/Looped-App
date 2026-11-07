@@ -337,7 +337,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que el artista confirme que su espacio está listo y sepa qué hacer después. Sabemos que funciona si entra a su panel.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
-  - Muestra «Tu espacio está listo.» con su nombre, y los botones «Ir a mi panel», «Escuchar» y «Ver mi recorrido».
+  - Muestra «Tu espacio está listo.» con su nombre y el botón «Ir a mi panel». (Decisión del equipo del 07-11-2026: «Escuchar» y «Ver mi recorrido» no van, como en el diseño; el artista nuevo aún no tiene música y el recorrido es del fan.)
   - «Ir a mi panel» lleva al panel del artista.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 

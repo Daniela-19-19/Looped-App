@@ -65,6 +65,8 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Selector de foto** (`.selector-foto`): avatar de 64 px con «Foto de perfil» al lado; toda la fila abre la galería. Al pasar el mouse, el círculo toma el borde del color del rol.
 - **Contador de caracteres** (`.campo__contador`): «0/160» en 12 px, gris y a la derecha, debajo del área de texto.
 - **Grupo de casillas** (`.casillas`): un `<fieldset>` sin borde; una columna, o dos con `.casillas--dos-columnas` (géneros).
+- **Cabecera de tarjeta** (`.tarjeta__cabecera`): foto a la izquierda y nombre con detalle a la derecha; los textos largos se parten.
+- **Grupo de etiquetas** (`.etiquetas`): etiquetas en fila con 8 px entre ellas; pasan a la línea siguiente si no caben.
 - **Fuera del kit por ahora:** reproductor y minirreproductor. Se agregan cuando se construyan esas pantallas.
 
 ## Historial de cambios
@@ -80,3 +82,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Selector de foto (`.selector-foto`) | Construcción de identidad del artista (A05r) y perfil básico del fan (A05f) |
 | 2026-11-07 | Contador de caracteres (`.campo__contador`) | Construcción de presentación (A06r); también lo usará escribir pregunta (F05e) |
 | 2026-11-07 | Grupo de casillas (`.casillas`, `.casillas--dos-columnas`) | Construcción de estilo musical (A07r) y gustos musicales (A06f) |
+| 2026-11-07 | Cabecera de tarjeta (`.tarjeta__cabecera`) y grupo de etiquetas (`.etiquetas`) | Construcción de perfil listo del artista (A09r) y del fan (A08f) |

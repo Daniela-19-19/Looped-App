@@ -495,6 +495,109 @@ function pantallaInteresesFan() {
   });
 }
 
+// ---------- Fin del registro ----------
+// Arma el perfil con los campos de spec.md («Datos»): artistas o fans.
+function perfilDelRegistro(registro) {
+  const comun = {
+    id: `${registro.rol}-${Date.now()}`,
+    nombreUsuario: registro.nombreUsuario,
+    correo: registro.correo,
+    foto: registro.foto || null
+  };
+  if (registro.rol === 'artista') {
+    return Object.assign(comun, {
+      nombreArtistico: registro.nombreArtistico,
+      presentacion: registro.presentacion || '',
+      ciudad: registro.ciudad || '',
+      generos: registro.generos || [],
+      roles: registro.roles || [],
+      seguidores: 0,
+      emergente: true
+    });
+  }
+  return Object.assign(comun, {
+    nombrePerfil: registro.nombrePerfil,
+    gustosMusicales: registro.gustosMusicales || [],
+    intereses: registro.intereses || [],
+    minutosEscucha: 0,
+    artistasQueSigue: [],
+    fanClubs: [],
+    fanFundadorDe: [],
+    fechaRegistro: new Date().toISOString().slice(0, 10)
+  });
+}
+
+// SIMULADO: crea la cuenta guardando el perfil en este navegador.
+// Con Supabase, aquí se crea la cuenta de verdad (la contraseña la
+// maneja Supabase; nunca se guarda en el código ni en el navegador).
+function crearCuentaSimulada(registro) {
+  const perfil = perfilDelRegistro(registro);
+  try { localStorage.setItem('looped-perfil', JSON.stringify(perfil)); } catch (e) { /* sin almacenamiento */ }
+  guardarSesion({ rol: registro.rol, id: perfil.id });
+  try { sessionStorage.removeItem('looped-registro'); } catch (e) { /* sin almacenamiento */ }
+  return perfil;
+}
+
+// Pasos «perfil listo» (A09r artista y A08f fan): resumen y entrada a su lado.
+function pasoPerfilListo({ rol, pasoAnterior, campoNombre, campoGeneros, etiquetaRol, destino }) {
+  // Solo se llega aquí al terminar los pasos del registro.
+  const registro = leerRegistro();
+  if (registro.rol !== rol || !registro[pasoAnterior] || !registro[campoNombre]) {
+    location.replace('elegir-experiencia.html');
+    return;
+  }
+
+  // Resumen: foto, nombre, @usuario (y ciudad) y etiquetas.
+  const nombre = registro[campoNombre];
+  pintarAvatar(document.querySelector('[data-resumen-avatar]'), registro.foto, nombre);
+  document.querySelector('[data-resumen-nombre]').textContent = nombre;
+  document.querySelector('[data-resumen-detalle]').textContent =
+    '@' + registro.nombreUsuario + (registro.ciudad ? ' · ' + registro.ciudad : '');
+
+  const generos = obtenerDatos('generos');
+  const nombresGeneros = (registro[campoGeneros] || [])
+    .map(id => (generos.find(g => g.id === id) || {}).nombre)
+    .filter(Boolean)
+    .slice(0, 3);
+  const etiquetas = [etiquetaRol, ...nombresGeneros].map((texto, i) => {
+    const etiqueta = document.createElement('span');
+    etiqueta.className = i === 0 ? 'etiqueta etiqueta--acento' : 'etiqueta';
+    etiqueta.textContent = texto;
+    return etiqueta;
+  });
+  document.querySelector('[data-resumen-etiquetas]').replaceChildren(...etiquetas);
+
+  // Al entrar, la cuenta queda creada. replace: «atrás» no vuelve al registro.
+  document.querySelector('[data-entrar]').addEventListener('click', () => {
+    crearCuentaSimulada(registro);
+    location.replace(destino);
+  });
+}
+
+// ---------- A09r · Perfil del artista listo ----------
+function pantallaPerfilListoArtista() {
+  pasoPerfilListo({
+    rol: 'artista',
+    pasoAnterior: 'roles',
+    campoNombre: 'nombreArtistico',
+    campoGeneros: 'generos',
+    etiquetaRol: 'Perfil artista',
+    destino: 'panel-artista.html'
+  });
+}
+
+// ---------- A08f · Perfil del fan listo ----------
+function pantallaPerfilListoFan() {
+  pasoPerfilListo({
+    rol: 'fan',
+    pasoAnterior: 'intereses',
+    campoNombre: 'nombrePerfil',
+    campoGeneros: 'gustosMusicales',
+    etiquetaRol: 'Perfil fan',
+    destino: 'inicio-fan.html'
+  });
+}
+
 // ---------- Arranque ----------
 const PANTALLAS = {
   'index': pantallaIndex,
@@ -507,7 +610,9 @@ const PANTALLAS = {
   'estilo-musical-artista': pantallaEstiloMusicalArtista,
   'gustos-fan': pantallaGustosFan,
   'proyecto-musical-artista': pantallaProyectoMusicalArtista,
-  'intereses-fan': pantallaInteresesFan
+  'intereses-fan': pantallaInteresesFan,
+  'perfil-listo-artista': pantallaPerfilListoArtista,
+  'perfil-listo-fan': pantallaPerfilListoFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {

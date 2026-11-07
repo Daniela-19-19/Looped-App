@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Tu espacio está listo</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="perfil-listo-artista">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-perfil" viewBox="0 0 24 24"><circle cx="12" cy="7.8" r="4" fill="currentColor"/><path fill="currentColor" d="M4.6 19c0-3.5 3.3-6 7.4-6s7.4 2.5 7.4 6c0 1-.8 1.8-1.8 1.8H6.4c-1 0-1.8-.8-1.8-1.8z"/></symbol>
+  </defs>
+</svg>
+
+<!-- A09r · Tu espacio está listo -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="proyecto-musical-artista.html" aria-label="Volver">
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span></span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">Tu espacio está listo.</h1>
+      <p class="encabezado-pagina__bajada">Ya puedes compartir música y gestionar tu comunidad.</p>
+    </div>
+
+    <!-- Resumen del perfil: lo llena js/app.js con lo que se escribió en el registro -->
+    <section class="tarjeta" aria-label="Tu perfil">
+      <div class="tarjeta__cabecera">
+        <span class="avatar" data-resumen-avatar></span>
+        <div>
+          <h2 class="tarjeta__titulo" data-resumen-nombre></h2>
+          <p class="texto--pequeno texto--suave" data-resumen-detalle></p>
+        </div>
+      </div>
+      <div class="etiquetas" data-resumen-etiquetas></div>
+    </section>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="button" class="boton boton--bloque" data-entrar>Ir a mi panel</button>
+  </footer>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>
