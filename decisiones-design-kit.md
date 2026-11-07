@@ -96,3 +96,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Panel del artista: solo «Mi música» relleno, los otros tres con borde | Pedido del equipo |
 | 2026-11-07 | Menú desplegable, ícono `filtro` y ✕ del buscador | Construcción de explorar (F01b) |
 | 2026-11-07 | Panel del artista: los cuatro botones con borde, morados solo al pasar, tocar o enfocar; `.boton--rellenar` también se rellena al presionar | Pedido del equipo |
+| 2026-11-07 | Íconos `audio` e `imagen` | Construcción de publicar lanzamiento (R03) |

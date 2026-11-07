@@ -174,3 +174,24 @@
 .musica__publicar { max-width: var(--ancho-pantalla); }
 .musica__lista { margin-top: var(--espacio-6); }
 .musica__etiquetas { margin-top: var(--espacio-2); }
+
+/* ---------- Avisos flotantes (toast) ---------- */
+/* Aparecen arriba, centrados, y se van solos. */
+.pantalla__avisos {
+  position: fixed;
+  z-index: 30;
+  top: calc(var(--espacio-4) + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: var(--espacio-2);
+  width: calc(100% - var(--espacio-6) * 2);
+  max-width: var(--ancho-pantalla);
+  margin-inline: auto;
+  pointer-events: none;
+}
+
+/* ---------- R03 · Publicar lanzamiento ---------- */
+.publicar__archivo { margin-top: var(--espacio-4); }
+.publicar__enviar { margin-top: var(--espacio-6); }
+.publicar__archivo [hidden] { display: none; }

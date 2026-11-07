@@ -5,11 +5,51 @@
    ========================================================== */
 
 // ---------- Datos ----------
-// Única puerta a los datos. Hoy lee js/data.js; el día que
-// conectemos Supabase, solo cambia esta función.
+// Única puerta a los datos. Hoy lee js/data.js (más lo publicado en este
+// navegador); el día que conectemos Supabase, solo cambia esta función.
 function obtenerDatos(tipo) {
-  if (typeof DATOS === 'undefined') return [];
-  return DATOS[tipo] || [];
+  const deEjemplo = typeof DATOS === 'undefined' ? [] : (DATOS[tipo] || []);
+  if (tipo === 'lanzamientos') return deEjemplo.concat(leerLanzamientosPropios());
+  return deEjemplo;
+}
+
+// ---------- Lo publicado en este navegador (SIMULADO) ----------
+// Mientras no esté Supabase, los lanzamientos que publica un artista se
+// guardan en este navegador: los datos en localStorage y el audio (que
+// puede pesar varios MB) en IndexedDB, una base de datos del navegador.
+function leerLanzamientosPropios() {
+  try { return JSON.parse(localStorage.getItem('looped-lanzamientos')) || []; } catch (e) { return []; }
+}
+function guardarLanzamientoPropio(lanzamiento) {
+  const lista = leerLanzamientosPropios();
+  lista.push(lanzamiento);
+  localStorage.setItem('looped-lanzamientos', JSON.stringify(lista)); // puede fallar si no hay espacio
+}
+
+function abrirAlmacenArchivos() {
+  return new Promise((resolver, rechazar) => {
+    const pedido = indexedDB.open('looped-archivos', 1);
+    pedido.onupgradeneeded = () => pedido.result.createObjectStore('archivos');
+    pedido.onsuccess = () => resolver(pedido.result);
+    pedido.onerror = () => rechazar(pedido.error);
+  });
+}
+async function guardarArchivo(clave, archivo) {
+  const almacen = await abrirAlmacenArchivos();
+  return new Promise((resolver, rechazar) => {
+    const transaccion = almacen.transaction('archivos', 'readwrite');
+    transaccion.objectStore('archivos').put(archivo, clave);
+    transaccion.oncomplete = () => resolver();
+    transaccion.onerror = () => rechazar(transaccion.error);
+  });
+}
+async function leerArchivo(clave) {
+  const almacen = await abrirAlmacenArchivos();
+  return new Promise((resolver, rechazar) => {
+    const pedido = almacen.transaction('archivos').objectStore('archivos').get(clave);
+    pedido.onsuccess = () => resolver(pedido.result || null);
+    pedido.onerror = () => rechazar(pedido.error);
+  });
 }
 
 // ---------- Sesión ----------
@@ -59,6 +99,7 @@ function mostrarError(nombreCampo, mensaje) {
   campo.classList.toggle('campo--error', Boolean(mensaje));
   campo.querySelector('.campo__mensaje-error').textContent = mensaje;
   const control = campo.querySelector('.campo__control, .area-texto');
+  if (!control) return; // p. ej. la tarjeta de audio: no tiene campo de texto
   if (mensaje) control.setAttribute('aria-invalid', 'true');
   else control.removeAttribute('aria-invalid');
 }
@@ -617,9 +658,40 @@ function pantallaPerfilListoFan() {
 
 // ---------- Utilidades compartidas ----------
 // Desde pages/ las rutas de data.js (desde la raíz) necesitan «../».
+// Las imágenes guardadas como texto (data:) se usan tal cual, y los
+// archivos guardados en IndexedDB («local:…») se leen aparte.
 const RAIZ = location.pathname.includes('/pages/') ? '../' : '';
 function rutaRecurso(ruta) {
-  return ruta ? RAIZ + ruta : null;
+  if (!ruta || ruta.startsWith('local:')) return null;
+  if (/^(data:|blob:|https?:)/.test(ruta)) return ruta;
+  return RAIZ + ruta;
+}
+
+// Dirección para reproducir un audio: los de IndexedDB se leen primero.
+async function urlDeAudio(ruta) {
+  if (ruta && ruta.startsWith('local:')) {
+    const archivo = await leerArchivo(ruta.slice('local:'.length));
+    return archivo ? URL.createObjectURL(archivo) : null;
+  }
+  return rutaRecurso(ruta);
+}
+
+// Aviso flotante (toast) arriba de la pantalla, que se va solo.
+function mostrarAviso(texto) {
+  const caja = document.querySelector('[data-avisos]');
+  if (!caja) return;
+  const aviso = document.createElement('div');
+  aviso.className = 'toast';
+  aviso.setAttribute('role', 'status');
+  aviso.innerHTML = `<p class="toast__texto">${escapar(texto)}</p>`;
+  caja.append(aviso);
+  setTimeout(() => aviso.remove(), 4000);
+}
+
+// Duración en minutos y segundos: 204 → «3:24».
+function formatoDuracion(segundos) {
+  const total = Math.round(segundos);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
 // Para poner textos de los datos dentro de HTML sin riesgo.
@@ -866,13 +938,15 @@ function actualizarBotonesReproducir() {
   });
 }
 
-function alternarReproduccion(lanzamiento) {
+async function alternarReproduccion(lanzamiento) {
   if (reproduccion.id === lanzamiento.id && reproduccion.audio) {
     if (reproduccion.audio.paused) reproduccion.audio.play();
     else reproduccion.audio.pause();
   } else {
     if (reproduccion.audio) reproduccion.audio.pause();
-    reproduccion.audio = new Audio(rutaRecurso(lanzamiento.audio));
+    const url = await urlDeAudio(lanzamiento.audio);
+    if (!url) return; // el audio no está en este navegador
+    reproduccion.audio = new Audio(url);
     reproduccion.id = lanzamiento.id;
     ['play', 'pause', 'ended'].forEach(evento => reproduccion.audio.addEventListener(evento, actualizarBotonesReproducir));
     reproduccion.audio.play();
@@ -1158,6 +1232,158 @@ function pantallaMusicaArtista() {
   }).join('');
 }
 
+// ---------- R03 · Publicar lanzamiento ----------
+// Lee la duración de un audio (en segundos). Rechaza si no se puede leer.
+function leerDuracion(url) {
+  return new Promise((resolver, rechazar) => {
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => resolver(audio.duration);
+    audio.onerror = () => rechazar(new Error('audio'));
+    audio.src = url;
+  });
+}
+
+const MAXIMO_AUDIO = 25 * 1024 * 1024; // 25 MB
+const AUDIO_DE_MUESTRA = 'assets/audio-muestra.mp3';
+
+function pantallaPublicarLanzamiento() {
+  // Sin sesión de artista, a iniciar sesión.
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+
+  const formulario = document.getElementById('formulario-lanzamiento');
+  const nombreLanzamiento = document.getElementById('nombre-lanzamiento');
+  const nombreCancion = document.getElementById('nombre-cancion');
+  const entradaAudio = document.querySelector('[data-entrada-audio]');
+  const entradaPortada = document.querySelector('[data-entrada-portada]');
+  const botonEscuchar = document.querySelector('[data-escuchar-audio]');
+  const botonMuestra = document.querySelector('[data-audio-muestra]');
+  const botonPublicar = document.querySelector('[data-publicar]');
+
+  // Lo elegido hasta ahora. audio: un archivo (File) o la ruta del de muestra.
+  const borrador = { audio: null, nombreAudio: '', duracion: 0, urlAudio: null, portada: null };
+  let escucha = null; // el audio que suena al tocar «Escuchar»
+
+  function pararEscucha() {
+    if (escucha) escucha.pause();
+    escucha = null;
+    botonEscuchar.textContent = 'Escuchar';
+  }
+
+  function pintarAudio() {
+    const hay = Boolean(borrador.audio);
+    document.querySelector('[data-titulo-audio]').textContent = hay ? 'Audio seleccionado' : 'Audio';
+    document.querySelector('[data-detalle-audio]').textContent = hay
+      ? `${borrador.nombreAudio}${borrador.duracion ? ' · ' + formatoDuracion(borrador.duracion) : ''}`
+      : 'MP3, M4A, WAV u OGG. Hasta 25 MB.';
+    document.querySelector('[data-elegir-audio]').textContent = hay ? 'Cambiar audio' : 'Seleccionar audio';
+    botonEscuchar.hidden = !hay;
+    botonMuestra.hidden = hay;
+  }
+
+  async function usarAudio(audio, nombre, url) {
+    try {
+      const duracion = await leerDuracion(url);
+      pararEscucha();
+      if (borrador.urlAudio && borrador.urlAudio.startsWith('blob:')) URL.revokeObjectURL(borrador.urlAudio);
+      Object.assign(borrador, { audio, nombreAudio: nombre, duracion, urlAudio: url });
+      mostrarError('audio', '');
+      pintarAudio();
+    } catch (e) {
+      mostrarAviso('No pudimos leer ese audio. Prueba con MP3 o M4A.');
+    }
+  }
+
+  // Seleccionar o cambiar el audio
+  document.querySelector('[data-elegir-audio]').addEventListener('click', () => entradaAudio.click());
+  entradaAudio.addEventListener('change', () => {
+    const archivo = entradaAudio.files[0];
+    entradaAudio.value = '';
+    if (!archivo) return;
+    if (archivo.size > MAXIMO_AUDIO) {
+      mostrarAviso('El audio supera 25 MB. Elige un archivo más liviano.');
+      return;
+    }
+    usarAudio(archivo, archivo.name, URL.createObjectURL(archivo));
+  });
+  // Audio de muestra (decisión 10 de spec.md)
+  botonMuestra.addEventListener('click', () => usarAudio(AUDIO_DE_MUESTRA, 'Muestra instrumental', rutaRecurso(AUDIO_DE_MUESTRA)));
+  // Escuchar antes de publicar
+  botonEscuchar.addEventListener('click', () => {
+    if (escucha) { pararEscucha(); return; }
+    escucha = new Audio(borrador.urlAudio);
+    escucha.addEventListener('ended', pararEscucha);
+    escucha.play();
+    botonEscuchar.textContent = 'Pausar';
+  });
+
+  // Portada (opcional): se achica a 800 px y se muestra en miniatura.
+  document.querySelector('[data-elegir-portada]').addEventListener('click', () => entradaPortada.click());
+  entradaPortada.addEventListener('change', async () => {
+    const archivo = entradaPortada.files[0];
+    entradaPortada.value = '';
+    if (!archivo) return;
+    try {
+      borrador.portada = await reducirImagen(archivo, 800);
+      document.querySelector('[data-miniatura-portada]').innerHTML =
+        `<img class="portada portada--pequena" src="${borrador.portada}" alt="Portada elegida">`;
+      document.querySelector('[data-detalle-portada]').textContent = 'Portada seleccionada';
+      document.querySelector('[data-elegir-portada]').textContent = 'Cambiar portada';
+    } catch (e) {
+      mostrarAviso('No pudimos usar esa imagen. Prueba con otra.');
+    }
+  });
+
+  nombreLanzamiento.addEventListener('input', () => mostrarError('nombre-lanzamiento', ''));
+  nombreCancion.addEventListener('input', () => mostrarError('nombre-cancion', ''));
+
+  formulario.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    const titulo = nombreLanzamiento.value.trim();
+    const cancion = nombreCancion.value.trim();
+    if (!titulo) mostrarError('nombre-lanzamiento', 'Escribe el nombre del lanzamiento.');
+    if (!cancion) mostrarError('nombre-cancion', 'Escribe el nombre de la canción.');
+    if (!borrador.audio) mostrarError('audio', 'Elige el audio o usa el de muestra.');
+    if (!titulo || !cancion || !borrador.audio) {
+      const primero = formulario.querySelector('[aria-invalid="true"]');
+      if (primero) primero.focus();
+      return;
+    }
+
+    // SIMULADO: con Supabase, aquí se suben el audio y la portada y se
+    // guarda el lanzamiento. Ahora queda guardado en este navegador.
+    botonPublicar.disabled = true;
+    pararEscucha();
+    const id = `lanzamiento-${Date.now()}`;
+    try {
+      let audio = borrador.audio;
+      if (typeof audio !== 'string') {
+        await guardarArchivo(`audio-${id}`, audio);
+        audio = `local:audio-${id}`;
+      }
+      guardarLanzamientoPropio({
+        id,
+        artista: artista.id,
+        nombreLanzamiento: titulo,
+        nombreCancion: cancion,
+        portada: borrador.portada,
+        audio,
+        fechaPublicacion: new Date().toISOString()
+      });
+      location.href = `lanzamiento-artista.html?id=${encodeURIComponent(id)}&nuevo=1`;
+    } catch (e) {
+      botonPublicar.disabled = false;
+      mostrarAviso('No se pudo guardar el lanzamiento en este navegador. Prueba con un audio más liviano.');
+    }
+  });
+
+  pintarAudio();
+}
+
 // ---------- F01b · Explorar ----------
 // Para buscar sin importar tildes ni mayúsculas: «Río» → «rio».
 function normalizar(texto) {
@@ -1329,7 +1555,8 @@ const PANTALLAS = {
   'panel-artista': pantallaPanelArtista,
   'inicio-fan': pantallaInicioFan,
   'explorar-fan': pantallaExplorarFan,
-  'musica-artista': pantallaMusicaArtista
+  'musica-artista': pantallaMusicaArtista,
+  'publicar-lanzamiento-artista': pantallaPublicarLanzamiento
 };
 
 document.addEventListener('DOMContentLoaded', () => {
