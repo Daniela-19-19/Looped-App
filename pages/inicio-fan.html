@@ -32,7 +32,7 @@
 
   <div class="pantalla__contenido">
     <header class="barra-marca">
-      <span>
+      <span class="barra-marca__logo">
         <img class="logo logo--blanco" src="../assets/logo-firma-blanco.svg" alt="Looped">
         <img class="logo logo--negro" src="../assets/logo-firma-negro.svg" alt="Looped">
       </span>
@@ -54,6 +54,7 @@
         </nav>
       </div>
 
+      <div class="inicio__fila">
       <section class="inicio__seccion" aria-labelledby="titulo-destacado" data-seccion-destacado>
         <div class="encabezado-seccion">
           <h2 class="encabezado-seccion__titulo" id="titulo-destacado" data-titulo-destacado>En sus primeras 48 h</h2>
@@ -69,13 +70,14 @@
         </div>
         <div data-conexion></div>
       </section>
+      </div>
 
       <section class="inicio__seccion" aria-labelledby="titulo-tus-preguntas">
         <div class="encabezado-seccion">
           <h2 class="encabezado-seccion__titulo" id="titulo-tus-preguntas">Tus preguntas</h2>
           <a class="enlace" href="perfil-fan.html" data-ver-todas-preguntas>Ver todas</a>
         </div>
-        <div data-tus-preguntas></div>
+        <div class="rejilla-tarjetas rejilla-tarjetas--dos" data-tus-preguntas></div>
       </section>
 
       <section class="inicio__seccion" aria-labelledby="titulo-explora">
@@ -91,9 +93,10 @@
         <div class="encabezado-seccion">
           <h2 class="encabezado-seccion__titulo" id="titulo-artistas">Artistas</h2>
         </div>
-        <div aria-live="polite" data-lista-artistas></div>
+        <div class="rejilla-tarjetas" aria-live="polite" data-lista-artistas></div>
       </section>
 
+      <div class="inicio__fila">
       <section class="inicio__seccion" aria-labelledby="titulo-canciones">
         <div class="encabezado-seccion">
           <h2 class="encabezado-seccion__titulo" id="titulo-canciones">Canciones</h2>
@@ -107,10 +110,15 @@
         </div>
         <div data-recorrido></div>
       </section>
+      </div>
     </main>
   </div>
 
-  <nav class="navegacion pantalla__navegacion" aria-label="Navegación principal">
+  <nav class="navegacion navegacion--adaptable pantalla__navegacion" aria-label="Navegación principal">
+    <a class="navegacion__marca" href="inicio-fan.html" aria-label="Looped, ir al inicio">
+      <img class="logo logo--blanco" src="../assets/logo-firma-blanco.svg" alt="">
+      <img class="logo logo--negro" src="../assets/logo-firma-negro.svg" alt="">
+    </a>
     <a class="navegacion__pestana" href="inicio-fan.html" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-inicio"></use></svg><span>Inicio</span></a>
     <a class="navegacion__pestana" href="explorar-fan.html"><svg class="icono" aria-hidden="true"><use href="#icono-explorar"></use></svg><span>Explorar</span></a>
     <a class="navegacion__pestana" href="comunidad-fan.html"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>

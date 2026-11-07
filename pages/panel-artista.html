@@ -32,7 +32,7 @@
 
   <div class="pantalla__contenido">
     <header class="barra-marca">
-      <span>
+      <span class="barra-marca__logo">
         <img class="logo logo--blanco" src="../assets/logo-firma-blanco.svg" alt="Looped">
         <img class="logo logo--negro" src="../assets/logo-firma-negro.svg" alt="Looped">
       </span>
@@ -57,6 +57,7 @@
         <a class="boton" href="cupos-artista.html">Disponibilidad</a>
       </nav>
 
+      <div class="panel__fila">
       <section class="panel__seccion" aria-labelledby="titulo-lanzamiento">
         <div class="encabezado-seccion">
           <h2 class="encabezado-seccion__titulo" id="titulo-lanzamiento">Tu último lanzamiento</h2>
@@ -71,18 +72,23 @@
         </div>
         <div data-disponibilidad></div>
       </section>
+      </div>
 
       <section class="panel__seccion" aria-labelledby="titulo-preguntas">
         <div class="encabezado-seccion">
           <h2 class="encabezado-seccion__titulo" id="titulo-preguntas">Preguntas</h2>
           <a class="enlace" href="bandeja-artista.html" data-ver-todas-preguntas>Ver todas</a>
         </div>
-        <div data-preguntas-nuevas></div>
+        <div class="rejilla-tarjetas rejilla-tarjetas--dos" data-preguntas-nuevas></div>
       </section>
     </main>
   </div>
 
-  <nav class="navegacion pantalla__navegacion" aria-label="Navegación principal">
+  <nav class="navegacion navegacion--adaptable pantalla__navegacion" aria-label="Navegación principal">
+    <a class="navegacion__marca" href="panel-artista.html" aria-label="Looped, ir al inicio">
+      <img class="logo logo--blanco" src="../assets/logo-firma-blanco.svg" alt="">
+      <img class="logo logo--negro" src="../assets/logo-firma-negro.svg" alt="">
+    </a>
     <a class="navegacion__pestana" href="panel-artista.html" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg><span>Música</span></a>
     <a class="navegacion__pestana" href="bandeja-artista.html" data-pestana-preguntas><svg class="icono" aria-hidden="true"><use href="#icono-preguntas"></use></svg><span>Preguntas</span></a>
     <a class="navegacion__pestana" href="comunidad-artista.html"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>

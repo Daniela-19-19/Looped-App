@@ -2,6 +2,8 @@
    Looped · Estilos de las pantallas
    Acomoda los componentes en cada pantalla. Usa solo variables
    de tokens.css y componentes de components.css.
+   Tamaños: celular (menos de 768 px), tablet (768 px o más) y
+   computador (1024 px o más).
    ========================================================== */
 
 /* ---------- Pantalla (contenedor común) ---------- */
@@ -66,6 +68,13 @@
 /* Nota al final de un formulario (p. ej. «Podrás cambiar estos datos…»). */
 .pantalla__nota { margin-top: var(--espacio-4); }
 
+/* Formularios (entrada y registro) en tablet y computador: siguen en una
+   columna angosta, pero centrada también a lo alto, con el pie justo debajo. */
+@media (min-width: 768px) {
+  .pantalla:has(> .barra-superior):not(.pantalla--con-navegacion) { justify-content: center; }
+  .pantalla__pie { margin-top: 0; }
+}
+
 /* ---------- Pantallas con navegación inferior ---------- */
 /* La navegación flota abajo, con el mismo ancho que el contenido. */
 .pantalla__navegacion {
@@ -82,6 +91,32 @@
 .pantalla--con-navegacion .pantalla__contenido {
   padding-bottom: calc(var(--alto-control) + var(--espacio-2) * 2 + var(--espacio-8) + env(safe-area-inset-bottom));
 }
+/* Tablet: el contenido se ensancha. */
+@media (min-width: 768px) {
+  .pantalla--con-navegacion .pantalla__contenido {
+    max-width: calc(var(--ancho-pantalla-media) + var(--espacio-6) * 2);
+  }
+}
+/* Computador: la navegación pasa a ser una barra lateral fija a la izquierda
+   y el contenido usa el ancho amplio a su derecha. */
+@media (min-width: 1024px) {
+  .pantalla--con-navegacion { padding-left: var(--ancho-barra-lateral); }
+  .pantalla__navegacion {
+    top: var(--espacio-4);
+    bottom: var(--espacio-4);
+    left: var(--espacio-4);
+    right: auto;
+    width: calc(var(--ancho-barra-lateral) - var(--espacio-4) * 2);
+    max-width: none;
+    margin: 0;
+  }
+  .pantalla--con-navegacion .pantalla__contenido {
+    max-width: calc(var(--ancho-pantalla-amplia) + var(--espacio-8) * 2);
+    padding: var(--espacio-6) var(--espacio-8) var(--espacio-8);
+  }
+  /* El logo ya está en la barra lateral. */
+  .pantalla--con-navegacion .barra-marca__logo { visibility: hidden; }
+}
 
 /* ---------- R01 · Panel del artista ---------- */
 .panel__accesos {
@@ -91,9 +126,28 @@
 }
 .panel__accesos .boton { padding-inline: var(--espacio-3); }
 .panel__seccion { margin-top: var(--espacio-8); }
+/* Tablet: los cuatro accesos en una fila. Computador: secciones lado a lado. */
+@media (min-width: 768px) {
+  .panel__accesos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .panel__fila {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espacio-6);
+  }
+}
 
 /* ---------- F01a · Inicio del fan ---------- */
 .inicio__atajos { margin-top: var(--espacio-3); }
 .inicio__seccion { margin-top: var(--espacio-8); }
 .inicio__seccion .chips + * { margin-top: var(--espacio-3); }
 .inicio__etiquetas { margin-top: var(--espacio-3); }
+/* Computador: dos secciones lado a lado (destacado y conexión; canciones y recorrido). */
+@media (min-width: 1024px) {
+  .inicio__fila {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espacio-6);
+  }
+}

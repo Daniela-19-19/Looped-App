@@ -24,6 +24,7 @@
     .cat-variante > .rotulo { display: block; margin-bottom: var(--espacio-2); color: var(--color-texto-suave); }
     .demo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-3); max-width: 440px; }
     .demo--columna { display: block; }
+    .demo--ancha { max-width: none; }
     .cat pre { margin: var(--espacio-3) 0 0; padding: var(--espacio-3) var(--espacio-4); overflow-x: auto; border-radius: var(--radio-md); background: var(--color-fondo-secundario); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); color: var(--color-texto-suave); font: var(--texto-xs)/var(--interlineado-xs) ui-monospace, Menlo, Consolas, monospace; }
     .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--espacio-3); }
     .muestra { overflow: hidden; border-radius: var(--radio-md); background: var(--color-superficie); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); }
@@ -333,6 +334,14 @@
             <svg class="icono texto--suave" aria-hidden="true"><use href="#icono-siguiente"></use></svg>
           </div>
         </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Rejilla · .rejilla-tarjetas (1 columna en celular, 2 desde 768 px, 3 desde 1024 px; con --dos, máximo 2)</span>
+        <div class="demo demo--columna demo--ancha">
+          <div class="rejilla-tarjetas">
+            <div class="tarjeta"><h3 class="tarjeta__titulo">Mara Sol</h3><p class="tarjeta__texto">Preguntas abiertas</p></div>
+            <div class="tarjeta"><h3 class="tarjeta__titulo">Río Lento</h3><p class="tarjeta__texto">Cupo cerrado</p></div>
+            <div class="tarjeta"><h3 class="tarjeta__titulo">Nadia Cruz</h3><p class="tarjeta__texto">Preguntas abiertas</p></div>
+          </div>
+        </div></div>
       <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con encabezado y votos · .tarjeta__encabezado + .votos (una pregunta)</span>
         <div class="demo demo--columna">
           <div class="tarjeta">
@@ -443,6 +452,19 @@
             <a class="navegacion__pestana" href="#" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-preguntas"></use></svg><span>Preguntas</span></a>
             <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
             <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-cupo"></use></svg><span>Cupo</span></a>
+          </nav>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Adaptable · .navegacion--adaptable + .navegacion__marca (abajo en celular y tablet; barra lateral con logo y nombres desde 1024 px: agranda la ventana para verla)</span>
+        <div class="demo demo--columna">
+          <nav class="navegacion navegacion--adaptable" aria-label="Navegación de ejemplo">
+            <a class="navegacion__marca" href="#" aria-label="Looped, ir al inicio">
+              <img class="logo logo--blanco" src="assets/logo-firma-blanco.svg" alt="">
+              <img class="logo logo--negro" src="assets/logo-firma-negro.svg" alt="">
+            </a>
+            <a class="navegacion__pestana" href="#" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-inicio"></use></svg><span>Inicio</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-explorar"></use></svg><span>Explorar</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg><span>Perfil</span></a>
           </nav>
         </div></div>
       <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con aviso · .navegacion__aviso (punto coral; el aria-label cuenta las novedades)</span>

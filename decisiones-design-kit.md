@@ -61,7 +61,8 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Logo mediano** (`.logo--medio`): 200 px, en la bienvenida.
 - **Atmósferas** (`.atmosfera`): violeta sin rol y para artista; turquesa y azul para fan; más suaves en claro. El violeta oscuro queda en una sola transparencia, `.35`. Variantes inferior (bienvenida), lateral (formularios, desde iniciar sesión) y centro (una sola mancha, en elegir experiencia) y superior (pantallas con barra de marca, desde el panel del artista). (11)
 - **Campo con botón** (`.campo__grupo` + `.campo__boton`): botón de ícono relleno dentro del campo, para mostrar u ocultar la contraseña. Usa los íconos `ver` y `ocultar`.
-- **Ancho de pantalla** (`--ancho-pantalla`): 440 px como máximo para el contenido en pantallas grandes.
+- **Ancho de pantalla** (`--ancho-pantalla`): 440 px como máximo para los formularios y para el contenido en celular.
+- **Responsive: barra lateral + rejillas** (decisión del equipo del 07-11-2026). Tablet desde 768 px: contenido hasta 720 px (`--ancho-pantalla-media`) y tarjetas en 2 columnas. Computador desde 1024 px: la navegación se vuelve barra lateral de 240 px (`--ancho-barra-lateral`, `.navegacion--adaptable`), contenido hasta 1200 px (`--ancho-pantalla-amplia`), tarjetas en 2 o 3 columnas (`.rejilla-tarjetas`) y títulos un paso más grandes (`--texto-3xl`, 40 px). Los formularios siguen angostos y se centran a lo alto.
 - **Selector de foto** (`.selector-foto`): avatar de 64 px con «Foto de perfil» al lado; toda la fila abre la galería. Al pasar el mouse, el círculo toma el borde del color del rol.
 - **Contador de caracteres** (`.campo__contador`): «0/160» en 12 px, gris y a la derecha, debajo del área de texto.
 - **Grupo de casillas** (`.casillas`): un `<fieldset>` sin borde; una columna, o dos con `.casillas--dos-columnas` (géneros).
@@ -90,3 +91,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Atmósfera superior, aviso en la navegación, encabezado de tarjeta, texto principal de tarjeta, votos e ícono `votos` | Construcción del panel del artista (R01) |
 | 2026-11-07 | Ícono `pausa`; `.chip` y `.tarjeta--tocable` como enlaces; `.tarjeta--fila > .tarjeta__info` | Construcción del inicio del fan (F01a) |
 | 2026-11-07 | Chips de 36 a 48 px de alto | Revisión responsive: área táctil mínima de 48 px |
+| 2026-11-07 | Responsive: tokens de ancho, títulos más grandes en computador, navegación adaptable (barra lateral) y rejilla de tarjetas | Pedido del equipo: la app debe aprovechar tablet y computador |

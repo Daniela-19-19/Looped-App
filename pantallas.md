@@ -13,8 +13,8 @@ Antes de marcar «Revisada vs spec», abran la pantalla en el navegador, presion
 
 - [ ] 320 px: nada se corta ni se monta.
 - [ ] 375 px: se ve igual al diseño.
-- [ ] 768 px: se adapta sin huecos raros.
-- [ ] 1280 px: columna centrada, nada estirado.
+- [ ] 768 px (tablet): contenido más ancho y tarjetas en 2 columnas, sin huecos raros.
+- [ ] 1024 y 1280 px (computador): barra lateral a la izquierda, rejillas de 2 o 3 columnas, nada estirado. Los formularios, angostos y centrados.
 - [ ] Arrastrar el borde de la ventana de angosta a ancha: nada salta ni se rompe.
 - [ ] Sin barra de desplazamiento horizontal.
 - [ ] Zoom al 200 %: todo se lee y se puede tocar.

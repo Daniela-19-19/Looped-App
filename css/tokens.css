@@ -61,6 +61,7 @@
   --texto-lg: 20px;   --interlineado-lg: 28px;   /* Nombres, subtítulos, títulos de sección */
   --texto-xl: 24px;   --interlineado-xl: 32px;   /* Títulos grandes de sección */
   --texto-2xl: 32px;  --interlineado-2xl: 40px;  /* Título principal de pantalla */
+  --texto-3xl: 40px;  --interlineado-3xl: 48px;  /* Título principal en computador */
 
   /* Tipografía: pesos (el «fuerte» de la marca es Medium, no negrita) */
   --peso-normal: 400;
@@ -95,7 +96,12 @@
   --ancho-logo: 144px;   /* Mínimo de la firma según el manual */
   --ancho-logo-medio: 200px;  /* Firma de la bienvenida */
   --ancho-logo-grande: 240px; /* Firma del splash */
-  --ancho-pantalla: 440px;    /* Ancho máximo del contenido en pantallas grandes */
+  --ancho-pantalla: 440px;    /* Ancho máximo de formularios y del contenido en celular */
+  /* Tamaños de pantalla (las media queries no aceptan variables, así que
+     los números van escritos allí): tablet desde 768 px, computador desde 1024 px. */
+  --ancho-pantalla-media: 720px;   /* Contenido en tablet */
+  --ancho-pantalla-amplia: 1200px; /* Contenido en computador */
+  --ancho-barra-lateral: 240px;    /* Navegación lateral en computador */
   --grosor-borde: 1px;
   --grosor-foco: 2px;
   --desenfoque-vidrio: 24px;

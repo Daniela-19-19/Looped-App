@@ -148,13 +148,17 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 
 ### Criterios para todas las pantallas (responsive)
 Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular y en computador sin que se rompa el diseño. Además de su propio «Está lista cuando», cada pantalla cumple:
-- Se ve bien en 320 px (celular pequeño), 375 px (celular), 768 px (tablet) y 1280 px (computador), y al arrastrar el borde de la ventana entre esos anchos.
+- Se ve bien en 320 px (celular pequeño), 375 px (celular), 768 px (tablet), 1024 px y 1280 px (computador), y al arrastrar el borde de la ventana entre esos anchos.
 - No aparece barra de desplazamiento horizontal.
 - Ningún texto se corta, se sale de su caja ni queda encima de otro elemento.
 - Los botones y enlaces miden al menos 48 px de alto y no quedan pegados entre sí.
 - Con zoom al 200 % todo se sigue leyendo y usando.
 - En celular, al abrir el teclado, el campo que se escribe y el botón principal se pueden alcanzar.
-- En computador, el contenido queda en una columna centrada de máximo 440 px (`--ancho-pantalla`); no se estira de lado a lado.
+- Se adapta a cada tamaño (decisión del equipo del 07-11-2026: «barra lateral + rejillas»):
+  - **Celular** (menos de 768 px): una columna, con la navegación abajo.
+  - **Tablet** (768 px o más): el contenido se ensancha (hasta 720 px) y las listas de tarjetas van en 2 columnas.
+  - **Computador** (1024 px o más): la navegación pasa a ser una barra lateral a la izquierda, el contenido usa hasta 1200 px, las listas van en 2 o 3 columnas, las secciones grandes quedan lado a lado y los títulos crecen.
+  - **Formularios** (entrada y registro): siempre en una columna angosta (440 px), centrada también a lo alto en pantallas grandes.
 - Funciona con mouse, con el dedo y con teclado (foco visible).
 
 ### A00 · Splash
