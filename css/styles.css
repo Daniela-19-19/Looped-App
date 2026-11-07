@@ -62,3 +62,6 @@
   margin-top: auto;
   padding: var(--espacio-3) var(--espacio-6) calc(var(--espacio-5) + env(safe-area-inset-bottom));
 }
+
+/* Nota al final de un formulario (p. ej. «Podrás cambiar estos datos…»). */
+.pantalla__nota { margin-top: var(--espacio-4); }

@@ -539,6 +539,16 @@ button, input, textarea { font: inherit; color: inherit; }
 .campo--error .area-texto { box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-error); }
 .campo--error .campo__mensaje-error { display: block; }
 
+/* Contador de caracteres (p. ej. «0/160»), debajo del control y a la derecha. */
+.campo__contador {
+  display: block;
+  margin-top: var(--espacio-2);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-xs);
+  line-height: var(--interlineado-xs);
+  text-align: right;
+}
+
 /* Campo con botón adentro (p. ej. mostrar u ocultar la contraseña).
    El grupo envuelve el control y el botón; el texto no queda debajo del botón. */
 .campo__grupo { position: relative; }

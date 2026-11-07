@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Tu presentación</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="presentacion-artista">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- A06r · Presentación -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="identidad-artista.html" aria-label="Volver">
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span></span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">Cuéntanos sobre ti.</h1>
+      <p class="encabezado-pagina__bajada">Una presentación breve para quienes te descubran.</p>
+    </div>
+
+    <form id="formulario-presentacion" novalidate>
+      <div class="campo" data-campo="presentacion">
+        <label class="campo__etiqueta" for="presentacion">Presentación</label>
+        <textarea class="area-texto" id="presentacion" name="presentacion" maxlength="160"
+          placeholder="Qué música haces y qué buscas" aria-describedby="contador-presentacion error-presentacion"></textarea>
+        <span class="campo__contador" id="contador-presentacion" data-contador>0/160</span>
+        <p class="campo__mensaje-error" id="error-presentacion" role="alert"></p>
+      </div>
+
+      <div class="campo" data-campo="ciudad">
+        <label class="campo__etiqueta" for="ciudad">Ciudad, opcional</label>
+        <input class="campo__control" id="ciudad" name="ciudad" type="text" maxlength="40"
+          placeholder="Tu ciudad" autocomplete="address-level2">
+      </div>
+    </form>
+
+    <p class="texto--pequeno texto--suave pantalla__nota">Podrás cambiar estos datos desde tu perfil.</p>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="submit" class="boton boton--bloque" form="formulario-presentacion">Continuar</button>
+  </footer>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

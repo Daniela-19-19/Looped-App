@@ -45,7 +45,7 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - `.aviso`, `.aviso--advertencia`. Ej.: `<div class="aviso">ícono<p>Mensaje</p></div>`
 - `.velo` + `.dialogo` (`__titulo`, `__texto`, `__acciones`). Ej.: `<div class="velo" hidden><div class="dialogo" role="dialog" aria-modal="true">…</div></div>`
 - `.navegacion` + `.navegacion__pestana` (la actual con `aria-current="page"`). Ej.: `<nav class="navegacion"><a class="navegacion__pestana" href="#" aria-current="page">ícono<span>Inicio</span></a>…</nav>`
-- `.campo` (`__etiqueta`, `__control`, `__ayuda`, `__mensaje-error`), `.campo--error`, `.area-texto`. Ej.: `<label class="campo"><span class="campo__etiqueta">Correo</span><input class="campo__control" type="email"></label>`
+- `.campo` (`__etiqueta`, `__control`, `__ayuda`, `__mensaje-error`, `__contador`), `.campo--error`, `.area-texto`. Ej.: `<label class="campo"><span class="campo__etiqueta">Correo</span><input class="campo__control" type="email"></label>`
 - Campo con botón adentro (mostrar la contraseña): `.campo__grupo` + `.campo__boton`. Ej.: `<div class="campo"><label class="campo__etiqueta" for="clave">Contraseña</label><div class="campo__grupo"><input class="campo__control" id="clave" type="password"><button type="button" class="boton-icono boton-icono--relleno campo__boton" aria-label="Mostrar contraseña">ícono</button></div></div>`
 - `.atmosfera` (manchas de fondo, primer hijo de `.pantalla`): `.atmosfera--inferior`, `.atmosfera--lateral`, `.atmosfera--centro`. Ej.: `<div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>`
 - `.buscador`. Ej.: `<label class="buscador">ícono<input type="search" aria-label="Buscar"></label>`

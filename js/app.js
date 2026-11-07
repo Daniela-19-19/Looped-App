@@ -43,7 +43,7 @@ function mostrarError(nombreCampo, mensaje) {
   if (!campo) return;
   campo.classList.toggle('campo--error', Boolean(mensaje));
   campo.querySelector('.campo__mensaje-error').textContent = mensaje;
-  const control = campo.querySelector('.campo__control');
+  const control = campo.querySelector('.campo__control, .area-texto');
   if (mensaje) control.setAttribute('aria-invalid', 'true');
   else control.removeAttribute('aria-invalid');
 }
@@ -357,6 +357,47 @@ function pantallaPerfilBasicoFan() {
   });
 }
 
+// Contador de caracteres: muestra «escritos/máximo» mientras se escribe.
+function activarContador(control, contador) {
+  const actualizar = () => { contador.textContent = `${control.value.length}/${control.maxLength}`; };
+  control.addEventListener('input', actualizar);
+  actualizar();
+}
+
+// ---------- A06r · Presentación ----------
+// SIMULADO: con Supabase, aquí se guardan la presentación y la ciudad.
+function pantallaPresentacionArtista() {
+  // Solo se llega aquí después de la identidad del artista.
+  const registro = leerRegistro();
+  if (registro.rol !== 'artista' || !registro.nombreArtistico) {
+    location.replace('elegir-experiencia.html');
+    return;
+  }
+
+  const formulario = document.getElementById('formulario-presentacion');
+  const presentacion = document.getElementById('presentacion');
+  const ciudad = document.getElementById('ciudad');
+
+  // Si vuelve a este paso, encuentra lo que ya había escrito.
+  presentacion.value = registro.presentacion || '';
+  ciudad.value = registro.ciudad || '';
+  activarContador(presentacion, document.querySelector('[data-contador]'));
+  presentacion.addEventListener('input', () => mostrarError('presentacion', ''));
+
+  formulario.addEventListener('submit', evento => {
+    evento.preventDefault();
+    const textoPresentacion = presentacion.value.trim();
+    if (!textoPresentacion) {
+      mostrarError('presentacion', 'Escribe una presentación breve.');
+      presentacion.focus();
+      return;
+    }
+    // La ciudad es opcional: puede quedar vacía.
+    guardarRegistro({ presentacion: textoPresentacion, ciudad: ciudad.value.trim() });
+    location.href = 'estilo-musical-artista.html';
+  });
+}
+
 // ---------- Arranque ----------
 const PANTALLAS = {
   'index': pantallaIndex,
@@ -364,7 +405,8 @@ const PANTALLAS = {
   'elegir-experiencia': pantallaElegirExperiencia,
   'crear-cuenta': pantallaCrearCuenta,
   'identidad-artista': pantallaIdentidadArtista,
-  'perfil-basico-fan': pantallaPerfilBasicoFan
+  'perfil-basico-fan': pantallaPerfilBasicoFan,
+  'presentacion-artista': pantallaPresentacionArtista
 };
 
 document.addEventListener('DOMContentLoaded', () => {

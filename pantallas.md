@@ -40,7 +40,7 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
 | A05r | Identidad del artista | `pages/identidad-artista.html` | ✅ | — | |
-| A06r | Presentación | `pages/presentacion-artista.html` | | | |
+| A06r | Presentación | `pages/presentacion-artista.html` | ✅ | — | |
 | A07r | Estilo musical | `pages/estilo-musical-artista.html` | | | |
 | A08r | Proyecto musical | `pages/proyecto-musical-artista.html` | | | |
 | A09r | Perfil del artista listo | `pages/perfil-listo-artista.html` | | | |
