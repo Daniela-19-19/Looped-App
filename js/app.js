@@ -1114,6 +1114,50 @@ function pantallaInicioFan() {
   activarBotonesReproducir(document.querySelector('main'));
 }
 
+// ---------- R02 · Música ----------
+function pantallaMusicaArtista() {
+  // Sin sesión de artista, a iniciar sesión.
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+
+  const lanzamientos = obtenerDatos('lanzamientos')
+    .filter(l => l.artista === artista.id)
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+  const lista = document.querySelector('[data-lista-lanzamientos]');
+
+  if (!lanzamientos.length) {
+    lista.innerHTML = `
+      <div class="tarjeta">
+        <h2 class="tarjeta__titulo">Aún no has publicado música.</h2>
+        <p class="tarjeta__texto">Cuando publiques un lanzamiento, aparecerá aquí y entrará a la ventana de 48 h de los fans.</p>
+      </div>`;
+    return;
+  }
+
+  lista.innerHTML = lanzamientos.map(l => {
+    const horas = horasRestantesVentana(l);
+    const estado = horas > 0 ? `Ventana activa · ${horas} h` : haceCuanto(l.fechaPublicacion);
+    return `
+      <article class="tarjeta">
+        <div class="tarjeta__cabecera">
+          ${htmlPortada(l, 'portada--mediana')}
+          <div>
+            <h2 class="tarjeta__titulo">${escapar(l.nombreLanzamiento)}</h2>
+            <p class="tarjeta__texto">${escapar(l.nombreCancion)}</p>
+            <div class="etiquetas musica__etiquetas"><span class="etiqueta etiqueta--borde">${escapar(estado)}</span></div>
+          </div>
+        </div>
+        <div class="tarjeta__acciones">
+          <a class="boton boton--secundario boton--bloque" href="lanzamiento-artista.html?id=${encodeURIComponent(l.id)}"
+            aria-label="Ver lanzamiento ${escapar(l.nombreLanzamiento)}">Ver lanzamiento</a>
+        </div>
+      </article>`;
+  }).join('');
+}
+
 // ---------- F01b · Explorar ----------
 // Para buscar sin importar tildes ni mayúsculas: «Río» → «rio».
 function normalizar(texto) {
@@ -1284,7 +1328,8 @@ const PANTALLAS = {
   'perfil-listo-fan': pantallaPerfilListoFan,
   'panel-artista': pantallaPanelArtista,
   'inicio-fan': pantallaInicioFan,
-  'explorar-fan': pantallaExplorarFan
+  'explorar-fan': pantallaExplorarFan,
+  'musica-artista': pantallaMusicaArtista
 };
 
 document.addEventListener('DOMContentLoaded', () => {

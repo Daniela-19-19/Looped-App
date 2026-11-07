@@ -168,3 +168,9 @@
 }
 .explorar__filtro-activo[hidden] { display: none; }
 .explorar__seccion { margin-top: var(--espacio-6); }
+
+/* ---------- R02 · Música ---------- */
+/* En pantallas grandes el botón no se estira de lado a lado. */
+.musica__publicar { max-width: var(--ancho-pantalla); }
+.musica__lista { margin-top: var(--espacio-6); }
+.musica__etiquetas { margin-top: var(--espacio-2); }
