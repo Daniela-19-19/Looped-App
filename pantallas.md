@@ -53,7 +53,7 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| R01 | Panel del artista (con su navegación inferior) | `pages/panel-artista.html` | | | |
+| R01 | Panel del artista (con su navegación inferior) | `pages/panel-artista.html` | ✅ | ✅ | |
 | F01a | Inicio del fan (con su navegación inferior) | `pages/inicio-fan.html` | | | |
 | F01b | Explorar | `pages/explorar-fan.html` | | | |
 

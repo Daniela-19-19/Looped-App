@@ -59,7 +59,7 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Logo:** blanco puro en oscuro y negro puro en claro. La firma mide al menos 144 px de ancho. (68, 69)
 - **Logo animado** (`.logo-animado`): solo en el splash, a 240 px. Con «reducir movimiento», aparece quieto.
 - **Logo mediano** (`.logo--medio`): 200 px, en la bienvenida.
-- **Atmósferas** (`.atmosfera`): violeta sin rol y para artista; turquesa y azul para fan; más suaves en claro. El violeta oscuro queda en una sola transparencia, `.35`. Variantes inferior (bienvenida), lateral (formularios, desde iniciar sesión) y centro (una sola mancha, en elegir experiencia); la superior se agrega cuando una pantalla la use. (11)
+- **Atmósferas** (`.atmosfera`): violeta sin rol y para artista; turquesa y azul para fan; más suaves en claro. El violeta oscuro queda en una sola transparencia, `.35`. Variantes inferior (bienvenida), lateral (formularios, desde iniciar sesión) y centro (una sola mancha, en elegir experiencia) y superior (pantallas con barra de marca, desde el panel del artista). (11)
 - **Campo con botón** (`.campo__grupo` + `.campo__boton`): botón de ícono relleno dentro del campo, para mostrar u ocultar la contraseña. Usa los íconos `ver` y `ocultar`.
 - **Ancho de pantalla** (`--ancho-pantalla`): 440 px como máximo para el contenido en pantallas grandes.
 - **Selector de foto** (`.selector-foto`): avatar de 64 px con «Foto de perfil» al lado; toda la fila abre la galería. Al pasar el mouse, el círculo toma el borde del color del rol.
@@ -67,6 +67,8 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Grupo de casillas** (`.casillas`): un `<fieldset>` sin borde; una columna, o dos con `.casillas--dos-columnas` (géneros).
 - **Cabecera de tarjeta** (`.tarjeta__cabecera`): foto a la izquierda y nombre con detalle a la derecha; los textos largos se parten.
 - **Grupo de etiquetas** (`.etiquetas`): etiquetas en fila con 8 px entre ellas; pasan a la línea siguiente si no caben.
+- **Aviso en la navegación** (`.navegacion__aviso`): punto coral de 8 px sobre el ícono cuando hay novedades; el `aria-label` de la pestaña dice cuántas.
+- **Encabezado de tarjeta** (`.tarjeta__encabezado`) y **votos** (`.votos`, ícono `votos`): para las preguntas («Lucía · Fan Club | ♥ 6») y el cupo («Preguntas abiertas | 3 de 5»). El ícono `votos` es el mismo corazón de `cupo`, con nombre propio para que el código se entienda.
 - **Fuera del kit por ahora:** reproductor y minirreproductor. Se agregan cuando se construyan esas pantallas.
 
 ## Historial de cambios
@@ -83,3 +85,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Contador de caracteres (`.campo__contador`) | Construcción de presentación (A06r); también lo usará escribir pregunta (F05e) |
 | 2026-11-07 | Grupo de casillas (`.casillas`, `.casillas--dos-columnas`) | Construcción de estilo musical (A07r) y gustos musicales (A06f) |
 | 2026-11-07 | Cabecera de tarjeta (`.tarjeta__cabecera`) y grupo de etiquetas (`.etiquetas`) | Construcción de perfil listo del artista (A09r) y del fan (A08f) |
+| 2026-11-07 | Atmósfera superior, aviso en la navegación, encabezado de tarjeta, texto principal de tarjeta, votos e ícono `votos` | Construcción del panel del artista (R01) |

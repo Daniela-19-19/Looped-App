@@ -62,6 +62,7 @@
     <symbol id="icono-reproducir" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.6v12.8c0 .9 1 1.4 1.7.9l9.5-6.4c.6-.4.6-1.4 0-1.8L9.7 4.7C9 4.2 8 4.7 8 5.6z"/></symbol>
     <symbol id="icono-preguntas" viewBox="0 0 24 24"><path fill="currentColor" d="M5.6 4h12.8C19.8 4 21 5.2 21 6.6v8.2c0 1.4-1.2 2.6-2.6 2.6H11l-4.4 3.3c-.7.5-1.6 0-1.6-.8v-2.5h.6C4.2 17.4 3 16.2 3 14.8V6.6C3 5.2 4.2 4 5.6 4z"/></symbol>
     <symbol id="icono-cupo" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.3c-.3 0-.6-.1-.8-.3C6.6 16.3 3 13.3 3 9.2 3 6.4 5.1 4.3 7.8 4.3c1.7 0 3.2.8 4.2 2.1 1-1.3 2.5-2.1 4.2-2.1 2.7 0 4.8 2.1 4.8 4.9 0 4.1-3.6 7.1-8.2 10.8-.2.2-.5.3-.8.3z"/></symbol>
+    <symbol id="icono-votos" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.3c-.3 0-.6-.1-.8-.3C6.6 16.3 3 13.3 3 9.2 3 6.4 5.1 4.3 7.8 4.3c1.7 0 3.2.8 4.2 2.1 1-1.3 2.5-2.1 4.2-2.1 2.7 0 4.8 2.1 4.8 4.9 0 4.1-3.6 7.1-8.2 10.8-.2.2-.5.3-.8.3z"/></symbol>
     <symbol id="icono-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.2 4.2L19 7"/></symbol>
     <symbol id="icono-agregar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></symbol>
     <symbol id="icono-notificaciones" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
@@ -254,6 +255,11 @@
           <div class="atmosfera atmosfera--centro" aria-hidden="true"></div>
           <p class="texto--pequeno texto--suave">Una sola mancha suave, para elegir experiencia.</p>
         </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Superior · .atmosfera--superior</span>
+        <div class="demo demo--columna marco-movil" data-demo-atmosfera>
+          <div class="atmosfera atmosfera--superior" aria-hidden="true"></div>
+          <p class="texto--pequeno texto--suave">Para pantallas con barra de marca, como el panel del artista.</p>
+        </div></div>
     </article>
 
     <article class="cat-componente">
@@ -324,6 +330,17 @@
               <p class="tarjeta__meta">Cupo abierto · 3 de 10</p>
             </div>
             <svg class="icono texto--suave" aria-hidden="true"><use href="#icono-siguiente"></use></svg>
+          </div>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con encabezado y votos · .tarjeta__encabezado + .votos (una pregunta)</span>
+        <div class="demo demo--columna">
+          <div class="tarjeta">
+            <div class="tarjeta__encabezado">
+              <span class="tarjeta__meta">Lucía · Fan Club</span>
+              <span class="votos" aria-label="6 votos"><svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-votos"></use></svg>6</span>
+            </div>
+            <p class="tarjeta__texto tarjeta__texto--principal">¿Vas a tocar Segundo sol en vivo este año?</p>
+            <p class="tarjeta__texto">Selecciona una pregunta para decidir si la respondes.</p>
           </div>
         </div></div>
       <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con cabecera y etiquetas · .tarjeta__cabecera + .etiquetas (resumen de un perfil)</span>
@@ -423,6 +440,15 @@
           <nav class="navegacion" aria-label="Navegación principal">
             <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg><span>Música</span></a>
             <a class="navegacion__pestana" href="#" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-preguntas"></use></svg><span>Preguntas</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
+            <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-cupo"></use></svg><span>Cupo</span></a>
+          </nav>
+        </div></div>
+      <div class="cat-variante"><span class="rotulo rotulo--pequeno">Con aviso · .navegacion__aviso (punto coral; el aria-label cuenta las novedades)</span>
+        <div class="demo demo--columna">
+          <nav class="navegacion" aria-label="Navegación principal">
+            <a class="navegacion__pestana" href="#" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg><span>Música</span></a>
+            <a class="navegacion__pestana" href="#" aria-label="Preguntas, 2 nuevas"><svg class="icono" aria-hidden="true"><use href="#icono-preguntas"></use></svg><span>Preguntas</span><i class="navegacion__aviso" aria-hidden="true"></i></a>
             <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
             <a class="navegacion__pestana" href="#"><svg class="icono" aria-hidden="true"><use href="#icono-cupo"></use></svg><span>Cupo</span></a>
           </nav>

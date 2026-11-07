@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Tu panel</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="panel-artista">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-tema" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.6M12 19.4V21M3 12h1.6M19.4 12H21M5.6 5.6l1.2 1.2M17.2 17.2l1.2 1.2M5.6 18.4l1.2-1.2M17.2 6.8l1.2-1.2"/></symbol>
+    <symbol id="icono-perfil" viewBox="0 0 24 24"><circle cx="12" cy="7.8" r="4" fill="currentColor"/><path fill="currentColor" d="M4.6 19c0-3.5 3.3-6 7.4-6s7.4 2.5 7.4 6c0 1-.8 1.8-1.8 1.8H6.4c-1 0-1.8-.8-1.8-1.8z"/></symbol>
+    <symbol id="icono-ver" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5.5c-4.6 0-8 3.4-9.4 5.6a1.7 1.7 0 0 0 0 1.8C4 15.1 7.4 18.5 12 18.5s8-3.4 9.4-5.6a1.7 1.7 0 0 0 0-1.8C20 8.9 16.6 5.5 12 5.5zm0 10a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></symbol>
+    <symbol id="icono-votos" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.3c-.3 0-.6-.1-.8-.3C6.6 16.3 3 13.3 3 9.2 3 6.4 5.1 4.3 7.8 4.3c1.7 0 3.2.8 4.2 2.1 1-1.3 2.5-2.1 4.2-2.1 2.7 0 4.8 2.1 4.8 4.9 0 4.1-3.6 7.1-8.2 10.8-.2.2-.5.3-.8.3z"/></symbol>
+    <symbol id="icono-reproducir" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.6v12.8c0 .9 1 1.4 1.7.9l9.5-6.4c.6-.4.6-1.4 0-1.8L9.7 4.7C9 4.2 8 4.7 8 5.6z"/></symbol>
+    <symbol id="icono-preguntas" viewBox="0 0 24 24"><path fill="currentColor" d="M5.6 4h12.8C19.8 4 21 5.2 21 6.6v8.2c0 1.4-1.2 2.6-2.6 2.6H11l-4.4 3.3c-.7.5-1.6 0-1.6-.8v-2.5h.6C4.2 17.4 3 16.2 3 14.8V6.6C3 5.2 4.2 4 5.6 4z"/></symbol>
+    <symbol id="icono-comunidad" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" fill="currentColor"/><circle cx="16.6" cy="9" r="2.6" fill="currentColor"/><path fill="currentColor" d="M2.8 18.6c0-3 2.8-5.2 6.2-5.2s6.2 2.2 6.2 5.2c0 .8-.6 1.4-1.4 1.4H4.2c-.8 0-1.4-.6-1.4-1.4zM16.4 13.6c2.7.1 4.8 1.9 4.8 4.4 0 .7-.6 1.2-1.2 1.2h-3c.2-.4.3-.8.3-1.3 0-1.7-.7-3.2-1.9-4.3z"/></symbol>
+    <symbol id="icono-cupo" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.3c-.3 0-.6-.1-.8-.3C6.6 16.3 3 13.3 3 9.2 3 6.4 5.1 4.3 7.8 4.3c1.7 0 3.2.8 4.2 2.1 1-1.3 2.5-2.1 4.2-2.1 2.7 0 4.8 2.1 4.8 4.9 0 4.1-3.6 7.1-8.2 10.8-.2.2-.5.3-.8.3z"/></symbol>
+  </defs>
+</svg>
+
+<!-- R01 · Panel del artista. Los datos los pone js/app.js. -->
+<div class="pantalla pantalla--con-navegacion">
+  <div class="atmosfera atmosfera--superior" aria-hidden="true"></div>
+
+  <div class="pantalla__contenido">
+    <header class="barra-marca">
+      <span>
+        <img class="logo logo--blanco" src="../assets/logo-firma-blanco.svg" alt="Looped">
+        <img class="logo logo--negro" src="../assets/logo-firma-negro.svg" alt="Looped">
+      </span>
+      <div class="barra-marca__acciones">
+        <button type="button" class="boton-icono boton-icono--relleno" aria-label="Cambiar a modo claro" data-cambiar-tema>
+          <svg class="icono" aria-hidden="true"><use href="#icono-tema"></use></svg>
+        </button>
+        <a class="avatar" href="perfil-propio-artista.html" aria-label="Tu perfil" data-avatar-sesion></a>
+      </div>
+    </header>
+
+    <main>
+      <div class="encabezado-pagina">
+        <h1 class="titulo titulo--medio">Tu panel de artista</h1>
+        <p class="encabezado-pagina__bajada">Hola, <span data-nombre-corto></span>. Gestiona tu música y las preguntas de tus fans.</p>
+      </div>
+
+      <nav class="panel__accesos" aria-label="Secciones de tu espacio">
+        <a class="boton" href="musica-artista.html">Mi música</a>
+        <a class="boton" href="bandeja-artista.html" data-acceso-preguntas>Preguntas de fans</a>
+        <a class="boton" href="comunidad-artista.html">Comunidad</a>
+        <a class="boton" href="cupos-artista.html">Disponibilidad</a>
+      </nav>
+
+      <section class="panel__seccion" aria-labelledby="titulo-lanzamiento">
+        <div class="encabezado-seccion">
+          <h2 class="encabezado-seccion__titulo" id="titulo-lanzamiento">Tu último lanzamiento</h2>
+          <a class="enlace" href="musica-artista.html" data-ver-todo-musica>Ver todo</a>
+        </div>
+        <div data-ultimo-lanzamiento></div>
+      </section>
+
+      <section class="panel__seccion" aria-labelledby="titulo-disponibilidad">
+        <div class="encabezado-seccion">
+          <h2 class="encabezado-seccion__titulo" id="titulo-disponibilidad">Disponibilidad</h2>
+        </div>
+        <div data-disponibilidad></div>
+      </section>
+
+      <section class="panel__seccion" aria-labelledby="titulo-preguntas">
+        <div class="encabezado-seccion">
+          <h2 class="encabezado-seccion__titulo" id="titulo-preguntas">Preguntas</h2>
+          <a class="enlace" href="bandeja-artista.html" data-ver-todas-preguntas>Ver todas</a>
+        </div>
+        <div data-preguntas-nuevas></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="navegacion pantalla__navegacion" aria-label="Navegación principal">
+    <a class="navegacion__pestana" href="panel-artista.html" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg><span>Música</span></a>
+    <a class="navegacion__pestana" href="bandeja-artista.html" data-pestana-preguntas><svg class="icono" aria-hidden="true"><use href="#icono-preguntas"></use></svg><span>Preguntas</span></a>
+    <a class="navegacion__pestana" href="comunidad-artista.html"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
+    <a class="navegacion__pestana" href="cupos-artista.html"><svg class="icono" aria-hidden="true"><use href="#icono-cupo"></use></svg><span>Cupo</span></a>
+  </nav>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

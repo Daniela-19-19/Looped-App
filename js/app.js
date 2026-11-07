@@ -615,7 +615,225 @@ function pantallaPerfilListoFan() {
   });
 }
 
+// ---------- Utilidades compartidas ----------
+// Desde pages/ las rutas de data.js (desde la raíz) necesitan «../».
+const RAIZ = location.pathname.includes('/pages/') ? '../' : '';
+function rutaRecurso(ruta) {
+  return ruta ? RAIZ + ruta : null;
+}
+
+// Para poner textos de los datos dentro de HTML sin riesgo.
+function escapar(texto) {
+  return String(texto).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Quién inició sesión en este navegador: { rol, id } o null.
+function leerSesion() {
+  try { return JSON.parse(localStorage.getItem('looped-sesion')); } catch (e) { return null; }
+}
+
+// El artista de la sesión: uno de data.js o el recién registrado. null si no hay.
+function artistaActual() {
+  const sesion = leerSesion();
+  if (!sesion || sesion.rol !== 'artista') return null;
+  const deEjemplo = obtenerDatos('artistas').find(a => a.id === sesion.id);
+  if (deEjemplo) return deEjemplo;
+  const propia = perfilGuardado();
+  return propia && propia.id === sesion.id ? propia : null;
+}
+
+// Hace cuánto: «Hace 5 h», «Ayer», «Hace 9 días».
+function haceCuanto(fecha) {
+  const minutos = Math.round((Date.now() - new Date(fecha)) / 60000);
+  if (minutos < 1) return 'Ahora';
+  if (minutos < 60) return `Hace ${minutos} min`;
+  const horas = Math.round(minutos / 60);
+  if (horas < 24) return `Hace ${horas} h`;
+  const dias = Math.round(horas / 24);
+  return dias === 1 ? 'Ayer' : `Hace ${dias} días`;
+}
+
+// ---------- Reglas de spec.md ----------
+// Ventana de visibilidad: 48 h desde la publicación.
+const HORAS_VENTANA = 48;
+function horasRestantesVentana(lanzamiento) {
+  const pasadas = (Date.now() - new Date(lanzamiento.fechaPublicacion)) / 3600000;
+  return Math.max(0, Math.ceil(HORAS_VENTANA - pasadas));
+}
+
+// Nivel del fan: el nivel 1 pide 15 minutos y cada nivel siguiente pide
+// 1,5 veces lo del anterior, redondeado (15, 23, 34, 51…). Empieza en 0.
+function nivelPorMinutos(minutos) {
+  let nivel = 0;
+  let acumulado = 0;
+  while (true) {
+    acumulado += Math.round(15 * Math.pow(1.5, nivel));
+    if (minutos < acumulado) return nivel;
+    nivel++;
+  }
+}
+
+function textoNivelMinimo(nivel) {
+  return !nivel || nivel <= 1 ? 'Sin requisito de nivel' : `Nivel ${nivel} o superior`;
+}
+
+// Preguntas nuevas de un artista, solo de fans con el nivel mínimo del cupo.
+// Orden (decisión del equipo): más votadas primero; si empatan, Fan Club primero.
+function preguntasNuevas(artistaId) {
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artistaId);
+  const nivelMinimo = cupo ? cupo.nivelMinimo : 0;
+  const fans = obtenerDatos('fans');
+  return obtenerDatos('preguntas')
+    .filter(p => p.artista === artistaId && p.estado === 'nueva')
+    .filter(p => {
+      const autor = fans.find(f => f.id === p.autor);
+      return autor && nivelPorMinutos(autor.minutosEscucha) >= nivelMinimo;
+    })
+    .sort((a, b) => (b.votos - a.votos) || (b.autorEsFanClub - a.autorEsFanClub) || (new Date(a.fecha) - new Date(b.fecha)));
+}
+
+// ---------- Apariencia (tema claro u oscuro) ----------
+// SIMULADO: la preferencia se recuerda en este navegador; con Supabase
+// se guardará en «preferencias» y seguirá igual al volver a iniciar sesión.
+function leerPreferencias() {
+  try { return JSON.parse(localStorage.getItem('looped-preferencias')) || {}; } catch (e) { return {}; }
+}
+function aplicarTema() {
+  if (leerPreferencias().apariencia === 'claro') document.documentElement.dataset.tema = 'claro';
+  else delete document.documentElement.dataset.tema;
+}
+// Activa un botón que alterna claro y oscuro (con su aria-label al día).
+function activarCambioDeTema(boton) {
+  if (!boton) return;
+  const actualizar = () => {
+    const claro = document.documentElement.dataset.tema === 'claro';
+    boton.setAttribute('aria-label', claro ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro');
+  };
+  boton.addEventListener('click', () => {
+    const preferencias = leerPreferencias();
+    preferencias.apariencia = preferencias.apariencia === 'claro' ? 'oscuro' : 'claro';
+    try { localStorage.setItem('looped-preferencias', JSON.stringify(preferencias)); } catch (e) { /* sin almacenamiento */ }
+    aplicarTema();
+    actualizar();
+  });
+  actualizar();
+}
+
+// ---------- R01 · Panel del artista ----------
+function pantallaPanelArtista() {
+  // Sin sesión de artista, a iniciar sesión.
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+
+  // Barra de marca y saludo
+  activarCambioDeTema(document.querySelector('[data-cambiar-tema]'));
+  pintarAvatar(document.querySelector('[data-avatar-sesion]'), rutaRecurso(artista.foto), artista.nombreArtistico);
+  document.querySelector('[data-nombre-corto]').textContent = artista.nombreArtistico.split(' ')[0];
+
+  // Preguntas nuevas: aviso en el botón y en la navegación
+  const nuevas = preguntasNuevas(artista.id);
+  const acceso = document.querySelector('[data-acceso-preguntas]');
+  const pestana = document.querySelector('[data-pestana-preguntas]');
+  if (nuevas.length) {
+    acceso.textContent = `Preguntas · ${nuevas.length}`;
+    acceso.setAttribute('aria-label', `Preguntas de fans, ${nuevas.length} nuevas`);
+    pestana.insertAdjacentHTML('beforeend', '<i class="navegacion__aviso" aria-hidden="true"></i>');
+    pestana.setAttribute('aria-label', `Preguntas, ${nuevas.length} nuevas`);
+  }
+
+  // Tu último lanzamiento
+  const lanzamientos = obtenerDatos('lanzamientos')
+    .filter(l => l.artista === artista.id)
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+  const ultimo = lanzamientos[0];
+  const cajaLanzamiento = document.querySelector('[data-ultimo-lanzamiento]');
+  if (ultimo) {
+    const horas = horasRestantesVentana(ultimo);
+    const estadoVentana = horas > 0 ? `En su ventana · Quedan ${horas} h` : haceCuanto(ultimo.fechaPublicacion);
+    const portada = ultimo.portada
+      ? `<img class="portada" src="${escapar(rutaRecurso(ultimo.portada))}" alt="Portada de ${escapar(ultimo.nombreLanzamiento)}">`
+      : `<div class="portada" role="img" aria-label="${escapar(ultimo.nombreLanzamiento)}, sin portada"></div>`;
+    cajaLanzamiento.innerHTML = `
+      <article class="tarjeta tarjeta--acento tarjeta--destacada">
+        <div class="tarjeta__info">
+          <div>
+            <h3 class="tarjeta__titulo">${escapar(ultimo.nombreLanzamiento)}</h3>
+            <p class="tarjeta__texto">${escapar(artista.nombreArtistico)}</p>
+            <p class="tarjeta__meta">${escapar(estadoVentana)}</p>
+          </div>
+          <a class="boton-icono" href="lanzamiento-artista.html?id=${encodeURIComponent(ultimo.id)}" aria-label="Ver lanzamiento ${escapar(ultimo.nombreLanzamiento)}">
+            <svg class="icono" aria-hidden="true"><use href="#icono-ver"></use></svg>
+          </a>
+        </div>
+        ${portada}
+      </article>`;
+  } else {
+    document.querySelector('[data-ver-todo-musica]').remove(); // nada que ver todavía
+    cajaLanzamiento.innerHTML = `
+      <div class="tarjeta">
+        <p class="tarjeta__texto">Aún no has publicado música.</p>
+        <div class="tarjeta__acciones"><a class="boton boton--bloque" href="publicar-lanzamiento-artista.html">Publicar lanzamiento</a></div>
+      </div>`;
+  }
+
+  // Disponibilidad (cupo). Un artista nuevo todavía no tiene cupo: cerrado.
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+  const cajaCupo = document.querySelector('[data-disponibilidad]');
+  if (cupo && cupo.estado === 'abierto') {
+    const quedan = Math.max(0, cupo.totalPreguntas - cupo.preguntasUsadas);
+    cajaCupo.innerHTML = `
+      <div class="tarjeta">
+        <div class="tarjeta__encabezado">
+          <h3 class="tarjeta__titulo">Preguntas abiertas</h3>
+          <span class="etiqueta etiqueta--borde">${quedan} de ${cupo.totalPreguntas}</span>
+        </div>
+        <div class="progreso" role="progressbar" aria-label="Respuestas usadas" aria-valuemin="0"
+          aria-valuemax="${cupo.totalPreguntas}" aria-valuenow="${cupo.preguntasUsadas}"><span class="progreso__barra"></span></div>
+        <p class="tarjeta__texto">Los fans pueden enviarte preguntas y votar. ${escapar(textoNivelMinimo(cupo.nivelMinimo))}.</p>
+      </div>`;
+    cajaCupo.querySelector('.progreso__barra').style.width = `${(cupo.preguntasUsadas / cupo.totalPreguntas) * 100}%`;
+  } else {
+    const completo = cupo && cupo.estado === 'completo';
+    cajaCupo.innerHTML = `
+      <div class="tarjeta">
+        <h3 class="tarjeta__titulo">${completo ? 'Cupo completo' : 'Cupo cerrado'}</h3>
+        <p class="tarjeta__texto">${completo
+          ? 'Respondiste todo lo que ofreciste. Abre uno nuevo cuando tengas disponibilidad.'
+          : 'Los fans no pueden enviarte preguntas ahora.'}</p>
+        <div class="tarjeta__acciones"><a class="boton boton--secundario boton--bloque" href="cupos-artista.html">Ir a mi cupo</a></div>
+      </div>`;
+  }
+
+  // Preguntas nuevas (las 2 primeras)
+  const cajaPreguntas = document.querySelector('[data-preguntas-nuevas]');
+  if (nuevas.length) {
+    const fans = obtenerDatos('fans');
+    cajaPreguntas.innerHTML = nuevas.slice(0, 2).map(p => {
+      const autor = fans.find(f => f.id === p.autor);
+      return `
+        <article class="tarjeta">
+          <div class="tarjeta__encabezado">
+            <span class="tarjeta__meta">${escapar(autor.nombrePerfil)}${p.autorEsFanClub ? ' · Fan Club' : ''}</span>
+            <span class="votos" aria-label="${p.votos} votos"><svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-votos"></use></svg>${p.votos}</span>
+          </div>
+          <p class="tarjeta__texto tarjeta__texto--principal">${escapar(p.texto)}</p>
+          <p class="tarjeta__texto">Selecciona una pregunta para decidir si la respondes.</p>
+          <div class="tarjeta__acciones"><a class="boton boton--bloque" href="revisar-pregunta-artista.html?id=${encodeURIComponent(p.id)}">Revisar pregunta</a></div>
+        </article>`;
+    }).join('');
+  } else {
+    document.querySelector('[data-ver-todas-preguntas]').remove(); // nada que ver todavía
+    cajaPreguntas.innerHTML = `
+      <div class="tarjeta"><p class="tarjeta__texto">No hay preguntas nuevas. Cuando tus fans participen, aparecerán aquí.</p></div>`;
+  }
+}
+
 // ---------- Arranque ----------
+// El tema guardado se aplica en todas las páginas apenas carga este archivo.
+aplicarTema();
 const PANTALLAS = {
   'index': pantallaIndex,
   'iniciar-sesion': pantallaIniciarSesion,
@@ -629,7 +847,8 @@ const PANTALLAS = {
   'proyecto-musical-artista': pantallaProyectoMusicalArtista,
   'intereses-fan': pantallaInteresesFan,
   'perfil-listo-artista': pantallaPerfilListoArtista,
-  'perfil-listo-fan': pantallaPerfilListoFan
+  'perfil-listo-fan': pantallaPerfilListoFan,
+  'panel-artista': pantallaPanelArtista
 };
 
 document.addEventListener('DOMContentLoaded', () => {

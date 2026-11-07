@@ -65,3 +65,29 @@
 
 /* Nota al final de un formulario (p. ej. «Podrás cambiar estos datos…»). */
 .pantalla__nota { margin-top: var(--espacio-4); }
+
+/* ---------- Pantallas con navegación inferior ---------- */
+/* La navegación flota abajo, con el mismo ancho que el contenido. */
+.pantalla__navegacion {
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--espacio-2) + env(safe-area-inset-bottom));
+  width: calc(100% - var(--espacio-6) * 2);
+  max-width: var(--ancho-pantalla);
+  margin-inline: auto;
+}
+/* El contenido deja espacio abajo para que la navegación no lo tape. */
+.pantalla--con-navegacion .pantalla__contenido {
+  padding-bottom: calc(var(--alto-control) + var(--espacio-2) * 2 + var(--espacio-8) + env(safe-area-inset-bottom));
+}
+
+/* ---------- R01 · Panel del artista ---------- */
+.panel__accesos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-2);
+}
+.panel__accesos .boton { padding-inline: var(--espacio-3); }
+.panel__seccion { margin-top: var(--espacio-8); }
