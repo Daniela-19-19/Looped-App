@@ -55,7 +55,7 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Elegido:** chips y selectores marcan lo elegido igual, con borde y fondo tenue del color del rol. (60)
 - **Íconos:** 24 px y 20 px; el de 22 px desaparece. (63)
 - **Portadas:** la de 46 px pasa a 48. (64)
-- **Botones del panel del artista:** solo el de la sección actual va relleno de acento («Mi música», porque el panel es la sección Música); los otros tres van con borde (`.boton--secundario`). Decisión del equipo del 07-11-2026; antes eran los cuatro rellenos. (70)
+- **Botones del panel del artista:** los cuatro van con borde y se rellenan de acento solo al pasar el mouse, tocarlos o enfocarlos (`.boton--secundario.boton--rellenar`). Decisión del equipo del 07-11-2026; antes eran los cuatro rellenos, y después solo «Mi música». (70)
 - **Logo:** blanco puro en oscuro y negro puro en claro. La firma mide al menos 144 px de ancho. (68, 69)
 - **Logo animado** (`.logo-animado`): solo en el splash, a 240 px. Con «reducir movimiento», aparece quieto.
 - **Logo mediano** (`.logo--medio`): 200 px, en la bienvenida.
@@ -95,3 +95,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Responsive: tokens de ancho, títulos más grandes en computador, navegación adaptable (barra lateral) y rejilla de tarjetas | Pedido del equipo: la app debe aprovechar tablet y computador |
 | 2026-11-07 | Panel del artista: solo «Mi música» relleno, los otros tres con borde | Pedido del equipo |
 | 2026-11-07 | Menú desplegable, ícono `filtro` y ✕ del buscador | Construcción de explorar (F01b) |
+| 2026-11-07 | Panel del artista: los cuatro botones con borde, morados solo al pasar, tocar o enfocar; `.boton--rellenar` también se rellena al presionar | Pedido del equipo |
