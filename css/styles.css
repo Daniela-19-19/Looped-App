@@ -46,3 +46,19 @@
   gap: var(--espacio-3);
   margin-top: calc(var(--espacio-8) + var(--espacio-2));
 }
+
+/* ---------- Pantallas con barra superior y pie fijo ---------- */
+/* La barra y el pie usan el mismo ancho máximo que el contenido. */
+.pantalla > .barra-superior,
+.pantalla__pie {
+  width: 100%;
+  max-width: calc(var(--ancho-pantalla) + var(--espacio-6) * 2);
+  margin-inline: auto;
+}
+/* Pie de pasos: el botón principal siempre en la misma posición, abajo. */
+.pantalla__pie {
+  display: grid;
+  gap: var(--espacio-2);
+  margin-top: auto;
+  padding: var(--espacio-3) var(--espacio-6) calc(var(--espacio-5) + env(safe-area-inset-bottom));
+}

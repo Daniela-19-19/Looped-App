@@ -106,6 +106,10 @@
   --atmosfera-alto-1: 240px;
   --atmosfera-ancho-2: 300px;
   --atmosfera-alto-2: 200px;
+  --atmosfera-ancho-3: 260px;  /* Lateral: mancha de la derecha */
+  --atmosfera-alto-3: 300px;
+  --atmosfera-ancho-4: 280px;  /* Lateral: mancha de arriba */
+  --atmosfera-alto-4: 220px;
 
   /* Movimiento */
   --duracion-rapida: 120ms;

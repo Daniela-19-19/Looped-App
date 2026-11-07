@@ -146,13 +146,24 @@ Lo que la app muestra o guarda, tal como aparece en los diseños. Todo se guarda
 
 En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.html`, compartido con las demás pantallas.
 
+### Criterios para todas las pantallas (responsive)
+Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular y en computador sin que se rompa el diseño. Además de su propio «Está lista cuando», cada pantalla cumple:
+- Se ve bien en 320 px (celular pequeño), 375 px (celular), 768 px (tablet) y 1280 px (computador), y al arrastrar el borde de la ventana entre esos anchos.
+- No aparece barra de desplazamiento horizontal.
+- Ningún texto se corta, se sale de su caja ni queda encima de otro elemento.
+- Los botones y enlaces miden al menos 48 px de alto y no quedan pegados entre sí.
+- Con zoom al 200 % todo se sigue leyendo y usando.
+- En celular, al abrir el teclado, el campo que se escribe y el botón principal se pueden alcanzar.
+- En computador, el contenido queda en una columna centrada de máximo 440 px (`--ancho-pantalla`); no se estira de lado a lado.
+- Funciona con mouse, con el dedo y con teclado (foco visible).
+
 ### A00 · Splash
 - **Objetivo:** Esta pantalla existe para que cualquier persona reconozca la marca al abrir la app. Sabemos que funciona si ve el logo animado y pasa sola a la bienvenida.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - El logo se anima y a los 3,5 s pasa a la bienvenida; un toque lo adelanta.
   - Con «reducir movimiento» activado, la animación dura menos de 1 s.
-  - Funciona en celular (375 px de ancho).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A01 · Bienvenida
 - **Objetivo:** Esta pantalla existe para que una persona nueva o que ya tiene cuenta pueda elegir cómo entrar. Sabemos que funciona si toca «Crear cuenta» o «Iniciar sesión» sin dudar.
@@ -166,7 +177,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Cada botón lleva a su pantalla.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A02 · Iniciar sesión
 - **Objetivo:** Esta pantalla existe para que un fan o un artista con cuenta pueda volver a entrar y encontrar su información. Sabemos que funciona si entra al inicio de su rol con correo y contraseña.
@@ -182,7 +193,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Con un correo mal escrito, sin contraseña o con datos incorrectos, aparece el error debajo del campo, en rojo de error.
   - Un artista que inicia sesión ve su panel con sus lanzamientos.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A03 · Crear cuenta: elegir experiencia
 - **Objetivo:** Esta pantalla existe para que una persona nueva pueda elegir si se registra como fan o como artista. Sabemos que funciona si elige una opción y pasa al formulario correcto.
@@ -196,7 +207,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Elegir fan pinta la app de turquesa y elegir artista, de violeta.
   - Lleva a «Crear cuenta» con el rol elegido.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A03f / A03r · Crear cuenta
 - **Archivo de diseño:** la misma pantalla para fan y artista.
@@ -215,7 +226,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Valida el correo y la contraseña y muestra el error debajo del campo.
   - Un correo ya registrado muestra un error.
   - «Continuar» lleva al primer paso del perfil del rol elegido.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A05f · Perfil básico del fan
 - **Objetivo:** Esta pantalla existe para que el fan pueda decir cómo quiere que lo vean. Sabemos que funciona si completa su nombre y su usuario y continúa.
@@ -228,7 +239,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - No deja continuar con campos vacíos.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A06f · Gustos musicales
 - **Objetivo:** Esta pantalla existe para que el fan pueda indicar qué música escucha. Sabemos que funciona si marca al menos un género o elige «Lo haré después».
@@ -243,7 +254,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Las casillas usan el componente `.casilla`.
   - Los dos botones avanzan.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A07f · Intereses
 - **Objetivo:** Esta pantalla existe para que el fan pueda decir qué busca en Looped. Sabemos que funciona si marca intereses o elige «Lo haré después».
@@ -256,7 +267,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los dos botones avanzan.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A08f · Perfil del fan listo
 - **Objetivo:** Esta pantalla existe para que el fan confirme que su perfil quedó creado. Sabemos que funciona si toca «Empezar a descubrir» y llega a su inicio.
@@ -264,7 +275,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Muestra «Ya eres parte de Looped.» con el nombre del fan.
   - «Empezar a descubrir» lleva al inicio del fan.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A05r · Identidad del artista
 - **Objetivo:** Esta pantalla existe para que el artista pueda decir cómo lo van a encontrar. Sabemos que funciona si completa su nombre artístico y su usuario.
@@ -277,7 +288,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - No deja continuar con campos vacíos.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A06r · Presentación
 - **Objetivo:** Esta pantalla existe para que el artista pueda presentarse a sus fans. Sabemos que funciona si escribe su presentación y continúa.
@@ -291,7 +302,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - La ciudad se puede dejar vacía.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A07r · Estilo musical
 - **Objetivo:** Esta pantalla existe para que el artista pueda indicar qué música hace. Sabemos que funciona si marca géneros o elige «Lo haré después».
@@ -304,7 +315,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los dos botones avanzan.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A08r · Proyecto musical
 - **Objetivo:** Esta pantalla existe para que el artista pueda decir cómo hace música (solista, banda, productor…). Sabemos que funciona si marca sus roles y completa su perfil.
@@ -317,7 +328,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los dos botones avanzan al perfil listo.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### A09r · Perfil del artista listo
 - **Objetivo:** Esta pantalla existe para que el artista confirme que su espacio está listo y sepa qué hacer después. Sabemos que funciona si entra a su panel.
@@ -325,7 +336,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Muestra «Tu espacio está listo.» con su nombre, y los botones «Ir a mi panel», «Escuchar» y «Ver mi recorrido».
   - «Ir a mi panel» lleva al panel del artista.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F01a · Inicio (fan)
 - **Objetivo:** Esta pantalla existe para que el fan pueda descubrir artistas y lanzamientos nuevos y retomar sus conexiones. Sabemos que funciona si desde aquí llega al perfil de un artista o a escuchar un lanzamiento.
@@ -351,7 +362,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - El lanzamiento destacado reproduce el audio y abre el minirreproductor.
   - Las tarjetas llevan al perfil del artista.
   - La navegación inferior marca «Inicio».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F01b · Explorar
 - **Objetivo:** Esta pantalla existe para que el fan pueda buscar un artista concreto. Sabemos que funciona si escribe un nombre (por ejemplo «Mara») y abre su perfil desde los resultados.
@@ -369,7 +380,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Escribir filtra los resultados.
   - Sin resultados aparece «revisar filtros».
   - Un resultado abre el perfil del artista.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F01c · Nuevos lanzamientos (ventana de visibilidad)
 - **Objetivo:** Esta pantalla existe para que el fan pueda escuchar lanzamientos recién publicados, con la misma visibilidad sin importar el tamaño del artista. Sabemos que funciona si escucha un lanzamiento de esta lista.
@@ -384,7 +395,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Solo aparecen lanzamientos de menos de 48 h, sin importar los seguidores del artista.
   - Cada uno se puede reproducir.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### Conexión activa
 - **Objetivo:** Esta pantalla existe para que el fan pueda ver con qué artistas puede hablar ahora. Sabemos que funciona si abre el perfil de un artista con cupo abierto.
@@ -397,7 +408,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Separa a los artistas con cupo abierto de los que tienen el cupo cerrado.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F02 · Perfil del artista (visto por el fan)
 - **Objetivo:** Esta pantalla existe para que el fan pueda conocer a un artista, escuchar su música y conectar con él. Sabemos que funciona si toca «Conectar», escucha una canción o entra a su comunidad.
@@ -418,7 +429,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Las tres acciones llevan a su pantalla.
   - Visitar a un artista con menos de 1000 seguidores muestra «Fan fundador» y queda en el perfil del fan.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### Reproductor (minirreproductor y vista ampliada)
 - **Archivo de diseño:** capa que aparece sobre las demás pantallas.
@@ -443,7 +454,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Con bucle en «una canción», la misma canción vuelve a empezar; con bucle en «toda la cola», al terminar la última vuelve la primera.
   - El minirreproductor abre la vista ampliada.
   - Cerrar sesión detiene la música.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 - **Nota:** el reproductor, el minirreproductor y los íconos de aleatorio, bucle y cola no están todavía en el design kit. Hay que agregarlos al kit y a `componentes.html` antes de construirlo.
 
 ### Cola de reproducción (pantalla nueva)
@@ -460,7 +471,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Al reordenar o quitar canciones, el reproductor sigue el nuevo orden.
   - Con aleatorio activado, la lista muestra el orden mezclado.
   - Se puede usar con el dedo en celular y con teclado.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F04 · Comunidad
 - **Objetivo:** Esta pantalla existe para que el fan pueda leer las publicaciones del artista y las preguntas ya respondidas. Sabemos que funciona si abre una respuesta o pregunta algo desde aquí.
@@ -478,7 +489,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Las respuestas de voz se pueden reproducir y pausar.
   - «Preguntar a …» lleva a «Conectar».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F05 · Conectar con el artista
 - **Objetivo:** Esta pantalla existe para que el fan pueda saber si puede preguntarle algo al artista y hacerlo. Sabemos que funciona si, con el cupo abierto y el nivel suficiente, envía o vota una pregunta.
@@ -501,7 +512,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Muestra los tres casos del flujo: cupo cerrado, no cumple condiciones y cupo abierto.
   - Votar suma un voto, se ve marcado y reordena la lista.
   - Un fan sin el nivel mínimo no puede preguntar y ve cuánto le falta.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F05e · Escribir pregunta
 - **Objetivo:** Esta pantalla existe para que el fan pueda escribir y enviar su pregunta al artista. Sabemos que funciona si la envía y la ve en cola.
@@ -516,7 +527,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - No deja enviar una pregunta vacía.
   - Al enviarla aparece un aviso flotante de confirmación.
   - La pregunta aparece en «Tus preguntas» como «en cola» y en la bandeja del artista.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F06 · Tu conexión: estado y respuesta
 - **Objetivo:** Esta pantalla existe para que el fan pueda ver en qué va su pregunta y leer o escuchar la respuesta. Sabemos que funciona si ve el estado correcto y, si ya hay respuesta, la abre.
@@ -532,7 +543,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Cada estado tiene su texto.
   - La nota de voz se reproduce y se pausa.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F07a · Perfil del fan
 - **Objetivo:** Esta pantalla existe para que el fan pueda ver su actividad y sus reconocimientos. Sabemos que funciona si llega desde aquí a su recorrido, al Fan Club o a editar su perfil.
@@ -550,7 +561,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Los botones llevan a su pantalla.
   - La navegación inferior marca «Perfil».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F07b · Tu recorrido
 - **Objetivo:** Esta pantalla existe para que el fan pueda entender cómo sube de nivel escuchando. Sabemos que funciona si ve su nivel, cuánto le falta y qué beneficios trae.
@@ -564,7 +575,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - La barra de progreso refleja los minutos escuchados hacia el siguiente nivel.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F08a · Conocer el Fan Club
 - **Objetivo:** Esta pantalla existe para que el fan pueda decidir si entra al Fan Club de un artista. Sabemos que funciona si toca «Entrar al Fan Club» o «Continuar normalmente».
@@ -579,7 +590,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - «Entrar» lleva al contenido del Fan Club.
   - «Continuar» vuelve atrás.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F08b · Contenido del Fan Club
 - **Objetivo:** Esta pantalla existe para que un miembro del Fan Club pueda ver el contenido exclusivo del artista. Sabemos que funciona si lee «Detrás de la canción».
@@ -596,7 +607,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Solo lo ven los miembros del Fan Club.
   - «Salir» pide confirmación antes de hacerlo.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### P01 · Editar perfil del fan
 - **Objetivo:** Esta pantalla existe para que el fan pueda cambiar sus datos y sus gustos. Sabemos que funciona si guarda un cambio y lo ve reflejado en su perfil.
@@ -613,7 +624,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los cambios aparecen en el perfil al volver y siguen ahí al volver a iniciar sesión.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R01 · Panel del artista
 - **Objetivo:** Esta pantalla existe para que el artista pueda ver de un vistazo su música, sus preguntas, su comunidad y su cupo. Sabemos que funciona si llega desde aquí a la sección que necesita.
@@ -632,7 +643,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado, con los cuatro botones rellenos de violeta.
   - Cada botón lleva a su sección.
   - Muestra el último lanzamiento y el estado del cupo reales del artista.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R02 · Música
 - **Objetivo:** Esta pantalla existe para que el artista pueda ver sus lanzamientos y publicar uno nuevo. Sabemos que funciona si abre un lanzamiento o empieza a publicar.
@@ -646,7 +657,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Los botones llevan a su pantalla.
   - La navegación inferior marca «Música».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R03 · Publicar lanzamiento
 - **Objetivo:** Esta pantalla existe para que el artista pueda subir y publicar música nueva. Sabemos que funciona si completa los datos, sube el audio y publica.
@@ -665,7 +676,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - No deja publicar sin nombre ni audio.
   - Al publicar, lleva a la pantalla del lanzamiento.
   - El lanzamiento aparece en «Nuevos lanzamientos» para los fans.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R03b · Lanzamiento
 - **Objetivo:** Esta pantalla existe para que el artista pueda ver su lanzamiento publicado y compartirlo con su comunidad. Sabemos que funciona si lo escucha o lo comparte.
@@ -684,7 +695,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Eliminar pide confirmación y lo quita también para los fans.
   - Compartir lleva a «Nueva publicación» con el lanzamiento.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R04 · Bandeja de preguntas
 - **Objetivo:** Esta pantalla existe para que el artista pueda ver las preguntas de sus fans ordenadas por prioridad. Sabemos que funciona si abre una pregunta para revisarla.
@@ -701,7 +712,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Las preguntas se ordenan por votos y solo aparecen las de fans con el nivel mínimo.
   - Cada filtro muestra lo suyo.
   - La navegación inferior marca «Preguntas».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R05 · Revisar pregunta
 - **Objetivo:** Esta pantalla existe para que el artista pueda decidir si responde una pregunta. Sabemos que funciona si elige responder, mantener en cola o descartar.
@@ -717,7 +728,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Descartar pide confirmación.
   - Cada acción cambia el estado de la pregunta, y el fan lo ve en «Tu conexión».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R06 · Responder (texto o nota de voz)
 - **Objetivo:** Esta pantalla existe para que el artista pueda responder con texto o con su voz. Sabemos que funciona si envía la respuesta.
@@ -735,7 +746,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se puede grabar, escuchar y regrabar antes de enviar.
   - Si se niega el permiso del micrófono, aparece el estado de error.
   - El cronómetro usa el tamaño de 32 px.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R06f · Respuesta enviada
 - **Objetivo:** Esta pantalla existe para que el artista confirme que su respuesta llegó y que se avisó al fan. Sabemos que funciona si vuelve a la bandeja o ve la respuesta.
@@ -743,7 +754,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Muestra «La conversación continúa.», «Ver respuesta» y «Volver a preguntas».
   - El fan recibe la notificación en la app y en el celular.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R06 preview · Respuesta del artista
 - **Objetivo:** Esta pantalla existe para que el artista pueda ver su respuesta como la verá el fan. Sabemos que funciona si la lee o la escucha.
@@ -751,7 +762,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - La nota de voz se reproduce.
   - «Volver a preguntas» funciona.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R07 · Comunidad del artista
 - **Objetivo:** Esta pantalla existe para que el artista pueda contarle a su comunidad lo que viene. Sabemos que funciona si crea una publicación.
@@ -766,7 +777,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Eliminar pide confirmación.
   - La navegación inferior marca «Comunidad».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### Nueva publicación
 - **Objetivo:** Esta pantalla existe para que el artista pueda escribir una publicación para su comunidad. Sabemos que funciona si la publica y aparece en su comunidad.
@@ -784,7 +795,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - No deja publicar un texto vacío.
   - Sin la casilla, aparece en la comunidad del artista y en la que ven los fans.
   - Con la casilla, aparece solo en el contenido del Fan Club de ese artista.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R08 · Cupos
 - **Objetivo:** Esta pantalla existe para que el artista pueda controlar cuántas preguntas recibe. Sabemos que funciona si abre, cierra o reabre su cupo y ve cuántas preguntas quedan.
@@ -801,7 +812,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - El progreso cuenta las preguntas respondidas.
   - Con el cupo cerrado o completo, los fans ya no pueden preguntar.
   - La navegación inferior marca «Cupo».
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### Configurar cupo
 - **Objetivo:** Esta pantalla existe para que el artista pueda decidir cuántas preguntas recibe y quién puede preguntar. Sabemos que funciona si guarda un cupo y lo ve abierto.
@@ -815,7 +826,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - No acepta números fuera de 1 a 100.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### P04 · Perfil del artista (propio)
 - **Objetivo:** Esta pantalla existe para que el artista pueda ver cómo lo ven sus fans y editar su información. Sabemos que funciona si llega a editar su perfil o a la configuración.
@@ -830,7 +841,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los botones llevan a su pantalla.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### P02 / P03 · Editar perfil del artista
 - **Objetivo:** Esta pantalla existe para que el artista pueda cambiar su identidad, su presentación, sus géneros y sus roles. Sabemos que funciona si guarda un cambio y lo ve en su perfil.
@@ -844,7 +855,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los cambios aparecen en el perfil y los ven los fans.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F09 / R09 · Configuración
 - **Archivo de diseño:** la misma pantalla para fan y artista.
@@ -861,7 +872,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Cerrar sesión detiene la música y vuelve a la bienvenida.
   - Borrar datos pide confirmación.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F10 / R10 · Apariencia
 - **Objetivo:** Esta pantalla existe para que cualquier persona pueda elegir la apariencia clara u oscura. Sabemos que funciona si el cambio se ve de inmediato.
@@ -869,7 +880,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Elegir claro u oscuro cambia toda la app sin perder el color del rol.
   - La elección se guarda y sigue igual al volver a iniciar sesión (Real).
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F11 / R11 · Notificaciones
 - **Objetivo:** Esta pantalla existe para que cualquier persona pueda controlar sus avisos y ver los recientes. Sabemos que funciona si activa o desactiva los avisos y abre uno reciente.
@@ -884,7 +895,7 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - Se ve igual al diseño aprobado.
   - Al tocar un aviso se abre su pantalla.
   - Con los avisos desactivados no llegan notificaciones al celular.
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F12 / R12 · Accesibilidad
 - **Objetivo:** Esta pantalla existe para que cualquier persona pueda reducir el movimiento y las transparencias. Sabemos que funciona si, al activarlas, las animaciones y el vidrio cambian.
@@ -893,4 +904,4 @@ En el orden del flujo. En todas, «Archivo de diseño» es `disenos/prototipo.ht
   - «Reducir movimiento» acorta las animaciones.
   - «Reducir transparencia» vuelve opaca la barra flotante.
   - La elección se guarda (Real).
-  - Funciona en celular (375 px).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).

@@ -31,7 +31,7 @@ Looped: una app de música con espacios de conversación que el artista controla
 ## Componentes disponibles
 Definidos en css/components.css y mostrados en componentes.html (ahí está el HTML completo de cada uno). Decisiones en decisiones-design-kit.md.
 - Rol y apariencia: en `<html>` usa `data-rol="fan"` o `data-rol="artista"`, y `data-tema="claro"` para el tema claro (sin el atributo, la apariencia es oscura).
-- Íconos: copia el bloque `<svg>` con los `<symbol>` del inicio de componentes.html y usa `<svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>`. Variante: `.icono--pequeno`. Archivos de referencia en assets/iconos/.
+- Íconos: copia el bloque `<svg>` con los `<symbol>` del inicio de componentes.html y usa `<svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>`. Variante: `.icono--pequeno`. Para mostrar u ocultar: `#icono-ver` y `#icono-ocultar`. Archivos de referencia en assets/iconos/.
 - Texto: `.titulo` (32), `.titulo--medio` (24), `.titulo--pequeno` (20), `.texto`, `.texto--pequeno`, `.texto--suave`, `.rotulo`, `.rotulo--pequeno`. Ej.: `<h1 class="titulo">Descubre</h1>`
 - `.logo` con `.logo--blanco` y `.logo--negro` (pon las dos imágenes; el CSS muestra la correcta). Ej.: `<img class="logo logo--blanco" src="assets/logo-firma-blanco.svg" alt="Looped">`
 - `.boton` (principal), `.boton--secundario`, `.boton--terciario`, `.boton--peligro`, `.boton--pequeno`, `.boton--bloque`. Ej.: `<button type="button" class="boton boton--bloque">Continuar</button>`
@@ -46,6 +46,8 @@ Definidos en css/components.css y mostrados en componentes.html (ahí está el H
 - `.velo` + `.dialogo` (`__titulo`, `__texto`, `__acciones`). Ej.: `<div class="velo" hidden><div class="dialogo" role="dialog" aria-modal="true">…</div></div>`
 - `.navegacion` + `.navegacion__pestana` (la actual con `aria-current="page"`). Ej.: `<nav class="navegacion"><a class="navegacion__pestana" href="#" aria-current="page">ícono<span>Inicio</span></a>…</nav>`
 - `.campo` (`__etiqueta`, `__control`, `__ayuda`, `__mensaje-error`), `.campo--error`, `.area-texto`. Ej.: `<label class="campo"><span class="campo__etiqueta">Correo</span><input class="campo__control" type="email"></label>`
+- Campo con botón adentro (mostrar la contraseña): `.campo__grupo` + `.campo__boton`. Ej.: `<div class="campo"><label class="campo__etiqueta" for="clave">Contraseña</label><div class="campo__grupo"><input class="campo__control" id="clave" type="password"><button type="button" class="boton-icono boton-icono--relleno campo__boton" aria-label="Mostrar contraseña">ícono</button></div></div>`
+- `.atmosfera` (manchas de fondo, primer hijo de `.pantalla`): `.atmosfera--inferior`, `.atmosfera--lateral`. Ej.: `<div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>`
 - `.buscador`. Ej.: `<label class="buscador">ícono<input type="search" aria-label="Buscar"></label>`
 - `.casilla` + `.casilla__caja`. Ej.: `<label class="casilla"><input type="checkbox"><span class="casilla__caja">ícono check</span>Indie</label>`
 - `.chips` + `.chip`, y `.selector` (con `.boton--secundario` dentro); lo elegido lleva `aria-pressed="true"`. Ej.: `<button type="button" class="chip" aria-pressed="true">Emergentes</button>`
