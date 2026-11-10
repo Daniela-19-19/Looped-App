@@ -203,6 +203,10 @@
 .musica__lista { margin-top: var(--espacio-6); }
 .musica__etiquetas { margin-top: var(--espacio-2); }
 
+/* ---------- Acciones de una canción (nuevos lanzamientos, perfil del artista) ---------- */
+/* «Escuchar» ocupa el ancho y los botones de ícono (＋ cola, perfil) quedan a su lado. */
+.acciones-cancion { grid-auto-flow: column; grid-template-columns: minmax(0, 1fr); align-items: center; }
+
 /* ---------- Avisos flotantes (toast) ---------- */
 /* Aparecen arriba, centrados, y se van solos. */
 .pantalla__avisos {
@@ -236,8 +240,7 @@
 .nuevos__ventana { margin-top: var(--espacio-6); }
 .nuevos__seccion { margin-top: var(--espacio-8); }
 .nuevos__etiquetas { margin-top: var(--espacio-2); }
-/* «Escuchar» ocupa el ancho y el botón de perfil queda a su lado. */
-.nuevos__acciones { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+
 
 /* ---------- F02 · Perfil del artista (visto por el fan) ---------- */
 .perfil-artista__cabecera { display: flex; align-items: center; gap: var(--espacio-4); margin-top: var(--espacio-4); }
@@ -256,3 +259,9 @@
 .perfil-artista__etiquetas-musica { margin-top: var(--espacio-2); }
 .perfil-artista__mas { margin-top: var(--espacio-3); }
 .perfil-artista__comunidad { display: flex; justify-content: center; margin-top: var(--espacio-3); }
+
+/* ---------- Cola de reproducción ---------- */
+/* Una columna angosta: es una lista, no necesita todo el ancho. */
+.cola { max-width: var(--ancho-pantalla-media); }
+.cola__seccion { margin-top: var(--espacio-6); }
+.cola__etiquetas { margin-top: var(--espacio-3); }

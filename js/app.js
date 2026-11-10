@@ -1159,6 +1159,60 @@ function cambiarBucle() {
   actualizarReproductor();
 }
 
+// ----- Editar la cola (pantalla Cola y botones ＋) -----
+// Los cambios se hacen igual en la cola normal y en la mezclada, así el
+// orden se respeta tenga o no aleatorio.
+function enAmbosOrdenes(cambio) {
+  const estado = reproductor.estado;
+  estado.cola = cambio(estado.cola);
+  estado.mezcla = cambio(estado.mezcla);
+  guardarEstadoReproductor();
+  if (reproductor.alCambiar) reproductor.alCambiar();
+}
+
+// Agregar: la canción sonará después de la actual y de las que ya se
+// agregaron antes (como en otras apps de música). Si no suena nada, arranca.
+function agregarACola(id) {
+  const estado = reproductor.estado;
+  if (!estado || !reproductor.url) {
+    alternarCancion(id);
+    return;
+  }
+  if (estado.actual === id) {
+    mostrarAviso('Esta canción ya está sonando.');
+    return;
+  }
+  estado.agregadas = (estado.agregadas || []).filter(x => x !== id);
+  enAmbosOrdenes(orden => {
+    const sin = orden.filter(x => x !== id);
+    let posicion = sin.indexOf(estado.actual) + 1;
+    while (posicion < sin.length && estado.agregadas.includes(sin[posicion])) posicion++;
+    sin.splice(posicion, 0, id);
+    return sin;
+  });
+  estado.agregadas.push(id);
+  guardarEstadoReproductor();
+  mostrarAviso('Agregada a la cola.');
+}
+function quitarDeCola(id) {
+  const estado = reproductor.estado;
+  estado.agregadas = (estado.agregadas || []).filter(x => x !== id);
+  enAmbosOrdenes(orden => orden.filter(x => x !== id));
+}
+// Mueve una canción un lugar (-1 sube, 1 baja) en el orden que está sonando.
+function moverEnCola(id, paso) {
+  const estado = reproductor.estado;
+  const clave = estado.aleatorio ? 'mezcla' : 'cola';
+  const orden = estado[clave].slice();
+  const i = orden.indexOf(id);
+  const j = i + paso;
+  if (i < 0 || j < 0 || j >= orden.length) return;
+  [orden[i], orden[j]] = [orden[j], orden[i]];
+  estado[clave] = orden;
+  guardarEstadoReproductor();
+  if (reproductor.alCambiar) reproductor.alCambiar();
+}
+
 // Minutos de escucha (spec.md): solo el fan, solo mientras suena de verdad.
 function contarEscucha() {
   const audio = reproductor.audio;
@@ -1257,6 +1311,7 @@ function pintarReproductor() {
   const ampliado = document.querySelector('[data-reproductor]');
   if (!mini) return;
   const lanzamiento = lanzamientoSonando();
+  if (reproductor.alCambiar) reproductor.alCambiar(); // p. ej. la pantalla Cola
   if (!lanzamiento) {
     mini.hidden = true;
     mini.innerHTML = '';
@@ -1414,6 +1469,9 @@ function activarBotonesReproducir(contenedor) {
       alternarCancion(boton.dataset.reproducir, Boolean(boton.querySelector('[data-texto-reproducir]')));
     });
   });
+  contenedor.querySelectorAll('[data-agregar-cola]').forEach(boton => {
+    boton.addEventListener('click', () => agregarACola(boton.dataset.agregarCola));
+  });
   actualizarReproductor();
 }
 
@@ -1422,6 +1480,13 @@ function botonReproducir(lanzamiento, clases) {
   return `<button type="button" class="boton-icono ${clases}" data-reproducir="${escapar(lanzamiento.id)}"
     data-titulo="${escapar(lanzamiento.nombreCancion)}" aria-label="Reproducir ${escapar(lanzamiento.nombreCancion)}">
     <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg></button>`;
+}
+
+// HTML del botón ＋ «Agregar a la cola».
+function botonAgregarCola(lanzamiento, clases = 'boton-icono--pequeno') {
+  return `<button type="button" class="boton-icono ${clases}" data-agregar-cola="${escapar(lanzamiento.id)}"
+    aria-label="Agregar ${escapar(lanzamiento.nombreCancion)} a la cola">
+    <svg class="icono" aria-hidden="true"><use href="#icono-agregar"></use></svg></button>`;
 }
 
 // Portada de un lanzamiento (o un cuadro vacío si no tiene).
@@ -1461,6 +1526,7 @@ function htmlFilaCancion(lanzamiento) {
         <b class="fila-lista__titulo">${escapar(lanzamiento.nombreCancion)}</b>
         <span class="fila-lista__detalle">${escapar(artista ? artista.nombreArtistico : '')} · ${escapar(lanzamiento.nombreLanzamiento)}</span>
       </span>
+      ${botonAgregarCola(lanzamiento)}
       ${botonReproducir(lanzamiento, 'boton-icono--relleno boton-icono--pequeno')}
     </div>`;
 }
@@ -1679,11 +1745,12 @@ function pantallaNuevosLanzamientosFan() {
               <div class="etiquetas nuevos__etiquetas"><span class="etiqueta etiqueta--borde">Quedan ${horasRestantesVentana(l)} h</span></div>
             </div>
           </div>
-          <div class="tarjeta__acciones nuevos__acciones">
+          <div class="tarjeta__acciones acciones-cancion">
             <button type="button" class="boton" data-reproducir="${escapar(l.id)}" data-titulo="${escapar(l.nombreCancion)} de ${escapar(nombreArtista)}">
               <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
               <span data-texto-reproducir="Escuchar">Escuchar</span>
             </button>
+            ${botonAgregarCola(l, 'boton-icono--borde')}
             <a class="boton-icono boton-icono--borde" href="perfil-artista-fan.html?id=${encodeURIComponent(l.artista)}"
               aria-label="Ver perfil de ${escapar(nombreArtista)}">
               <svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg>
@@ -1783,11 +1850,12 @@ function pantallaPerfilArtistaFan() {
               <div class="etiquetas perfil-artista__etiquetas-musica"><span class="etiqueta etiqueta--borde">${enVentana ? 'Nuevo lanzamiento' : escapar(haceCuanto(ultimo.fechaPublicacion))}</span></div>
             </div>
           </div>
-          <div class="tarjeta__acciones">
-            <button type="button" class="boton boton--secundario boton--bloque" data-reproducir="${escapar(ultimo.id)}" data-titulo="${escapar(ultimo.nombreCancion)}">
+          <div class="tarjeta__acciones acciones-cancion">
+            <button type="button" class="boton boton--secundario" data-reproducir="${escapar(ultimo.id)}" data-titulo="${escapar(ultimo.nombreCancion)}">
               <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
               <span data-texto-reproducir="Escuchar">Escuchar</span>
             </button>
+            ${botonAgregarCola(ultimo, 'boton-icono--borde')}
           </div>
         </article>
         ${lanzamientos.length > 1 ? `<div class="tarjeta perfil-artista__mas">${lanzamientos.slice(1).map(htmlFilaCancion).join('')}</div>` : ''}`;
@@ -1847,6 +1915,162 @@ function pantallaPerfilArtistaFan() {
       caja.querySelector('[data-seguir]').focus(); // el foco no se pierde al redibujar
     });
   }
+  pintar();
+}
+
+// ---------- Cola de reproducción ----------
+// Diseño aprobado por el equipo (09-11-2026): «Sonando ahora», «A continuación»
+// y un menú ⋯ en cada canción con Reproducir ahora, Subir, Bajar y Quitar.
+function pantallaColaFan() {
+  // Sin sesión de fan, a iniciar sesión.
+  if (!fanActual()) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  // Volver: a la pantalla anterior si venimos de la app; si no, a Inicio.
+  document.querySelector('[data-volver]').addEventListener('click', evento => {
+    if (document.referrer && new URL(document.referrer).origin === location.origin) {
+      evento.preventDefault();
+      history.back();
+    }
+  });
+
+  const caja = document.querySelector('[data-cola]');
+  const artistas = obtenerDatos('artistas');
+  const nombreArtista = l => {
+    const artista = artistas.find(a => a.id === l.artista);
+    return artista ? artista.nombreArtistico : '';
+  };
+  let menuAbierto = null; // { menu, boton }
+
+  function pintar(enfocar) {
+    const estado = reproductor.estado;
+    const actual = lanzamientoSonando();
+    if (!estado || !actual) {
+      caja.innerHTML = `
+        <div class="tarjeta">
+          <h2 class="tarjeta__titulo">Todavía no suena nada</h2>
+          <p class="tarjeta__texto">Toca ▶ en una canción y aquí verás lo que sigue.</p>
+          <div class="tarjeta__acciones"><a class="boton boton--secundario boton--bloque" href="nuevos-lanzamientos-fan.html">Ver nuevos lanzamientos</a></div>
+        </div>`;
+      return;
+    }
+    const lanzamientos = obtenerDatos('lanzamientos');
+    const orden = ordenDeLaCola();
+    const siguientes = orden.slice(orden.indexOf(estado.actual) + 1)
+      .map(id => lanzamientos.find(l => l.id === id))
+      .filter(Boolean);
+
+    const filas = siguientes.map((l, i) => {
+      const menuId = `menu-cola-${i}`;
+      const nombre = escapar(l.nombreCancion);
+      return `
+        <div class="fila-lista">
+          ${htmlPortada(l, 'portada--pequena')}
+          <span class="fila-lista__info">
+            <b class="fila-lista__titulo">${nombre}</b>
+            <span class="fila-lista__detalle">${escapar(nombreArtista(l))}</span>
+          </span>
+          <div class="desplegable">
+            <button type="button" class="boton-icono boton-icono--pequeno" data-opciones="${escapar(l.id)}"
+              aria-label="Opciones de ${nombre}" aria-haspopup="true" aria-expanded="false" aria-controls="${menuId}">
+              <svg class="icono" aria-hidden="true"><use href="#icono-opciones"></use></svg>
+            </button>
+            <div class="menu" id="${menuId}" role="menu" aria-label="Opciones de ${nombre}" hidden>
+              <button type="button" class="menu__opcion" role="menuitem" data-accion="reproducir" data-id="${escapar(l.id)}">Reproducir ahora</button>
+              ${i > 0 ? `<button type="button" class="menu__opcion" role="menuitem" data-accion="subir" data-id="${escapar(l.id)}">Subir</button>` : ''}
+              ${i < siguientes.length - 1 ? `<button type="button" class="menu__opcion" role="menuitem" data-accion="bajar" data-id="${escapar(l.id)}">Bajar</button>` : ''}
+              <button type="button" class="menu__opcion" role="menuitem" data-accion="quitar" data-id="${escapar(l.id)}">Quitar</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    caja.innerHTML = `
+      <section class="cola__seccion" aria-labelledby="titulo-sonando">
+        <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-sonando">Sonando ahora</h2></div>
+        <div class="tarjeta">
+          <div class="fila-lista">
+            ${htmlPortada(actual, 'portada--pequena')}
+            <span class="fila-lista__info">
+              <b class="fila-lista__titulo">${escapar(actual.nombreCancion)}</b>
+              <span class="fila-lista__detalle">${escapar(nombreArtista(actual))}</span>
+            </span>
+            ${botonReproducir(actual, 'boton-icono--relleno boton-icono--pequeno')}
+          </div>
+        </div>
+        ${estado.aleatorio ? '<div class="etiquetas cola__etiquetas"><span class="etiqueta etiqueta--acento">Aleatorio activado</span></div>' : ''}
+      </section>
+      <section class="cola__seccion" aria-labelledby="titulo-siguen">
+        <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-siguen">A continuación</h2></div>
+        ${siguientes.length
+          ? `<div class="tarjeta">${filas}</div>`
+          : `<div class="tarjeta">
+              <p class="tarjeta__texto">No hay más canciones en la cola.</p>
+              <div class="tarjeta__acciones"><a class="boton boton--secundario boton--bloque" href="nuevos-lanzamientos-fan.html">Ver nuevos lanzamientos</a></div>
+            </div>`}
+      </section>`;
+    activarBotonesReproducir(caja);
+
+    // Después de mover o quitar, el foco queda en un lugar útil (teclado).
+    if (enfocar) {
+      const destino = caja.querySelector(`[data-opciones="${enfocar}"]`) || caja.querySelector('[data-opciones]') || caja.querySelector('#titulo-siguen');
+      if (destino) {
+        if (destino.id === 'titulo-siguen') destino.tabIndex = -1;
+        destino.focus();
+      }
+    }
+  }
+
+  function cerrarMenu(devolverFoco) {
+    if (!menuAbierto) return;
+    menuAbierto.menu.hidden = true;
+    menuAbierto.boton.setAttribute('aria-expanded', 'false');
+    if (devolverFoco) menuAbierto.boton.focus();
+    menuAbierto = null;
+  }
+
+  caja.addEventListener('click', evento => {
+    const botonMenu = evento.target.closest('[data-opciones]');
+    if (botonMenu) {
+      const yaAbierto = menuAbierto && menuAbierto.boton === botonMenu;
+      cerrarMenu(false);
+      if (yaAbierto) { botonMenu.focus(); return; }
+      const menu = botonMenu.nextElementSibling;
+      menu.hidden = false;
+      botonMenu.setAttribute('aria-expanded', 'true');
+      menuAbierto = { menu, boton: botonMenu };
+      menu.querySelector('.menu__opcion').focus();
+      return;
+    }
+    const opcion = evento.target.closest('.menu__opcion');
+    if (!opcion) return;
+    const id = opcion.dataset.id;
+    const accion = opcion.dataset.accion;
+    // El que sigue en la lista, para dejar ahí el foco si esta canción se va.
+    const filas = [...caja.querySelectorAll('[data-opciones]')].map(b => b.dataset.opciones);
+    const vecino = filas[filas.indexOf(id) + 1] || filas[filas.indexOf(id) - 1];
+    menuAbierto = null;
+    if (accion === 'reproducir') cargarCancion(id);
+    if (accion === 'subir') { moverEnCola(id, -1); pintar(id); }
+    if (accion === 'bajar') { moverEnCola(id, 1); pintar(id); }
+    if (accion === 'quitar') { quitarDeCola(id); pintar(vecino); mostrarAviso('Quitada de la cola.'); }
+  });
+  // Flechas arriba y abajo dentro del menú; Esc lo cierra.
+  caja.addEventListener('keydown', evento => {
+    if (!menuAbierto) return;
+    const opciones = [...menuAbierto.menu.querySelectorAll('.menu__opcion')];
+    const actual = opciones.indexOf(document.activeElement);
+    if (evento.key === 'ArrowDown') { evento.preventDefault(); opciones[(actual + 1) % opciones.length].focus(); }
+    if (evento.key === 'ArrowUp') { evento.preventDefault(); opciones[(actual - 1 + opciones.length) % opciones.length].focus(); }
+    if (evento.key === 'Escape') cerrarMenu(true);
+  });
+  document.addEventListener('click', evento => {
+    if (!evento.target.closest('.desplegable')) cerrarMenu(false);
+  });
+
+  // Cuando cambia la canción o la cola (p. ej. termina una), se vuelve a dibujar.
+  reproductor.alCambiar = () => { if (!menuAbierto) pintar(); };
   pintar();
 }
 
@@ -2306,7 +2530,8 @@ const PANTALLAS = {
   'publicar-lanzamiento-artista': pantallaPublicarLanzamiento,
   'lanzamiento-artista': pantallaLanzamientoArtista,
   'nuevos-lanzamientos-fan': pantallaNuevosLanzamientosFan,
-  'perfil-artista-fan': pantallaPerfilArtistaFan
+  'perfil-artista-fan': pantallaPerfilArtistaFan,
+  'cola-fan': pantallaColaFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {

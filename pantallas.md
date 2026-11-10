@@ -67,7 +67,7 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 | F01c | Nuevos lanzamientos | `pages/nuevos-lanzamientos-fan.html` | ✅ | ✅ | |
 | F02 | Perfil del artista (visto por el fan) | `pages/perfil-artista-fan.html` | ✅ | ✅ | |
 | — | Reproductor (minirreproductor y vista ampliada) | capa sobre las pantallas con navegación (`js/app.js`) | ✅ | ✅ | |
-| — | Cola de reproducción (sin diseño todavía) | `pages/cola-fan.html` | | | |
+| — | Cola de reproducción (diseño aprobado el 09-11-2026) | `pages/cola-fan.html` | ✅ | ✅ | |
 
 ### 5 · Cupo y preguntas
 

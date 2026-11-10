@@ -77,7 +77,7 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Minirreproductor** (`.minirreproductor`): cápsula de vidrio sobre la navegación; en computador va abajo, a la derecha de la barra lateral.
 - **Barra de avance** (`.avance`): control deslizante con los tiempos; lo avanzado se pinta con la variable `--avance`.
 - **Botón de ícono prendido** (`.boton-icono[aria-pressed="true"]`): se rellena del color del rol (aleatorio y bucle). Se usa relleno y no solo color de ícono porque el turquesa sobre blanco no tiene contraste suficiente.
-- **Íconos** `cancion-anterior`, `cancion-siguiente`, `aleatorio`, `bucle`, `bucle-una`, `cola` y `bajar`.
+- **Íconos** `cancion-anterior`, `cancion-siguiente`, `aleatorio`, `bucle`, `bucle-una`, `cola` y `bajar`; `opciones` (⋯) para el menú de cada canción en la cola.
 
 ## Historial de cambios
 
@@ -102,3 +102,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Panel del artista: los cuatro botones con borde, morados solo al pasar, tocar o enfocar; `.boton--rellenar` también se rellena al presionar | Pedido del equipo |
 | 2026-11-07 | Íconos `audio` e `imagen` | Construcción de publicar lanzamiento (R03) |
 | 2026-11-09 | Reproductor, minirreproductor, barra de avance, botón de ícono prendido e íconos del reproductor | Construcción del reproductor (tramo 4) |
+| 2026-11-09 | Ícono `opciones` (⋯) | Construcción de la cola de reproducción (menú en cada fila, aprobado por el equipo) |

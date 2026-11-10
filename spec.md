@@ -468,7 +468,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   - Al tocar ▶ en una canción, la cola es esa canción y después los demás lanzamientos, del más nuevo al más viejo.
 
 ### Cola de reproducción (pantalla nueva)
-- **Archivo de diseño:** no tiene diseño todavía. El equipo debe diseñarla o aprobarla antes de construirla.
+- **Archivo de diseño:** no tiene diseño en el prototipo. **Diseño aprobado por el equipo (09-11-2026):** «Sonando ahora» (tarjeta con la canción actual), aviso «Aleatorio activado» cuando aplica, «A continuación» (filas con portada, nombre y artista) y un menú ⋯ en cada fila con Reproducir ahora, Subir, Bajar y Quitar. Un botón ＋ «Agregar a la cola» en las canciones de Inicio, Explorar, Nuevos lanzamientos y el perfil del artista; la canción agregada suena después de la actual (y de las agregadas antes).
 - **Objetivo:** Esta pantalla existe para que el fan pueda ver y ordenar lo que va a sonar. Sabemos que funciona si cambia el orden o quita una canción y el reproductor lo respeta.
 - **Contenido:**
   1. Canción que suena ahora.
