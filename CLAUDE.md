@@ -9,6 +9,9 @@ Looped: una app de música con espacios de conversación que el artista controla
 - HTML, CSS y JavaScript puro. Sin frameworks ni librerías (nada de React, Vue, Tailwind ni TypeScript) y sin paso de compilación: todo debe funcionar abriendo los archivos en el navegador.
 - La app se publicará en Vercel, conectada a este repositorio.
 - La base de datos es Supabase: cuentas, música, preguntas y todo lo demás se guardan ahí de verdad. Los datos de ejemplo (Mara Sol y los demás artistas) son solo los datos iniciales.
+- Única librería permitida: `supabase-js`, cargada desde el CDN con un `<script>` (sin compilación). La conexión vive en js/supabase.js y se usa con la variable `baseDatos`.
+- En el código solo va la clave pública de Supabase (`sb_publishable_…`). La clave secreta (`sb_secret_…`) nunca va en el código ni en el chat. La seguridad la dan las reglas RLS de supabase/esquema.sql.
+- El SQL de la base de datos está en supabase/: esquema.sql (tablas y reglas) y datos-iniciales.sql (Mara Sol y los demás). Se pega en el SQL Editor de Supabase.
 
 ## Estructura del proyecto
 - disenos/: diseños originales. Solo de referencia: nunca los modifiques.

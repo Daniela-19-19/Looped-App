@@ -174,15 +174,6 @@ function activarMostrarContrasena(control, boton) {
   });
 }
 
-// ¿Este correo ya tiene una cuenta, de fan o de artista?
-function correoRegistrado(correo) {
-  const buscado = correo.toLowerCase();
-  const propia = perfilGuardado();
-  if (propia && propia.correo.toLowerCase() === buscado) return true;
-  return obtenerDatos('fans').some(f => f.correo.toLowerCase() === buscado) ||
-    obtenerDatos('artistas').some(a => a.correo.toLowerCase() === buscado);
-}
-
 // ---------- Registro en curso ----------
 // Lo que la persona va llenando en los pasos del registro (rol, correo…),
 // guardado solo en esta pestaña. Nunca se guarda la contraseña.
@@ -306,12 +297,14 @@ function pantallaCrearCuenta() {
   correo.addEventListener('input', () => mostrarError('correo', ''));
   contrasena.addEventListener('input', () => mostrarError('contrasena', ''));
 
-  formulario.addEventListener('submit', evento => {
+  const botonContinuar = document.querySelector('button[form="formulario-cuenta"]');
+
+  formulario.addEventListener('submit', async evento => {
     evento.preventDefault();
+    if (botonContinuar.disabled) return; // ya se está creando la cuenta
     const textoCorreo = correo.value.trim();
 
     if (!correoValido(textoCorreo)) mostrarError('correo', 'Escribe un correo válido.');
-    else if (correoRegistrado(textoCorreo)) mostrarError('correo', 'Este correo ya tiene una cuenta. Inicia sesión.');
     if (contrasena.value.length < 6) mostrarError('contrasena', 'La contraseña necesita al menos 6 caracteres.');
 
     const conError = formulario.querySelector('[aria-invalid="true"]');
@@ -320,8 +313,43 @@ function pantallaCrearCuenta() {
       return;
     }
 
-    // SIMULADO: aquí se creará la cuenta en Supabase. Por ahora solo se
-    // recuerda el correo para los pasos siguientes (la contraseña no).
+    // REAL: crea la cuenta en Supabase Auth. El rol (fan o artista) se
+    // guarda con la cuenta, así al iniciar sesión la app sabe qué lado abrir.
+    // Supabase revisa que el correo no tenga ya otra cuenta.
+    botonContinuar.disabled = true;
+    botonContinuar.textContent = 'Creando tu cuenta…';
+    let respuesta;
+    try {
+      respuesta = await baseDatos.auth.signUp({
+        email: textoCorreo,
+        password: contrasena.value,
+        options: { data: { rol } }
+      });
+    } catch (e) {
+      respuesta = { error: { code: 'sin_conexion' } };
+    }
+    botonContinuar.disabled = false;
+    botonContinuar.textContent = 'Continuar';
+
+    const error = respuesta.error;
+    if (error) {
+      if (error.code === 'user_already_exists' || error.code === 'email_exists') {
+        mostrarError('correo', 'Este correo ya tiene una cuenta. Inicia sesión.');
+        correo.focus();
+      } else if (error.code === 'weak_password') {
+        mostrarError('contrasena', 'Esta contraseña es muy fácil de adivinar. Prueba con otra.');
+        contrasena.focus();
+      } else if (error.code === 'email_address_invalid') {
+        mostrarError('correo', 'Escribe un correo válido.');
+        correo.focus();
+      } else {
+        mostrarError('correo', 'No pudimos crear la cuenta. Revisa tu conexión e inténtalo otra vez.');
+        correo.focus();
+      }
+      return;
+    }
+
+    // La contraseña nunca se guarda en la app: solo el correo, para los pasos siguientes.
     guardarRegistro({ correo: textoCorreo });
     location.href = rol === 'artista' ? 'identidad-artista.html' : 'perfil-basico-fan.html';
   });
