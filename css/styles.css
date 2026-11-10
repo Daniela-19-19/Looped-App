@@ -203,3 +203,10 @@
 .lanzamiento__tarjeta { margin-top: var(--espacio-3); }
 .lanzamiento__nombre { margin-top: var(--espacio-4); }
 .lanzamiento__eliminar { display: flex; justify-content: center; margin-top: var(--espacio-2); }
+
+/* ---------- F01c · Nuevos lanzamientos ---------- */
+.nuevos__ventana { margin-top: var(--espacio-6); }
+.nuevos__seccion { margin-top: var(--espacio-8); }
+.nuevos__etiquetas { margin-top: var(--espacio-2); }
+/* «Escuchar» ocupa el ancho y el botón de perfil queda a su lado. */
+.nuevos__acciones { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }

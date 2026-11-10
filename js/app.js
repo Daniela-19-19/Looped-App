@@ -971,7 +971,9 @@ function actualizarBotonesReproducir() {
     // Botones con texto (p. ej. «Escuchar lanzamiento»): el texto cambia a «Pausar».
     const texto = boton.querySelector('[data-texto-reproducir]');
     if (texto) texto.textContent = sonando ? 'Pausar' : texto.dataset.textoReproducir;
-    else boton.setAttribute('aria-label', `${sonando ? 'Pausar' : 'Reproducir'} ${boton.dataset.titulo}`);
+    // El nombre para lectores de pantalla empieza igual que el texto visible y dice qué suena.
+    const accion = texto ? texto.textContent : (sonando ? 'Pausar' : 'Reproducir');
+    boton.setAttribute('aria-label', `${accion} ${boton.dataset.titulo}`);
   });
 }
 
@@ -1225,6 +1227,75 @@ function pantallaInicioFan() {
   document.querySelector('[data-recorrido] .progreso__barra').style.width = `${progreso.porcentaje}%`;
 
   // Todos los botones ▶ de la página (destacado y canciones)
+  activarBotonesReproducir(document.querySelector('main'));
+}
+
+// ---------- F01c · Nuevos lanzamientos ----------
+// Misma oportunidad para todos: solo cuenta la fecha (ventana de 48 h), nunca
+// los seguidores, y el orden se mezcla al azar en cada visita.
+function mezclar(lista) {
+  const copia = lista.slice();
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+function pantallaNuevosLanzamientosFan() {
+  // Sin sesión de fan, a iniciar sesión.
+  if (!fanActual()) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const artistas = obtenerDatos('artistas');
+  const lanzamientos = obtenerDatos('lanzamientos');
+  const enVentana = mezclar(lanzamientos.filter(l => horasRestantesVentana(l) > 0));
+  const anteriores = lanzamientos
+    .filter(l => horasRestantesVentana(l) === 0)
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+
+  const cajaVentana = document.querySelector('[data-lista-ventana]');
+  if (enVentana.length) {
+    cajaVentana.innerHTML = enVentana.map(l => {
+      const artista = artistas.find(a => a.id === l.artista);
+      const nombreArtista = artista ? artista.nombreArtistico : '';
+      return `
+        <article class="tarjeta">
+          <div class="tarjeta__cabecera">
+            ${htmlPortada(l, 'portada--mediana')}
+            <div>
+              <h2 class="tarjeta__titulo">${escapar(l.nombreLanzamiento)}</h2>
+              <p class="tarjeta__texto">${escapar(nombreArtista)}</p>
+              <div class="etiquetas nuevos__etiquetas"><span class="etiqueta etiqueta--borde">Quedan ${horasRestantesVentana(l)} h</span></div>
+            </div>
+          </div>
+          <div class="tarjeta__acciones nuevos__acciones">
+            <button type="button" class="boton" data-reproducir="${escapar(l.id)}" data-titulo="${escapar(l.nombreCancion)} de ${escapar(nombreArtista)}">
+              <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+              <span data-texto-reproducir="Escuchar">Escuchar</span>
+            </button>
+            <a class="boton-icono boton-icono--borde" href="perfil-artista-fan.html?id=${encodeURIComponent(l.artista)}"
+              aria-label="Ver perfil de ${escapar(nombreArtista)}">
+              <svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg>
+            </a>
+          </div>
+        </article>`;
+    }).join('');
+  } else {
+    cajaVentana.innerHTML = `
+      <div class="tarjeta">
+        <h2 class="tarjeta__titulo">No hay lanzamientos en su ventana</h2>
+        <p class="tarjeta__texto">Cuando un artista publique, aparecerá aquí durante sus primeras 48 horas.</p>
+      </div>`;
+  }
+
+  if (anteriores.length) {
+    document.querySelector('[data-lista-anteriores]').innerHTML = anteriores.map(htmlFilaCancion).join('');
+  } else {
+    document.querySelector('[data-seccion-anteriores]').remove();
+  }
+
   activarBotonesReproducir(document.querySelector('main'));
 }
 
@@ -1682,7 +1753,8 @@ const PANTALLAS = {
   'explorar-fan': pantallaExplorarFan,
   'musica-artista': pantallaMusicaArtista,
   'publicar-lanzamiento-artista': pantallaPublicarLanzamiento,
-  'lanzamiento-artista': pantallaLanzamientoArtista
+  'lanzamiento-artista': pantallaLanzamientoArtista,
+  'nuevos-lanzamientos-fan': pantallaNuevosLanzamientosFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {
