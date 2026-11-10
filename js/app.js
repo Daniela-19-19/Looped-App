@@ -2315,6 +2315,9 @@ function pantallaConectarFan() {
           <div class="tarjeta__encabezado"><span class="tarjeta__meta">Para ${nombre}</span>${etiqueta}</div>
           <p class="tarjeta__texto tarjeta__texto--principal">${escapar(p.texto)}</p>
           <p class="tarjeta__texto">${escapar(textoEstadoPregunta(p, artista))}</p>
+          <div class="tarjeta__acciones">
+            <a class="boton ${respondida ? 'boton--secundario' : 'boton--terciario'}" href="tu-conexion-fan.html?id=${encodeURIComponent(p.id)}">${respondida ? 'Ver respuesta' : 'Ver mi pregunta'}</a>
+          </div>
         </article>`;
     };
     const tarjetaComunidad = p => {
@@ -2437,15 +2440,707 @@ function pantallaEscribirPreguntaFan() {
     // La base de datos revisa cupo y nivel, y marca primer contacto y Fan Club.
     boton.disabled = true;
     boton.textContent = 'Enviando…';
-    const { error } = await baseDatos.from('preguntas').insert({ artista: id, autor: fan.id, texto });
+    const { data, error } = await baseDatos.from('preguntas')
+      .insert({ artista: id, autor: fan.id, texto }).select('id').single();
     if (error) {
       boton.disabled = false;
       boton.textContent = 'Enviar pregunta';
       mostrarAviso(mensajeErrorParticipacion(error));
       return;
     }
-    location.replace(`${conectar}&enviada=1`);
+    // Como en el diseño: después de enviar, «Tu conexión» muestra la pregunta en cola.
+    location.replace(`tu-conexion-fan.html?id=${encodeURIComponent(data.id)}&enviada=1`);
   });
+}
+
+// ---------- Preguntas y respuestas: piezas compartidas ----------
+// Votos de una pregunta (corazón con número).
+function htmlVotos(votos) {
+  return `<span class="votos" aria-label="${votos} ${votos === 1 ? 'voto' : 'votos'}"><svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-votos"></use></svg>${votos}</span>`;
+}
+
+// Qué le pasa a una pregunta, dicho para el artista.
+const PISTA_PREGUNTA = {
+  nueva: 'Selecciona una pregunta para decidir si la respondes.',
+  pendiente: 'Puedes mantenerla en cola o descartarla.',
+  seleccionada: 'La seleccionaste. Falta enviar tu respuesta.',
+  respondida: 'Respuesta enviada al fan.',
+  descartada: 'Descartada.'
+};
+
+// Tarjeta de una pregunta en el lado del artista. Con «accion», lleva a
+// revisarla o, si ya está respondida, a ver la respuesta.
+function htmlPreguntaArtista(pregunta, { accion = true, etiqueta = '' } = {}) {
+  const autor = obtenerDatos('fans').find(f => f.id === pregunta.autor);
+  const detalles = [autor ? autor.nombrePerfil : 'Fan'];
+  if (pregunta.autorEsFanClub) detalles.push('Fan Club');
+  if (pregunta.primerContacto) detalles.push('Primer contacto');
+  const enlace = encodeURIComponent(pregunta.id);
+  const boton = !accion ? ''
+    : pregunta.estado === 'respondida'
+      ? `<a class="boton boton--secundario boton--bloque" href="respuesta-artista.html?id=${enlace}">Ver respuesta</a>`
+      : `<a class="boton boton--bloque" href="revisar-pregunta-artista.html?id=${enlace}">Revisar pregunta</a>`;
+  return `
+    <article class="tarjeta">
+      <div class="tarjeta__encabezado">
+        <span class="tarjeta__meta">${escapar(detalles.join(' · '))}</span>
+        ${etiqueta || htmlVotos(pregunta.votos)}
+      </div>
+      <p class="tarjeta__texto tarjeta__texto--principal">${escapar(pregunta.texto)}</p>
+      <p class="tarjeta__texto">${PISTA_PREGUNTA[pregunta.estado] || ''}</p>
+      ${boton ? `<div class="tarjeta__acciones">${boton}</div>` : ''}
+    </article>`;
+}
+
+// Estado del cupo en una línea, para el artista.
+function textoCupoArtista(cupo) {
+  if (cupo && cupo.estado === 'abierto') {
+    return `Cupo abierto · te quedan ${Math.max(0, cupo.totalPreguntas - cupo.preguntasUsadas)} de ${cupo.totalPreguntas} respuestas`;
+  }
+  if (cupo && cupo.estado === 'completo') return 'Cupo completo · abre uno nuevo para responder';
+  return 'Cupo cerrado · ábrelo para responder';
+}
+
+// Nota de voz con el componente .avance del kit: botón Escuchar/Pausar,
+// barra para moverse y tiempos.
+function htmlNotaDeVoz(duracion) {
+  return `
+    <div class="nota-voz" data-nota-voz>
+      <button type="button" class="boton boton--secundario boton--bloque" data-nota-boton>
+        <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+        <span>Escuchar nota</span>
+      </button>
+      <div class="avance">
+        <input class="avance__control" type="range" min="0" max="1000" value="0" aria-label="Posición de la nota de voz" style="--avance: 0%">
+        <div class="avance__tiempos"><span data-nota-actual>0:00</span><span data-nota-total>${formatoDuracion(duracion || 0)}</span></div>
+      </div>
+    </div>`;
+}
+
+// Hace sonar la nota de voz dibujada con htmlNotaDeVoz(). Devuelve el audio.
+// Al sonar, pausa la música del reproductor para no oír las dos a la vez.
+function activarNotaDeVoz(caja, url, duracionGuardada) {
+  const nota = caja.querySelector('[data-nota-voz]');
+  if (!nota) return null;
+  const audio = new Audio();
+  audio.preload = 'metadata';
+  audio.src = url;
+  const boton = nota.querySelector('[data-nota-boton]');
+  const control = nota.querySelector('.avance__control');
+  // Algunas grabaciones no traen su duración: se usa la guardada.
+  const duracion = () => (isFinite(audio.duration) && audio.duration > 0 ? audio.duration : duracionGuardada || 0);
+
+  function pintar() {
+    const total = duracion();
+    const porcentaje = total ? Math.min(100, (audio.currentTime / total) * 100) : 0;
+    control.value = Math.round(porcentaje * 10);
+    control.style.setProperty('--avance', `${porcentaje}%`);
+    nota.querySelector('[data-nota-actual]').textContent = formatoDuracion(audio.currentTime);
+    nota.querySelector('[data-nota-total]').textContent = formatoDuracion(total);
+    const sonando = !audio.paused;
+    boton.querySelector('use').setAttribute('href', sonando ? '#icono-pausa' : '#icono-reproducir');
+    boton.querySelector('span').textContent = sonando ? 'Pausar nota' : 'Escuchar nota';
+  }
+
+  boton.addEventListener('click', () => {
+    if (audio.paused) {
+      if (reproductor.audio && !reproductor.audio.paused) reproductor.audio.pause();
+      audio.play().catch(() => mostrarAviso('No pudimos reproducir la nota de voz.'));
+    } else {
+      audio.pause();
+    }
+  });
+  control.addEventListener('input', () => {
+    if (duracion()) audio.currentTime = (control.value / 1000) * duracion();
+    pintar();
+  });
+  ['timeupdate', 'play', 'pause', 'ended', 'loadedmetadata'].forEach(nombre => audio.addEventListener(nombre, pintar));
+  return audio;
+}
+
+// Tarjeta de una respuesta (texto o nota de voz).
+function htmlRespuesta(respuesta, titulo, { etiquetaTitulo = 'h2' } = {}) {
+  const contenido = respuesta.tipo === 'voz'
+    ? `<p class="tarjeta__meta">Nota de voz</p>${htmlNotaDeVoz(respuesta.duracionAudio)}`
+    : `<p class="tarjeta__texto tarjeta__texto--principal">${escapar(respuesta.texto)}</p>`;
+  return `
+    <section class="tarjeta">
+      <${etiquetaTitulo} class="tarjeta__titulo">${escapar(titulo)}</${etiquetaTitulo}>
+      ${contenido}
+      <p class="tarjeta__meta">${escapar(haceCuanto(respuesta.fecha))}</p>
+    </section>`;
+}
+
+// La pregunta pedida en la dirección (?id=), si es de este artista.
+function preguntaDelArtista(artista) {
+  const id = new URLSearchParams(location.search).get('id');
+  return obtenerDatos('preguntas').find(p => p.id === id && p.artista === artista.id) || null;
+}
+
+// ---------- R04 · Bandeja de preguntas ----------
+const FILTROS_BANDEJA = [['nuevas', 'Nuevas'], ['votadas', 'Más votadas'], ['pendientes', 'Pendientes'], ['respondidas', 'Respondidas']];
+const BANDEJA_VACIA = {
+  nuevas: ['No hay preguntas nuevas', 'Cuando tus fans participen, sus preguntas aparecerán aquí.'],
+  votadas: ['Sin preguntas en cola', 'Las preguntas con más votos aparecerán primero.'],
+  pendientes: ['Nada pendiente', 'Aquí verás las preguntas que mantengas en cola o hayas seleccionado.'],
+  respondidas: ['Aún no respondes', 'Tus respuestas enviadas quedarán aquí.']
+};
+
+// Las preguntas de cada filtro. Orden (decisión del equipo): más votadas
+// primero; si empatan, Fan Club primero. Nuevas y más votadas: solo de
+// fans con el nivel mínimo del cupo (spec.md).
+function preguntasDeBandeja(artistaId, filtro) {
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artistaId);
+  const nivelMinimo = cupo ? cupo.nivelMinimo : 0;
+  const fans = obtenerDatos('fans');
+  const conNivel = p => {
+    const autor = fans.find(f => f.id === p.autor);
+    return autor && nivelPorMinutos(autor.minutosEscucha) >= nivelMinimo;
+  };
+  const prioridad = (a, b) => (b.votos - a.votos) || (b.autorEsFanClub - a.autorEsFanClub) || (new Date(a.fecha) - new Date(b.fecha));
+  const lista = obtenerDatos('preguntas').filter(p => p.artista === artistaId);
+  if (filtro === 'nuevas') return preguntasNuevas(artistaId);
+  if (filtro === 'votadas') {
+    return lista.filter(p => ['nueva', 'pendiente', 'seleccionada'].includes(p.estado)).filter(conNivel).sort(prioridad);
+  }
+  if (filtro === 'pendientes') return lista.filter(p => ['pendiente', 'seleccionada'].includes(p.estado)).sort(prioridad);
+  if (filtro === 'respondidas') {
+    const respuestas = obtenerDatos('respuestas');
+    const fecha = p => (respuestas.find(r => r.pregunta === p.id) || p).fecha;
+    return lista.filter(p => p.estado === 'respondida').sort((a, b) => new Date(fecha(b)) - new Date(fecha(a)));
+  }
+  return [];
+}
+
+function pantallaBandejaArtista() {
+  // Sin sesión de artista, a iniciar sesión.
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const parametros = new URLSearchParams(location.search);
+  let filtro = FILTROS_BANDEJA.some(([clave]) => clave === parametros.get('f')) ? parametros.get('f') : 'nuevas';
+  // Aviso al volver de revisar una pregunta.
+  if (parametros.get('aviso') === 'cola') mostrarAviso('La pregunta sigue en cola.');
+  if (parametros.get('aviso') === 'descartada') mostrarAviso('Pregunta descartada.');
+
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+  document.querySelector('[data-estado-cupo]').textContent = textoCupoArtista(cupo);
+
+  // Punto de novedades en la pestaña si hay preguntas nuevas.
+  const nuevas = preguntasNuevas(artista.id);
+  if (nuevas.length) {
+    const pestana = document.querySelector('[data-pestana-preguntas]');
+    pestana.insertAdjacentHTML('beforeend', '<i class="navegacion__aviso" aria-hidden="true"></i>');
+    pestana.setAttribute('aria-label', `Preguntas, ${nuevas.length} nuevas`);
+  }
+
+  const filtros = document.querySelector('[data-filtros]');
+  const caja = document.querySelector('[data-lista-preguntas]');
+  const notaFanClub = document.querySelector('[data-nota-fan-club]');
+
+  function pintar() {
+    filtros.innerHTML = FILTROS_BANDEJA.map(([clave, nombre]) => {
+      const cuantas = preguntasDeBandeja(artista.id, clave).length;
+      const texto = nombre + (cuantas && clave !== 'respondidas' ? ` · ${cuantas}` : '');
+      return `<button type="button" class="boton boton--secundario" data-filtro="${clave}" aria-pressed="${clave === filtro}">${texto}</button>`;
+    }).join('');
+    const lista = preguntasDeBandeja(artista.id, filtro);
+    notaFanClub.hidden = !(filtro === 'nuevas' && lista.some(p => p.autorEsFanClub));
+    const [titulo, texto] = BANDEJA_VACIA[filtro];
+    caja.innerHTML = lista.length
+      ? lista.map(p => htmlPreguntaArtista(p)).join('')
+      : `<div class="tarjeta"><h2 class="tarjeta__titulo">${titulo}</h2><p class="tarjeta__texto">${texto}</p></div>`;
+  }
+
+  filtros.addEventListener('click', evento => {
+    const boton = evento.target.closest('[data-filtro]');
+    if (!boton) return;
+    filtro = boton.dataset.filtro;
+    // El filtro queda en la dirección: al volver de revisar, sigue el mismo.
+    history.replaceState(null, '', `?f=${filtro}`);
+    pintar();
+    filtros.querySelector(`[data-filtro="${filtro}"]`).focus();
+  });
+  pintar();
+}
+
+// ---------- R05 · Revisar pregunta ----------
+// Cambia el estado de una pregunta del artista. REAL: en «preguntas»
+// (el artista solo puede cambiar el estado de las suyas).
+async function cambiarEstadoPregunta(preguntaId, estado) {
+  const { data, error } = await baseDatos.from('preguntas')
+    .update({ estado }).eq('id', preguntaId).select('id');
+  return !error && data && data.length > 0;
+}
+
+function pantallaRevisarPreguntaArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const pregunta = preguntaDelArtista(artista);
+  if (!pregunta) return; // queda el mensaje del HTML
+  const caja = document.querySelector('[data-revisar]');
+  const enlace = encodeURIComponent(pregunta.id);
+  const autor = obtenerDatos('fans').find(f => f.id === pregunta.autor);
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+  const puedeResponder = cupo && cupo.estado === 'abierto' && cupo.preguntasUsadas < cupo.totalPreguntas;
+  const respondida = pregunta.estado === 'respondida';
+
+  let acciones;
+  if (respondida) {
+    acciones = `<a class="boton" href="respuesta-artista.html?id=${enlace}">Ver respuesta</a>`;
+  } else {
+    acciones = (puedeResponder
+      ? '<button type="button" class="boton" data-responder>Responder</button>'
+      : '<a class="boton" href="cupos-artista.html">Abrir cupo</a>')
+      + (pregunta.estado !== 'pendiente' ? '<button type="button" class="boton boton--secundario" data-mantener>Mantener en cola</button>' : '')
+      + (pregunta.estado !== 'descartada' ? '<button type="button" class="boton boton--terciario" data-descartar>Descartar</button>' : '');
+  }
+
+  caja.innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">Pregunta de ${escapar(autor ? autor.nombrePerfil : 'un fan')}.</h1>
+      <p class="encabezado-pagina__bajada">${escapar(textoCupoArtista(cupo))}</p>
+    </div>
+    ${htmlPreguntaArtista(pregunta, { accion: false })}
+    ${!puedeResponder && !respondida ? `
+    <div class="aviso aviso--advertencia pregunta__bloque">
+      <svg class="icono" aria-hidden="true"><use href="#icono-alerta"></use></svg>
+      <p><b>Tu cupo no está abierto.</b> Abre un cupo para responder. Puedes mantener la pregunta en cola mientras tanto.</p>
+    </div>` : ''}
+    <div class="pregunta__acciones">${acciones}</div>`;
+
+  // Cada botón queda quieto mientras se guarda.
+  function ocupado(boton, si) {
+    caja.querySelectorAll('.pregunta__acciones .boton').forEach(b => { b.disabled = si; });
+    if (boton) boton.setAttribute('aria-busy', String(si));
+  }
+
+  const responder = caja.querySelector('[data-responder]');
+  if (responder) responder.addEventListener('click', async () => {
+    ocupado(responder, true);
+    // Al elegir responder, la pregunta queda «seleccionada» (el fan lo ve).
+    if (pregunta.estado !== 'seleccionada' && !(await cambiarEstadoPregunta(pregunta.id, 'seleccionada'))) {
+      ocupado(responder, false);
+      mostrarAviso('No pudimos guardar el cambio. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    location.href = `responder-artista.html?id=${enlace}`;
+  });
+
+  const mantener = caja.querySelector('[data-mantener]');
+  if (mantener) mantener.addEventListener('click', async () => {
+    ocupado(mantener, true);
+    if (!(await cambiarEstadoPregunta(pregunta.id, 'pendiente'))) {
+      ocupado(mantener, false);
+      mostrarAviso('No pudimos guardar el cambio. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    location.replace('bandeja-artista.html?f=pendientes&aviso=cola');
+  });
+
+  // Descartar: primero se confirma en el diálogo.
+  const botonDescartar = caja.querySelector('[data-descartar]');
+  const velo = document.querySelector('[data-velo-descartar]');
+  const botonConfirmar = document.querySelector('[data-confirmar-descartar]');
+  const botonCancelar = document.querySelector('[data-cancelar-descartar]');
+  function cerrarDialogo() {
+    velo.hidden = true;
+    botonDescartar.focus();
+  }
+  if (botonDescartar) {
+    botonDescartar.addEventListener('click', () => {
+      velo.hidden = false;
+      botonCancelar.focus(); // el foco empieza en la opción segura
+    });
+    botonCancelar.addEventListener('click', cerrarDialogo);
+    velo.addEventListener('click', evento => { if (evento.target === velo) cerrarDialogo(); });
+    document.addEventListener('keydown', evento => {
+      if (evento.key === 'Escape' && !velo.hidden) cerrarDialogo();
+    });
+    botonConfirmar.addEventListener('click', async () => {
+      botonConfirmar.disabled = true;
+      if (!(await cambiarEstadoPregunta(pregunta.id, 'descartada'))) {
+        botonConfirmar.disabled = false;
+        cerrarDialogo();
+        mostrarAviso('No pudimos descartar la pregunta. Revisa tu conexión e inténtalo otra vez.');
+        return;
+      }
+      location.replace('bandeja-artista.html?aviso=descartada');
+    });
+  }
+}
+
+// ---------- R06 · Responder (texto o nota de voz) ----------
+const MAXIMO_NOTA_VOZ = 60; // segundos (diseño: «hasta 60 segundos»)
+
+function mensajeErrorRespuesta(error) {
+  const texto = (error && error.message) || '';
+  if (texto.includes('cupo-sin-respuestas')) return 'Tu cupo ya no tiene respuestas disponibles.';
+  if (texto.includes('ya-respondida')) return 'Esta pregunta ya tiene respuesta.';
+  if (texto.includes('sin-sesion')) return 'Tu sesión se cerró. Inicia sesión otra vez para responder.';
+  return 'No pudimos enviar la respuesta. Revisa tu conexión e inténtalo otra vez.';
+}
+
+function pantallaResponderArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const pregunta = preguntaDelArtista(artista);
+  if (!pregunta) return; // queda el mensaje del HTML
+  const enlace = encodeURIComponent(pregunta.id);
+  if (pregunta.estado === 'respondida') {
+    location.replace(`respuesta-artista.html?id=${enlace}`);
+    return;
+  }
+  document.querySelector('[data-volver]').href = `revisar-pregunta-artista.html?id=${enlace}`;
+  const caja = document.querySelector('[data-responder]');
+  const autor = obtenerDatos('fans').find(f => f.id === pregunta.autor);
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+  const quedan = cupo ? Math.max(0, cupo.totalPreguntas - cupo.preguntasUsadas) : 0;
+
+  // Estado de la pantalla: modo (texto o voz) y, en voz, la vista
+  // (permiso, grabando, revisar o error).
+  let modo = 'texto';
+  let vista = 'permiso';
+  let borrador = '';
+  let textoError = '';
+  let notaAudio = null;
+  const grabacion = { stream: null, recorder: null, partes: [], blob: null, url: null, inicio: 0, duracion: 0, reloj: null };
+
+  // Suelta el micrófono y borra la nota grabada.
+  function limpiarGrabacion() {
+    clearInterval(grabacion.reloj);
+    if (grabacion.recorder && grabacion.recorder.state !== 'inactive') {
+      grabacion.recorder.onstop = null;
+      grabacion.recorder.stop();
+    }
+    if (grabacion.stream) grabacion.stream.getTracks().forEach(pista => pista.stop());
+    if (grabacion.url) URL.revokeObjectURL(grabacion.url);
+    if (notaAudio) notaAudio.pause();
+    Object.assign(grabacion, { stream: null, recorder: null, partes: [], blob: null, url: null, duracion: 0, reloj: null });
+  }
+
+  function htmlContenido() {
+    if (modo === 'texto') {
+      return `
+        <form id="formulario-respuesta" novalidate>
+          <div class="campo" data-campo="respuesta">
+            <label class="campo__etiqueta" for="respuesta">Tu respuesta</label>
+            <textarea class="area-texto" id="respuesta" name="respuesta" maxlength="500"
+              placeholder="Comparte tu respuesta" aria-describedby="contador-respuesta error-respuesta">${escapar(borrador)}</textarea>
+            <span class="campo__contador" id="contador-respuesta" data-contador>0/500</span>
+            <p class="campo__mensaje-error" id="error-respuesta" role="alert"></p>
+          </div>
+        </form>
+        <div class="pregunta__acciones"><button type="submit" class="boton" form="formulario-respuesta" data-enviar>Enviar respuesta</button></div>`;
+    }
+    if (vista === 'grabando') {
+      return `
+        <section class="tarjeta">
+          <h2 class="tarjeta__titulo">Grabando</h2>
+          <p class="titulo" data-cronometro aria-live="off">0:00</p>
+          <div class="progreso" role="progressbar" aria-label="Tiempo de la nota" aria-valuemin="0" aria-valuemax="${MAXIMO_NOTA_VOZ}" aria-valuenow="0"><span class="progreso__barra" style="width: 0%"></span></div>
+          <div class="tarjeta__acciones"><button type="button" class="boton boton--bloque" data-detener>Detener grabación</button></div>
+        </section>`;
+    }
+    if (vista === 'revisar') {
+      return `
+        <section class="tarjeta">
+          <h2 class="tarjeta__titulo">Escucha tu nota.</h2>
+          <p class="tarjeta__texto">Revísala antes de enviarla.</p>
+          ${htmlNotaDeVoz(grabacion.duracion)}
+          <div class="tarjeta__acciones pregunta__acciones">
+            <button type="button" class="boton" data-enviar-voz>Enviar nota de voz</button>
+            <button type="button" class="boton boton--terciario" data-grabar-de-nuevo>Grabar de nuevo</button>
+          </div>
+        </section>`;
+    }
+    if (vista === 'error') {
+      return `
+        <section class="tarjeta">
+          <h2 class="tarjeta__titulo">No pudimos grabar.</h2>
+          <p class="tarjeta__texto">${escapar(textoError)}</p>
+          <div class="tarjeta__acciones pregunta__acciones">
+            <button type="button" class="boton" data-a-texto>Responder con texto</button>
+            <button type="button" class="boton boton--terciario" data-grabar>Intentar de nuevo</button>
+          </div>
+        </section>`;
+    }
+    return `
+      <section class="tarjeta">
+        <h2 class="tarjeta__titulo">Tu voz también conecta.</h2>
+        <p class="tarjeta__texto">Necesitamos acceder al micrófono cuando empieces a grabar. La nota puede durar hasta ${MAXIMO_NOTA_VOZ} segundos.</p>
+        <div class="tarjeta__acciones">
+          <button type="button" class="boton boton--bloque" data-grabar>
+            <svg class="icono" aria-hidden="true"><use href="#icono-microfono"></use></svg>
+            <span>Grabar nota</span>
+          </button>
+        </div>
+      </section>`;
+  }
+
+  function pintar() {
+    if (notaAudio) notaAudio.pause();
+    notaAudio = null;
+    caja.innerHTML = `
+      <p class="texto--pequeno texto--suave">${escapar(autor ? autor.nombrePerfil : 'Un fan')} preguntó:</p>
+      <h1 class="titulo titulo--pequeno responder__pregunta">${escapar(pregunta.texto)}</h1>
+      <div class="selector pregunta__bloque" role="group" aria-label="Tipo de respuesta">
+        <button type="button" class="boton boton--secundario" data-modo="texto" aria-pressed="${modo === 'texto'}">Texto</button>
+        <button type="button" class="boton boton--secundario" data-modo="voz" aria-pressed="${modo === 'voz'}">Nota de voz</button>
+      </div>
+      <div class="pregunta__bloque">${htmlContenido()}</div>
+      <p class="texto--pequeno texto--suave pregunta__bloque">Te quedan ${quedan} de ${cupo ? cupo.totalPreguntas : 0} respuestas en este cupo. Enviar consume una.</p>`;
+
+    const area = caja.querySelector('#respuesta');
+    if (area) {
+      activarContador(area, caja.querySelector('[data-contador]'));
+      area.addEventListener('input', () => { borrador = area.value; mostrarError('respuesta', ''); });
+      caja.querySelector('#formulario-respuesta').addEventListener('submit', evento => {
+        evento.preventDefault();
+        if (!area.value.trim()) {
+          mostrarError('respuesta', 'Escribe tu respuesta.');
+          area.focus();
+          return;
+        }
+        enviar('texto', caja.querySelector('[data-enviar]'));
+      });
+    }
+    if (vista === 'revisar' && modo === 'voz') notaAudio = activarNotaDeVoz(caja, grabacion.url, grabacion.duracion);
+  }
+
+  // Avanza el cronómetro mientras graba; a los 60 s se detiene sola.
+  function avanzarReloj() {
+    const segundos = (Date.now() - grabacion.inicio) / 1000;
+    const cronometro = caja.querySelector('[data-cronometro]');
+    const barra = caja.querySelector('.progreso__barra');
+    if (cronometro) cronometro.textContent = formatoDuracion(Math.floor(segundos));
+    if (barra) {
+      barra.style.width = `${Math.min(100, (segundos / MAXIMO_NOTA_VOZ) * 100)}%`;
+      barra.parentElement.setAttribute('aria-valuenow', String(Math.floor(segundos)));
+    }
+    if (segundos >= MAXIMO_NOTA_VOZ) detener();
+  }
+
+  // REAL: graba con el micrófono del dispositivo.
+  async function grabar() {
+    limpiarGrabacion();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+      vista = 'error';
+      textoError = 'Este navegador no permite grabar audio. Responde con texto o prueba con otro navegador.';
+      pintar();
+      return;
+    }
+    try {
+      grabacion.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      vista = 'error';
+      textoError = 'Revisa el permiso del micrófono o elige una respuesta de texto.';
+      pintar();
+      return;
+    }
+    if (reproductor.audio && !reproductor.audio.paused) reproductor.audio.pause();
+    const tipos = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'];
+    const tipo = tipos.find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || '';
+    const recorder = new MediaRecorder(grabacion.stream, tipo ? { mimeType: tipo } : undefined);
+    grabacion.recorder = recorder;
+    grabacion.partes = [];
+    recorder.ondataavailable = evento => { if (evento.data.size) grabacion.partes.push(evento.data); };
+    recorder.onstop = () => {
+      clearInterval(grabacion.reloj);
+      grabacion.duracion = (Date.now() - grabacion.inicio) / 1000;
+      grabacion.blob = new Blob(grabacion.partes, { type: recorder.mimeType || tipo || 'audio/webm' });
+      grabacion.url = URL.createObjectURL(grabacion.blob);
+      if (grabacion.stream) grabacion.stream.getTracks().forEach(pista => pista.stop());
+      grabacion.stream = null;
+      grabacion.recorder = null;
+      if (grabacion.duracion < 1) {
+        vista = 'permiso';
+        mostrarAviso('La nota fue muy corta. Inténtalo de nuevo.');
+      } else {
+        vista = 'revisar';
+      }
+      pintar();
+      const siguiente = caja.querySelector('[data-enviar-voz], [data-grabar]');
+      if (siguiente) siguiente.focus();
+    };
+    grabacion.inicio = Date.now();
+    recorder.start(250);
+    vista = 'grabando';
+    pintar();
+    caja.querySelector('[data-detener]').focus();
+    grabacion.reloj = setInterval(avanzarReloj, 250);
+  }
+
+  function detener() {
+    clearInterval(grabacion.reloj);
+    if (grabacion.recorder && grabacion.recorder.state !== 'inactive') grabacion.recorder.stop();
+  }
+
+  // REAL: la nota de voz se sube a «notas-voz» y la respuesta se guarda con
+  // responder_pregunta() (respuesta, estado, cupo y notificación al fan juntos).
+  async function enviar(tipo, boton) {
+    const textoBoton = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = 'Enviando…';
+    let audio = null;
+    try {
+      if (tipo === 'voz') {
+        const usuarioId = await idDeLaCuenta();
+        if (!usuarioId) throw new Error('sin-sesion');
+        const clase = grabacion.blob.type.split(';')[0] || 'audio/webm';
+        const extension = clase.includes('mp4') ? 'm4a' : clase.includes('ogg') ? 'ogg' : 'webm';
+        audio = await subirArchivo('notas-voz', usuarioId, `nota-${Date.now()}.${extension}`, grabacion.blob, clase);
+      }
+      const { error } = await baseDatos.rpc('responder_pregunta', {
+        pregunta_id: pregunta.id,
+        tipo_respuesta: tipo,
+        texto_respuesta: tipo === 'texto' ? borrador.trim() : null,
+        audio_respuesta: audio,
+        duracion: tipo === 'voz' ? Math.round(grabacion.duracion) : null
+      });
+      if (error) throw error;
+      limpiarGrabacion();
+      location.replace(`respuesta-enviada-artista.html?id=${enlace}`);
+    } catch (e) {
+      if (audio) borrarArchivoSubido(audio).catch(() => {}); // no deja el audio suelto
+      boton.disabled = false;
+      boton.textContent = textoBoton;
+      mostrarAviso(mensajeErrorRespuesta(e));
+    }
+  }
+
+  caja.addEventListener('click', evento => {
+    const boton = evento.target.closest('button');
+    if (!boton) return;
+    if (boton.matches('[data-modo]')) {
+      if (boton.dataset.modo === modo) return;
+      if (vista === 'grabando') { limpiarGrabacion(); vista = 'permiso'; }
+      modo = boton.dataset.modo;
+      pintar();
+      caja.querySelector(`[data-modo="${modo}"]`).focus();
+    } else if (boton.matches('[data-grabar]')) {
+      grabar();
+    } else if (boton.matches('[data-detener]')) {
+      detener();
+    } else if (boton.matches('[data-grabar-de-nuevo]')) {
+      limpiarGrabacion();
+      vista = 'permiso';
+      pintar();
+      caja.querySelector('[data-grabar]').focus();
+    } else if (boton.matches('[data-a-texto]')) {
+      modo = 'texto';
+      pintar();
+      caja.querySelector('#respuesta').focus();
+    } else if (boton.matches('[data-enviar-voz]')) {
+      enviar('voz', boton);
+    }
+  });
+  // Al salir de la pantalla se suelta el micrófono.
+  window.addEventListener('pagehide', limpiarGrabacion);
+  pintar();
+}
+
+// ---------- R06f · Respuesta enviada ----------
+function pantallaRespuestaEnviadaArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const pregunta = preguntaDelArtista(artista);
+  if (!pregunta || pregunta.estado !== 'respondida') return; // queda el mensaje del HTML
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+  const quedan = cupo ? Math.max(0, cupo.totalPreguntas - cupo.preguntasUsadas) : 0;
+  const nota = cupo && cupo.estado === 'completo'
+    ? 'Completaste tu cupo. Puedes abrir uno nuevo cuando tengas disponibilidad.'
+    : `Te quedan ${quedan} ${quedan === 1 ? 'respuesta' : 'respuestas'} en este cupo.`;
+  document.querySelector('[data-respuesta-enviada]').innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">La conversación continúa.</h1>
+      <p class="encabezado-pagina__bajada">Tu respuesta llegó al fan y su pregunta quedó respondida.</p>
+    </div>
+    ${htmlPreguntaArtista(pregunta, { etiqueta: '<span class="etiqueta etiqueta--reconocimiento">Respondida</span>' })}
+    <p class="texto--pequeno texto--suave pregunta__bloque">${nota}</p>
+    <div class="pregunta__acciones"><a class="boton" href="bandeja-artista.html?f=respondidas">Volver a preguntas</a></div>`;
+}
+
+// ---------- R06 preview · Respuesta del artista (como la verá el fan) ----------
+function pantallaRespuestaArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const pregunta = preguntaDelArtista(artista);
+  const respuesta = pregunta && obtenerDatos('respuestas').find(r => r.pregunta === pregunta.id);
+  if (!respuesta) return; // queda el mensaje del HTML
+  const caja = document.querySelector('[data-respuesta-artista]');
+  caja.innerHTML = `
+    ${htmlPreguntaArtista(pregunta, { accion: false })}
+    <div class="pregunta__bloque">${htmlRespuesta(respuesta, 'Tu respuesta', { etiquetaTitulo: 'h1' })}</div>
+    <div class="pregunta__acciones"><a class="boton boton--terciario" href="bandeja-artista.html?f=respondidas">Volver a preguntas</a></div>`;
+  if (respuesta.tipo === 'voz') activarNotaDeVoz(caja, rutaRecurso(respuesta.audio), respuesta.duracionAudio);
+}
+
+// ---------- F06 · Tu conexión: estado y respuesta ----------
+function pantallaTuConexionFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const parametros = new URLSearchParams(location.search);
+  const pregunta = obtenerDatos('preguntas').find(p => p.id === parametros.get('id'));
+  const artista = pregunta && obtenerDatos('artistas').find(a => a.id === pregunta.artista);
+  if (!artista) return; // queda el mensaje del HTML
+  const mia = pregunta.autor === fan.id;
+  const nombre = escapar(artista.nombreArtistico);
+  const alArtista = `perfil-artista-fan.html?id=${encodeURIComponent(artista.id)}`;
+  document.querySelector('[data-volver]').href = alArtista;
+  document.querySelector('.barra-superior__titulo').textContent = mia ? 'Tu conexión' : 'Conversación';
+  document.title = `Looped · ${mia ? 'Tu conexión' : 'Conversación'}`;
+  if (parametros.get('enviada')) mostrarAviso('Pregunta enviada. Está en cola.');
+
+  const autor = obtenerDatos('fans').find(f => f.id === pregunta.autor);
+  const respuesta = obtenerDatos('respuestas').find(r => r.pregunta === pregunta.id);
+  let estado;
+  if (pregunta.estado === 'respondida' && respuesta) {
+    estado = htmlRespuesta(respuesta, `La respuesta de ${artista.nombreArtistico}`)
+      + (mia ? '<div class="etiquetas pregunta__bloque"><span class="etiqueta etiqueta--reconocimiento">Te escucharon</span></div>' : '');
+  } else if (pregunta.estado === 'seleccionada') {
+    estado = `<section class="tarjeta"><h2 class="tarjeta__titulo">Esperando respuesta</h2><p class="tarjeta__texto">${nombre} seleccionó tu pregunta y todavía no ha enviado su respuesta.</p></section>`;
+  } else if (pregunta.estado === 'descartada') {
+    estado = '<section class="tarjeta"><h2 class="tarjeta__titulo">No seleccionada</h2><p class="tarjeta__texto">El artista no eligió esta pregunta en este cupo. Puedes participar de nuevo cuando haya espacio.</p></section>';
+  } else {
+    estado = '<section class="tarjeta"><h2 class="tarjeta__titulo">Pregunta enviada</h2><p class="tarjeta__texto">Tu pregunta está en cola. El artista decidirá cuáles responder.</p></section>';
+  }
+
+  const caja = document.querySelector('[data-tu-conexion]');
+  caja.innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">${mia ? 'Tu pregunta' : `Pregunta de ${escapar(autor ? autor.nombrePerfil : 'un fan')}`} a ${nombre}.</h1>
+    </div>
+    <article class="tarjeta">
+      <div class="tarjeta__encabezado">
+        <span class="tarjeta__meta">${mia ? 'Tú' : escapar(autor ? autor.nombrePerfil : 'Fan')}</span>
+        ${pregunta.votos ? htmlVotos(pregunta.votos) : ''}
+      </div>
+      <p class="tarjeta__texto tarjeta__texto--principal">${escapar(pregunta.texto)}</p>
+      <p class="tarjeta__texto">${escapar(textoEstadoPregunta(pregunta, artista))}</p>
+    </article>
+    <div class="pregunta__bloque">${estado}</div>
+    <div class="pregunta__acciones">
+      <a class="boton ${pregunta.estado === 'respondida' ? 'boton--terciario' : ''}" href="${alArtista}">Volver al artista</a>
+    </div>`;
+  if (respuesta && respuesta.tipo === 'voz') activarNotaDeVoz(caja, rutaRecurso(respuesta.audio), respuesta.duracionAudio);
 }
 
 // ---------- Cola de reproducción ----------
@@ -3087,7 +3782,13 @@ const PANTALLAS = {
   'perfil-artista-fan': pantallaPerfilArtistaFan,
   'cola-fan': pantallaColaFan,
   'conectar-fan': pantallaConectarFan,
-  'escribir-pregunta-fan': pantallaEscribirPreguntaFan
+  'escribir-pregunta-fan': pantallaEscribirPreguntaFan,
+  'bandeja-artista': pantallaBandejaArtista,
+  'revisar-pregunta-artista': pantallaRevisarPreguntaArtista,
+  'responder-artista': pantallaResponderArtista,
+  'respuesta-enviada-artista': pantallaRespuestaEnviadaArtista,
+  'respuesta-artista': pantallaRespuestaArtista,
+  'tu-conexion-fan': pantallaTuConexionFan
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

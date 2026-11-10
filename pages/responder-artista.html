@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Responder</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="responder-artista">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-microfono" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+    <symbol id="icono-reproducir" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.6v12.8c0 .9 1 1.4 1.7.9l9.5-6.4c.6-.4.6-1.4 0-1.8L9.7 4.7C9 4.2 8 4.7 8 5.6z"/></symbol>
+    <symbol id="icono-pausa" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/></symbol>
+    <symbol id="icono-alerta" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4.5 2.8 19.5h18.4zM12 10v4M12 17h.01"/></symbol>
+  </defs>
+</svg>
+
+<!-- R06 · Responder con texto o nota de voz (?id=). El contenido lo pone js/app.js. -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="bandeja-artista.html" aria-label="Volver" data-volver>
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span class="barra-superior__titulo">Responder</span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido responder" data-responder>
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">Esta pregunta ya no está disponible.</h1>
+      <p class="encabezado-pagina__bajada"><a class="enlace" href="bandeja-artista.html">Volver a preguntas</a></p>
+    </div>
+  </main>
+
+  <!-- Avisos flotantes -->
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

@@ -276,6 +276,34 @@
 .conectar__seccion { margin-top: var(--espacio-8); }
 .conectar__nota { margin-top: var(--espacio-3); }
 
+
+/* ---------- Preguntas y respuestas (R04–R06, F06) ---------- */
+/* Bloques uno debajo del otro, con aire entre ellos. */
+.pregunta__bloque { margin-top: var(--espacio-4); }
+/* Botones de acción: uno debajo del otro en celular, en fila en pantallas grandes. */
+.pregunta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-3);
+  max-width: var(--ancho-pantalla);
+  margin-top: var(--espacio-5);
+}
+.pregunta__acciones > .boton { flex: 1 1 12rem; }
+.tarjeta__acciones.pregunta__acciones { margin-top: var(--espacio-4); }
+
+/* R04 · Bandeja */
+.bandeja__cupo { margin-top: var(--espacio-4); }
+.bandeja__nota { margin-top: var(--espacio-2); }
+.bandeja__lista { margin-top: var(--espacio-5); }
+
+/* R06 · Responder: la pregunta y el cronómetro */
+.responder__pregunta { margin-top: var(--espacio-2); }
+.responder .titulo[data-cronometro] { margin-block: var(--espacio-3); font-variant-numeric: tabular-nums; }
+
+/* Nota de voz: botón y, debajo, la barra de avance del kit */
+.nota-voz { margin-top: var(--espacio-3); }
+.nota-voz .avance { margin-top: var(--espacio-3); }
+
 /* ---------- Cola de reproducción ---------- */
 /* Una columna angosta: es una lista, no necesita todo el ancho. */
 .cola { max-width: var(--ancho-pantalla-media); }
