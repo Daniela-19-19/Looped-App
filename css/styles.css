@@ -210,3 +210,21 @@
 .nuevos__etiquetas { margin-top: var(--espacio-2); }
 /* «Escuchar» ocupa el ancho y el botón de perfil queda a su lado. */
 .nuevos__acciones { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+
+/* ---------- F02 · Perfil del artista (visto por el fan) ---------- */
+.perfil-artista__cabecera { display: flex; align-items: center; gap: var(--espacio-4); margin-top: var(--espacio-4); }
+.perfil-artista__cabecera > div { min-width: 0; }
+.perfil-artista__etiquetas { margin-top: var(--espacio-4); }
+/* Seguir y Conectar lado a lado; en pantallas grandes no se estiran de más. */
+.perfil-artista__acciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+  max-width: var(--ancho-pantalla);
+  margin-top: var(--espacio-5);
+}
+.perfil-artista__estado { margin-top: var(--espacio-3); }
+.perfil-artista__seccion { margin-top: var(--espacio-8); }
+.perfil-artista__etiquetas-musica { margin-top: var(--espacio-2); }
+.perfil-artista__mas { margin-top: var(--espacio-3); }
+.perfil-artista__comunidad { display: flex; justify-content: center; margin-top: var(--espacio-3); }

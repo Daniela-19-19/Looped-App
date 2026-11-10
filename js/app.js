@@ -9,6 +9,10 @@
 // navegador); el día que conectemos Supabase, solo cambia esta función.
 function obtenerDatos(tipo) {
   const deEjemplo = typeof DATOS === 'undefined' ? [] : (DATOS[tipo] || []);
+  if (tipo === 'artistas') {
+    const cambios = leerCambiosSeguidores();
+    return deEjemplo.map(a => cambios[a.id] ? { ...a, seguidores: Math.max(0, a.seguidores + cambios[a.id]) } : a);
+  }
   if (tipo === 'lanzamientos') {
     const eliminados = leerEliminados();
     return deEjemplo.concat(leerLanzamientosPropios()).filter(l => !eliminados.includes(l.id));
@@ -49,6 +53,28 @@ async function eliminarLanzamiento(id) {
     if (!eliminados.includes(id)) eliminados.push(id);
     localStorage.setItem('looped-lanzamientos-eliminados', JSON.stringify(eliminados));
   }
+}
+
+// Lo que el fan hace en este navegador (SIMULADO): a quién sigue, de quién es
+// fan fundador y qué perfiles ya visitó. Se guarda por fan y fanActual() lo
+// junta con sus datos. También se lleva la cuenta de seguidores que se suman
+// o restan. Con Supabase, esto se guardará en la base de datos.
+function leerCambiosFan(fanId) {
+  try { return (JSON.parse(localStorage.getItem('looped-fan-cambios')) || {})[fanId] || {}; } catch (e) { return {}; }
+}
+function guardarCambiosFan(fanId, cambios) {
+  let todos = {};
+  try { todos = JSON.parse(localStorage.getItem('looped-fan-cambios')) || {}; } catch (e) { /* empieza vacío */ }
+  todos[fanId] = { ...(todos[fanId] || {}), ...cambios };
+  localStorage.setItem('looped-fan-cambios', JSON.stringify(todos));
+}
+function leerCambiosSeguidores() {
+  try { return JSON.parse(localStorage.getItem('looped-seguidores')) || {}; } catch (e) { return {}; }
+}
+function sumarSeguidor(artistaId, cuanto) {
+  const cambios = leerCambiosSeguidores();
+  cambios[artistaId] = (cambios[artistaId] || 0) + cuanto;
+  localStorage.setItem('looped-seguidores', JSON.stringify(cambios));
 }
 
 function abrirAlmacenArchivos() {
@@ -942,10 +968,9 @@ function pantallaPanelArtista() {
 function fanActual() {
   const sesion = leerSesion();
   if (!sesion || sesion.rol !== 'fan') return null;
-  const deEjemplo = obtenerDatos('fans').find(f => f.id === sesion.id);
-  if (deEjemplo) return deEjemplo;
   const propia = perfilGuardado();
-  return propia && propia.id === sesion.id ? propia : null;
+  const fan = obtenerDatos('fans').find(f => f.id === sesion.id) || (propia && propia.id === sesion.id ? propia : null);
+  return fan ? { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan, ...leerCambiosFan(fan.id) } : null;
 }
 
 // Dónde está el fan dentro de su nivel: minutos al empezar el nivel
@@ -1297,6 +1322,148 @@ function pantallaNuevosLanzamientosFan() {
   }
 
   activarBotonesReproducir(document.querySelector('main'));
+}
+
+// ---------- F02 · Perfil del artista (visto por el fan) ----------
+const UMBRAL_FAN_FUNDADOR = 1000; // spec.md: menos de 1000 seguidores
+
+function pantallaPerfilArtistaFan() {
+  // Sin sesión de fan, a iniciar sesión.
+  let fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+
+  // Volver: a la pantalla anterior si venimos de la app; si no, a Inicio.
+  document.querySelector('[data-volver]').addEventListener('click', evento => {
+    if (document.referrer && new URL(document.referrer).origin === location.origin) {
+      evento.preventDefault();
+      history.back();
+    }
+  });
+
+  const id = new URLSearchParams(location.search).get('id');
+  let artista = obtenerDatos('artistas').find(a => a.id === id);
+  if (!artista) return; // queda el mensaje del HTML
+
+  // Fan fundador (spec.md): en la primera visita, si el artista tiene menos de 1000 seguidores.
+  if (!fan.artistasVisitados.includes(id)) {
+    const cambios = { artistasVisitados: fan.artistasVisitados.concat(id) };
+    const nuevoFundador = artista.seguidores < UMBRAL_FAN_FUNDADOR && !fan.fanFundadorDe.includes(id);
+    if (nuevoFundador) cambios.fanFundadorDe = fan.fanFundadorDe.concat(id);
+    guardarCambiosFan(fan.id, cambios);
+    fan = fanActual();
+    if (nuevoFundador) mostrarAviso(`Eres fan fundador de ${artista.nombreArtistico}. Lo descubriste en su comienzo.`);
+  }
+
+  document.title = `Looped · ${artista.nombreArtistico}`;
+  const caja = document.querySelector('[data-perfil-artista]');
+  const generos = obtenerDatos('generos');
+  const cupo = obtenerDatos('cupos').find(c => c.artista === id);
+  const lanzamientos = obtenerDatos('lanzamientos')
+    .filter(l => l.artista === id)
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+
+  function pintar() {
+    const sigue = fan.artistasQueSigue.includes(id);
+    const fundador = fan.fanFundadorDe.includes(id);
+    const enFanClub = fan.fanClubs.includes(id);
+    const nombre = escapar(artista.nombreArtistico);
+    const avatar = artista.foto
+      ? `<span class="avatar avatar--grande"><img src="${escapar(rutaRecurso(artista.foto))}" alt="Foto de ${nombre}"></span>`
+      : `<span class="avatar avatar--grande avatar--acento" aria-hidden="true">${escapar(iniciales(artista.nombreArtistico))}</span>`;
+    const etiquetas = [
+      fundador ? '<span class="etiqueta etiqueta--reconocimiento">Fan fundador</span>' : '',
+      enFanClub ? '<span class="etiqueta etiqueta--acento">Fan Club</span>' : '',
+      ...artista.generos.slice(0, 3).map(g => {
+        const genero = generos.find(x => x.id === g);
+        return `<span class="etiqueta etiqueta--borde">${escapar(genero ? genero.nombre : g)}</span>`;
+      })
+    ].join('');
+    const estadoCupo = cupo && cupo.estado === 'abierto'
+      ? `Cupo abierto, quedan ${Math.max(0, cupo.totalPreguntas - cupo.preguntasUsadas)} respuestas`
+      : 'Cupo cerrado';
+
+    let musica = `<div class="tarjeta"><p class="tarjeta__texto">Todavía no hay lanzamientos.</p></div>`;
+    if (lanzamientos.length) {
+      const ultimo = lanzamientos[0];
+      const enVentana = horasRestantesVentana(ultimo) > 0;
+      musica = `
+        <article class="tarjeta">
+          <div class="tarjeta__cabecera">
+            ${htmlPortada(ultimo, 'portada--mediana')}
+            <div>
+              <h3 class="tarjeta__titulo">${escapar(ultimo.nombreLanzamiento)}</h3>
+              <p class="tarjeta__texto">${escapar(ultimo.nombreCancion)}</p>
+              <div class="etiquetas perfil-artista__etiquetas-musica"><span class="etiqueta etiqueta--borde">${enVentana ? 'Nuevo lanzamiento' : escapar(haceCuanto(ultimo.fechaPublicacion))}</span></div>
+            </div>
+          </div>
+          <div class="tarjeta__acciones">
+            <button type="button" class="boton boton--secundario boton--bloque" data-reproducir="${escapar(ultimo.id)}" data-titulo="${escapar(ultimo.nombreCancion)}">
+              <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+              <span data-texto-reproducir="Escuchar">Escuchar</span>
+            </button>
+          </div>
+        </article>
+        ${lanzamientos.length > 1 ? `<div class="tarjeta perfil-artista__mas">${lanzamientos.slice(1).map(htmlFilaCancion).join('')}</div>` : ''}`;
+    }
+
+    caja.innerHTML = `
+      <div class="perfil-artista__cabecera">
+        ${avatar}
+        <div>
+          <h1 class="titulo titulo--medio">${nombre}</h1>
+          <p class="texto--pequeno texto--suave">@${escapar(artista.nombreUsuario)}${artista.ciudad ? ' · ' + escapar(artista.ciudad) : ''}</p>
+        </div>
+      </div>
+      ${etiquetas ? `<div class="etiquetas perfil-artista__etiquetas">${etiquetas}</div>` : ''}
+      <div class="perfil-artista__acciones">
+        <button type="button" class="boton boton--secundario" aria-pressed="${sigue}" data-seguir>${sigue ? 'Siguiendo' : 'Seguir'}</button>
+        <a class="boton" href="conectar-fan.html?id=${encodeURIComponent(id)}">Conectar</a>
+      </div>
+      <p class="rotulo rotulo--pequeno texto--suave perfil-artista__estado">${artista.seguidores.toLocaleString('es-CO')} seguidores · ${estadoCupo}</p>
+
+      <section class="perfil-artista__seccion" aria-labelledby="titulo-su-musica">
+        <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-su-musica">Su música</h2></div>
+        ${musica}
+      </section>
+
+      <section class="perfil-artista__seccion" aria-labelledby="titulo-conoce">
+        <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-conoce">Conoce a ${nombre}</h2></div>
+        <div class="rejilla-tarjetas rejilla-tarjetas--dos">
+          <article class="tarjeta">
+            <p class="tarjeta__texto tarjeta__texto--principal">${escapar(artista.presentacion || 'Todavía no ha escrito su presentación.')}</p>
+          </article>
+          <article class="tarjeta">
+            <h3 class="tarjeta__titulo">Fan Club de ${nombre}</h3>
+            <p class="tarjeta__texto">${enFanClub ? 'Ya eres miembro. Revisa el contenido exclusivo.' : 'Contenido exclusivo y prioridad dentro de su cupo.'}</p>
+            <div class="tarjeta__acciones">
+              <a class="boton boton--secundario boton--bloque" href="${enFanClub ? 'contenido-fan-club-fan.html' : 'fan-club-fan.html'}?id=${encodeURIComponent(id)}">${enFanClub ? 'Ver contenido' : 'Explorar Fan Club'}</a>
+            </div>
+          </article>
+        </div>
+        <div class="perfil-artista__comunidad">
+          <a class="boton boton--terciario" href="comunidad-fan.html?id=${encodeURIComponent(id)}">Ver comunidad</a>
+        </div>
+      </section>`;
+
+    activarBotonesReproducir(caja);
+
+    // Seguir / dejar de seguir (Real, guardado en este navegador).
+    caja.querySelector('[data-seguir]').addEventListener('click', () => {
+      const seguia = fan.artistasQueSigue.includes(id);
+      guardarCambiosFan(fan.id, {
+        artistasQueSigue: seguia ? fan.artistasQueSigue.filter(x => x !== id) : fan.artistasQueSigue.concat(id)
+      });
+      sumarSeguidor(id, seguia ? -1 : 1);
+      fan = fanActual();
+      artista = obtenerDatos('artistas').find(a => a.id === id);
+      pintar();
+      caja.querySelector('[data-seguir]').focus(); // el foco no se pierde al redibujar
+    });
+  }
+  pintar();
 }
 
 // ---------- R02 · Música ----------
@@ -1754,7 +1921,8 @@ const PANTALLAS = {
   'musica-artista': pantallaMusicaArtista,
   'publicar-lanzamiento-artista': pantallaPublicarLanzamiento,
   'lanzamiento-artista': pantallaLanzamientoArtista,
-  'nuevos-lanzamientos-fan': pantallaNuevosLanzamientosFan
+  'nuevos-lanzamientos-fan': pantallaNuevosLanzamientosFan,
+  'perfil-artista-fan': pantallaPerfilArtistaFan
 };
 
 document.addEventListener('DOMContentLoaded', () => {
