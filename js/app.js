@@ -5,54 +5,110 @@
    ========================================================== */
 
 // ---------- Datos ----------
-// Única puerta a los datos. Hoy lee js/data.js (más lo publicado en este
-// navegador); el día que conectemos Supabase, solo cambia esta función.
+// REAL: al abrir cada pantalla, cargarDatos() trae de Supabase lo que la
+// app muestra y lo deja aquí, con los mismos nombres de campos de
+// js/data.js (que queda solo como referencia de los datos iniciales).
+let datosCargados = {};
+
+// Única puerta a los datos: todas las pantallas leen por aquí.
 function obtenerDatos(tipo) {
-  const deEjemplo = typeof DATOS === 'undefined' ? [] : (DATOS[tipo] || []);
+  const lista = datosCargados[tipo] || [];
   if (tipo === 'artistas') {
+    // PROVISIONAL: «seguir» aún se guarda en este navegador y suma aquí.
     const cambios = leerCambiosSeguidores();
-    return deEjemplo.map(a => cambios[a.id] ? { ...a, seguidores: Math.max(0, a.seguidores + cambios[a.id]) } : a);
+    return lista.map(a => cambios[a.id] ? { ...a, seguidores: Math.max(0, a.seguidores + cambios[a.id]) } : a);
   }
-  if (tipo === 'lanzamientos') {
-    const eliminados = leerEliminados();
-    return deEjemplo.concat(leerLanzamientosPropios()).filter(l => !eliminados.includes(l.id));
-  }
-  return deEjemplo;
+  return lista;
 }
 
-// ---------- Lo publicado en este navegador (SIMULADO) ----------
-// Mientras no esté Supabase, los lanzamientos que publica un artista se
-// guardan en este navegador: los datos en localStorage y el audio (que
-// puede pesar varios MB) en IndexedDB, una base de datos del navegador.
-function leerLanzamientosPropios() {
-  try { return JSON.parse(localStorage.getItem('looped-lanzamientos')) || []; } catch (e) { return []; }
-}
-function guardarLanzamientoPropio(lanzamiento) {
-  const lista = leerLanzamientosPropios();
-  lista.push(lanzamiento);
-  localStorage.setItem('looped-lanzamientos', JSON.stringify(lista)); // puede fallar si no hay espacio
+// Trae de Supabase todas las tablas que muestran las pantallas.
+// Lanza un error si no hay conexión.
+async function cargarDatos() {
+  const tablas = ['generos', 'roles', 'intereses', 'artistas', 'fans', 'seguimientos',
+    'miembros_fan_club', 'lanzamientos', 'cupos', 'preguntas', 'respuestas'];
+  const respuestas = await Promise.all(tablas.map(tabla => baseDatos.from(tabla).select('*')));
+  const filas = {};
+  respuestas.forEach((respuesta, i) => {
+    if (respuesta.error) throw respuesta.error;
+    filas[tablas[i]] = respuesta.data;
+  });
+
+  datosCargados = {
+    generos: filas.generos,
+    roles: filas.roles,
+    intereses: filas.intereses,
+    artistas: filas.artistas.map(fila => perfilDesdeFila('artista', fila)),
+    fans: filas.fans.map(fila => Object.assign(perfilDesdeFila('fan', fila), {
+      artistasQueSigue: filas.seguimientos.filter(s => s.fan === fila.id).map(s => s.artista),
+      fanFundadorDe: filas.seguimientos.filter(s => s.fan === fila.id && s.es_fan_fundador).map(s => s.artista),
+      fanClubs: filas.miembros_fan_club.filter(m => m.fan === fila.id).map(m => m.artista)
+    })),
+    lanzamientos: filas.lanzamientos.map(fila => ({
+      id: fila.id,
+      artista: fila.artista,
+      nombreLanzamiento: fila.nombre_lanzamiento,
+      nombreCancion: fila.nombre_cancion,
+      portada: fila.portada,
+      audio: fila.audio,
+      fechaPublicacion: fila.fecha_publicacion
+    })),
+    cupos: filas.cupos.map(fila => ({
+      id: fila.id,
+      artista: fila.artista,
+      estado: fila.estado,
+      totalPreguntas: fila.total_preguntas,
+      preguntasUsadas: fila.preguntas_usadas,
+      nivelMinimo: fila.nivel_minimo,
+      fechaApertura: fila.fecha_apertura
+    })),
+    preguntas: filas.preguntas.map(fila => ({
+      id: fila.id,
+      artista: fila.artista,
+      autor: fila.autor,
+      autorEsFanClub: fila.autor_es_fan_club,
+      primerContacto: fila.primer_contacto,
+      texto: fila.texto,
+      votos: fila.votos,
+      estado: fila.estado,
+      fecha: fila.fecha
+    })),
+    respuestas: filas.respuestas.map(fila => ({
+      id: fila.id,
+      pregunta: fila.pregunta,
+      tipo: fila.tipo,
+      texto: fila.texto,
+      audio: fila.audio,
+      duracionAudio: fila.duracion_audio,
+      fecha: fila.fecha
+    }))
+  };
 }
 
-// Eliminar un lanzamiento. Si lo publicaron en este navegador, se borra de
-// verdad (datos y audio). Los de ejemplo de data.js no se pueden borrar del
-// archivo: se anotan en una lista de «eliminados» y obtenerDatos los oculta.
-// Con Supabase, aquí se borrará la fila de la base de datos.
-function leerEliminados() {
-  try { return JSON.parse(localStorage.getItem('looped-lanzamientos-eliminados')) || []; } catch (e) { return []; }
+// ---------- Archivos en Supabase Storage ----------
+// Sube un archivo a una carpeta («audios», «portadas»…) dentro de la
+// carpeta de la cuenta, y devuelve su enlace público.
+async function subirArchivo(carpeta, usuarioId, nombre, archivo, tipo) {
+  const ruta = `${usuarioId}/${nombre}`;
+  const { error } = await baseDatos.storage.from(carpeta).upload(ruta, archivo, { contentType: tipo });
+  if (error) throw error;
+  return baseDatos.storage.from(carpeta).getPublicUrl(ruta).data.publicUrl;
 }
-async function eliminarLanzamiento(id) {
-  const propios = leerLanzamientosPropios();
-  const propio = propios.find(l => l.id === id);
-  if (propio) {
-    localStorage.setItem('looped-lanzamientos', JSON.stringify(propios.filter(l => l.id !== id)));
-    if (propio.audio && propio.audio.startsWith('local:')) {
-      try { await borrarArchivo(propio.audio.slice('local:'.length)); } catch (e) { /* si falla, el audio solo queda huérfano */ }
-    }
-  } else {
-    const eliminados = leerEliminados();
-    if (!eliminados.includes(id)) eliminados.push(id);
-    localStorage.setItem('looped-lanzamientos-eliminados', JSON.stringify(eliminados));
-  }
+
+// Si un enlace es de un archivo nuestro en Supabase, lo borra.
+// Los de assets/ (datos de ejemplo) no se tocan.
+async function borrarArchivoSubido(enlace) {
+  const coincide = /\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/.exec(enlace || '');
+  if (!coincide) return;
+  await baseDatos.storage.from(coincide[1]).remove([decodeURIComponent(coincide[2])]);
+}
+
+// REAL: borra el lanzamiento de Supabase, con su audio y su portada.
+async function eliminarLanzamiento(lanzamiento) {
+  const { error } = await baseDatos.from('lanzamientos').delete().eq('id', lanzamiento.id);
+  if (error) throw error;
+  // Si borrar un archivo falla, el lanzamiento igual quedó eliminado.
+  try { await borrarArchivoSubido(lanzamiento.audio); } catch (e) { /* queda el archivo suelto */ }
+  try { await borrarArchivoSubido(lanzamiento.portada); } catch (e) { /* queda el archivo suelto */ }
 }
 
 // Lo que el fan hace en este navegador (SIMULADO): a quién sigue, de quién es
@@ -75,41 +131,6 @@ function sumarSeguidor(artistaId, cuanto) {
   const cambios = leerCambiosSeguidores();
   cambios[artistaId] = (cambios[artistaId] || 0) + cuanto;
   localStorage.setItem('looped-seguidores', JSON.stringify(cambios));
-}
-
-function abrirAlmacenArchivos() {
-  return new Promise((resolver, rechazar) => {
-    const pedido = indexedDB.open('looped-archivos', 1);
-    pedido.onupgradeneeded = () => pedido.result.createObjectStore('archivos');
-    pedido.onsuccess = () => resolver(pedido.result);
-    pedido.onerror = () => rechazar(pedido.error);
-  });
-}
-async function guardarArchivo(clave, archivo) {
-  const almacen = await abrirAlmacenArchivos();
-  return new Promise((resolver, rechazar) => {
-    const transaccion = almacen.transaction('archivos', 'readwrite');
-    transaccion.objectStore('archivos').put(archivo, clave);
-    transaccion.oncomplete = () => resolver();
-    transaccion.onerror = () => rechazar(transaccion.error);
-  });
-}
-async function borrarArchivo(clave) {
-  const almacen = await abrirAlmacenArchivos();
-  return new Promise((resolver, rechazar) => {
-    const transaccion = almacen.transaction('archivos', 'readwrite');
-    transaccion.objectStore('archivos').delete(clave);
-    transaccion.oncomplete = () => resolver();
-    transaccion.onerror = () => rechazar(transaccion.error);
-  });
-}
-async function leerArchivo(clave) {
-  const almacen = await abrirAlmacenArchivos();
-  return new Promise((resolver, rechazar) => {
-    const pedido = almacen.transaction('archivos').objectStore('archivos').get(clave);
-    pedido.onsuccess = () => resolver(pedido.result || null);
-    pedido.onerror = () => rechazar(pedido.error);
-  });
 }
 
 // ---------- Sesión ----------
@@ -893,22 +914,18 @@ function pantallaPerfilListoFan() {
 }
 
 // ---------- Utilidades compartidas ----------
-// Desde pages/ las rutas de data.js (desde la raíz) necesitan «../».
-// Las imágenes guardadas como texto (data:) se usan tal cual, y los
-// archivos guardados en IndexedDB («local:…») se leen aparte.
+// Desde pages/ las rutas de los datos de ejemplo (assets/…, desde la raíz)
+// necesitan «../». Los enlaces de Supabase (https:) y las imágenes
+// guardadas como texto (data:) se usan tal cual.
 const RAIZ = location.pathname.includes('/pages/') ? '../' : '';
 function rutaRecurso(ruta) {
-  if (!ruta || ruta.startsWith('local:')) return null;
+  if (!ruta || ruta.startsWith('local:')) return null; // «local:» era el guardado viejo en el navegador
   if (/^(data:|blob:|https?:)/.test(ruta)) return ruta;
   return RAIZ + ruta;
 }
 
-// Dirección para reproducir un audio: los de IndexedDB se leen primero.
+// Dirección para reproducir un audio.
 async function urlDeAudio(ruta) {
-  if (ruta && ruta.startsWith('local:')) {
-    const archivo = await leerArchivo(ruta.slice('local:'.length));
-    return archivo ? URL.createObjectURL(archivo) : null;
-  }
   return rutaRecurso(ruta);
 }
 
@@ -940,7 +957,7 @@ function leerSesion() {
   try { return JSON.parse(localStorage.getItem('looped-sesion')); } catch (e) { return null; }
 }
 
-// El artista de la sesión: uno de data.js o el recién registrado. null si no hay.
+// El artista de la sesión (de Supabase, o la copia del navegador). null si no hay.
 function artistaActual() {
   const sesion = leerSesion();
   if (!sesion || sesion.rol !== 'artista') return null;
@@ -1140,7 +1157,7 @@ function pantallaPanelArtista() {
 }
 
 // ---------- Fan de la sesión y su nivel ----------
-// El fan de la sesión: uno de data.js o el recién registrado. null si no hay.
+// El fan de la sesión (de Supabase, o la copia del navegador). null si no hay.
 function fanActual() {
   const sesion = leerSesion();
   if (!sesion || sesion.rol !== 'fan') return null;
@@ -2374,8 +2391,14 @@ function pantallaLanzamientoArtista() {
   botonConfirmar.addEventListener('click', async () => {
     botonConfirmar.disabled = true;
     if (reproductor.estado && reproductor.estado.actual === lanzamiento.id) detenerMusica();
-    await eliminarLanzamiento(lanzamiento.id);
-    location.replace('musica-artista.html?eliminado=1');
+    try {
+      await eliminarLanzamiento(lanzamiento);
+      location.replace('musica-artista.html?eliminado=1');
+    } catch (e) {
+      botonConfirmar.disabled = false;
+      cerrarDialogo();
+      mostrarAviso('No pudimos eliminar el lanzamiento. Revisa tu conexión e inténtalo otra vez.');
+    }
   });
 }
 
@@ -2501,30 +2524,48 @@ function pantallaPublicarLanzamiento() {
       return;
     }
 
-    // SIMULADO: con Supabase, aquí se suben el audio y la portada y se
-    // guarda el lanzamiento. Ahora queda guardado en este navegador.
+    // REAL: sube el audio y la portada a Supabase y guarda el lanzamiento.
+    // Al guardarlo con la fecha de ahora, entra a la ventana de 48 h.
+    const textoBoton = botonPublicar.textContent;
     botonPublicar.disabled = true;
+    botonPublicar.textContent = 'Publicando…';
     pararEscucha();
-    const id = `lanzamiento-${Date.now()}`;
+    const marca = Date.now(); // para que cada archivo tenga un nombre distinto
+    const subidos = []; // si algo falla, se borran los archivos que alcanzaron a subir
     try {
+      const { data: { user } } = await baseDatos.auth.getUser();
+      if (!user) throw new Error('sin-sesion');
+
+      // El audio de muestra ya está en assets/: se guarda su ruta, sin subirlo.
       let audio = borrador.audio;
       if (typeof audio !== 'string') {
-        await guardarArchivo(`audio-${id}`, audio);
-        audio = `local:audio-${id}`;
+        const extension = (audio.name.split('.').pop() || 'mp3').toLowerCase();
+        audio = await subirArchivo('audios', user.id, `audio-${marca}.${extension}`, audio, audio.type || 'audio/mpeg');
+        subidos.push(audio);
       }
-      guardarLanzamientoPropio({
-        id,
+      let portada = null;
+      if (borrador.portada) {
+        const imagen = await (await fetch(borrador.portada)).blob();
+        portada = await subirArchivo('portadas', user.id, `portada-${marca}.jpg`, imagen, 'image/jpeg');
+        subidos.push(portada);
+      }
+
+      const { data, error } = await baseDatos.from('lanzamientos').insert({
         artista: artista.id,
-        nombreLanzamiento: titulo,
-        nombreCancion: cancion,
-        portada: borrador.portada,
-        audio,
-        fechaPublicacion: new Date().toISOString()
-      });
-      location.href = `lanzamiento-artista.html?id=${encodeURIComponent(id)}&nuevo=1`;
+        nombre_lanzamiento: titulo,
+        nombre_cancion: cancion,
+        portada,
+        audio
+      }).select().single();
+      if (error) throw error;
+      location.href = `lanzamiento-artista.html?id=${encodeURIComponent(data.id)}&nuevo=1`;
     } catch (e) {
+      subidos.forEach(enlace => borrarArchivoSubido(enlace).catch(() => {}));
       botonPublicar.disabled = false;
-      mostrarAviso('No se pudo guardar el lanzamiento en este navegador. Prueba con un audio más liviano.');
+      botonPublicar.textContent = textoBoton;
+      mostrarAviso(e.message === 'sin-sesion'
+        ? 'Tu sesión se cerró. Inicia sesión otra vez para publicar.'
+        : 'No pudimos publicar el lanzamiento. Revisa tu conexión e inténtalo otra vez.');
     }
   });
 
@@ -2710,7 +2751,23 @@ const PANTALLAS = {
   'cola-fan': pantallaColaFan
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Primero se traen los datos de Supabase (en las páginas que cargan la conexión).
+  if (typeof baseDatos !== 'undefined') {
+    try {
+      await cargarDatos();
+    } catch (e) {
+      // Sin conexión: la pantalla se muestra igual, vacía, con un aviso arriba.
+      const contenido = document.querySelector('main');
+      if (contenido) {
+        const aviso = document.createElement('div');
+        aviso.className = 'aviso aviso--advertencia';
+        aviso.setAttribute('role', 'alert');
+        aviso.innerHTML = '<p>No pudimos cargar los datos. Revisa tu conexión y recarga la página.</p>';
+        contenido.prepend(aviso);
+      }
+    }
+  }
   const pantalla = PANTALLAS[document.body.dataset.pantalla];
   if (pantalla) pantalla();
   iniciarReproductor(); // solo aparece en las pantallas con navegación
