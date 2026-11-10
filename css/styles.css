@@ -300,6 +300,14 @@
 .responder__pregunta { margin-top: var(--espacio-2); }
 .responder .titulo[data-cronometro] { margin-block: var(--espacio-3); font-variant-numeric: tabular-nums; }
 
+/* R08 · Cupos: el número grande (32 px, .titulo) y las filas de datos */
+.cupos__rotulo { margin-top: var(--espacio-3); }
+.cupos__encabezado { margin-top: var(--espacio-6); }
+.cupos .progreso { margin-block: var(--espacio-3); }
+.cupos .tarjeta .tarjeta__encabezado + .tarjeta__encabezado,
+.cupos .tarjeta__titulo + .tarjeta__encabezado { margin-top: var(--espacio-3); }
+.cupos .titulo { font-variant-numeric: tabular-nums; }
+
 /* Nota de voz: botón y, debajo, la barra de avance del kit */
 .nota-voz { margin-top: var(--espacio-3); }
 .nota-voz .avance { margin-top: var(--espacio-3); }

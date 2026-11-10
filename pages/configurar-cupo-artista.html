@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Configurar cupo</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="configurar-cupo-artista">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- Configurar cupo: cuántas respuestas das y quién puede preguntar -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="cupos-artista.html" aria-label="Volver a tu cupo">
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span class="barra-superior__titulo">Configurar cupo</span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">El espacio lo decides tú.</h1>
+      <p class="encabezado-pagina__bajada">Elige tu disponibilidad para la interacción.</p>
+    </div>
+
+    <form id="formulario-cupo" novalidate>
+      <div class="campo" data-campo="respuestas">
+        <label class="campo__etiqueta" for="respuestas">Número de respuestas</label>
+        <input class="campo__control" id="respuestas" name="respuestas" type="number" inputmode="numeric"
+          min="1" max="100" step="1" aria-describedby="ayuda-respuestas error-respuestas">
+        <p class="campo__ayuda" id="ayuda-respuestas">Escribe un número de 1 a 100.</p>
+        <p class="campo__mensaje-error" id="error-respuestas" role="alert"></p>
+      </div>
+
+      <div class="campo">
+        <span class="campo__etiqueta" id="etiqueta-nivel">Nivel mínimo para participar</span>
+        <div class="selector" role="group" aria-labelledby="etiqueta-nivel" data-niveles>
+          <button type="button" class="boton boton--secundario" data-nivel="0" aria-pressed="false">Sin requisito</button>
+          <button type="button" class="boton boton--secundario" data-nivel="1" aria-pressed="false">Nivel 1</button>
+          <button type="button" class="boton boton--secundario" data-nivel="2" aria-pressed="false">Nivel 2</button>
+          <button type="button" class="boton boton--secundario" data-nivel="3" aria-pressed="false">Nivel 3</button>
+        </div>
+      </div>
+    </form>
+
+    <p class="texto--pequeno texto--suave pantalla__nota">El cupo cuenta respuestas que puedes dar, no preguntas. Puedes cambiarlo antes de abrir el cupo.</p>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="submit" class="boton boton--bloque" form="formulario-cupo">Revisar cupo</button>
+  </footer>
+
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

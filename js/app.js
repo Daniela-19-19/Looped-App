@@ -3143,6 +3143,214 @@ function pantallaTuConexionFan() {
   if (respuesta && respuesta.tipo === 'voz') activarNotaDeVoz(caja, rutaRecurso(respuesta.audio), respuesta.duracionAudio);
 }
 
+// ---------- R08 · Cupos ----------
+// Una fila de dato y valor dentro de una tarjeta («Respuestas: 5»).
+function htmlDato(nombre, valor) {
+  return `<div class="tarjeta__encabezado"><span class="texto--pequeno texto--suave">${escapar(nombre)}</span><b class="texto--pequeno">${escapar(valor)}</b></div>`;
+}
+
+function pantallaCuposArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const caja = document.querySelector('[data-cupos]');
+  if (new URLSearchParams(location.search).get('aviso') === 'guardado') mostrarAviso('Cupo listo. Ábrelo cuando quieras.');
+
+  function pintar() {
+    const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+    // Un artista nuevo todavía no tiene cupo: primero lo configura.
+    if (!cupo) {
+      caja.innerHTML = `
+        <div class="encabezado-pagina">
+          <h1 class="titulo titulo--medio">Un espacio para tu comunidad.</h1>
+          <p class="encabezado-pagina__bajada">Decide cuántas respuestas das y quién puede preguntarte.</p>
+        </div>
+        <section class="tarjeta"><h2 class="tarjeta__titulo">Todavía no tienes cupo</h2><p class="tarjeta__texto">Configúralo para que tus fans puedan enviarte preguntas.</p></section>
+        <div class="pregunta__acciones"><a class="boton" href="configurar-cupo-artista.html">Configurar cupo</a></div>`;
+      return;
+    }
+    const total = cupo.totalPreguntas;
+    const usadas = cupo.preguntasUsadas;
+    if (cupo.estado === 'abierto') {
+      const porcentaje = Math.min(100, (usadas / total) * 100);
+      caja.innerHTML = `
+        <div class="encabezado-pagina">
+          <h1 class="titulo titulo--medio">Un espacio para tu comunidad.</h1>
+          <p class="encabezado-pagina__bajada">Recibe preguntas y votos dentro de tu disponibilidad.</p>
+        </div>
+        <div class="rejilla-tarjetas rejilla-tarjetas--dos">
+          <section class="tarjeta">
+            <div class="tarjeta__encabezado"><h2 class="tarjeta__titulo">Cupo abierto</h2><span class="etiqueta etiqueta--acento">${usadas} de ${total}</span></div>
+            <p class="rotulo rotulo--pequeno texto--suave cupos__rotulo">Respuestas disponibles</p>
+            <p class="titulo">${Math.max(0, total - usadas)}</p>
+            <div class="progreso" role="progressbar" aria-label="Respuestas usadas" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${usadas}"><span class="progreso__barra" style="width: ${porcentaje.toFixed(1)}%"></span></div>
+            <p class="tarjeta__texto">Has respondido ${usadas} de ${total}. Las preguntas en cola no consumen tu cupo.</p>
+          </section>
+          <section class="tarjeta">
+            <h2 class="tarjeta__titulo">Tu disponibilidad</h2>
+            ${htmlDato('Respuestas', String(total))}
+            ${htmlDato('Condición', textoNivelMinimo(cupo.nivelMinimo))}
+            ${cupo.fechaApertura ? htmlDato('Abierto', haceCuanto(cupo.fechaApertura)) : ''}
+          </section>
+        </div>
+        <div class="pregunta__acciones">
+          <a class="boton" href="bandeja-artista.html">Ver preguntas</a>
+          <button type="button" class="boton boton--terciario" data-cerrar-cupo>Cerrar cupo</button>
+        </div>`;
+    } else if (cupo.estado === 'completo') {
+      caja.innerHTML = `
+        <div class="encabezado-pagina">
+          <h1 class="titulo titulo--medio">Este espacio ya se completó.</h1>
+          <p class="encabezado-pagina__bajada">Puedes volver a abrir uno cuando tengas disponibilidad.</p>
+        </div>
+        <section class="tarjeta"><h2 class="tarjeta__titulo">Cupo completo</h2><p class="tarjeta__texto">Respondiste ${usadas} de ${total}. Las preguntas que quedaron en cola siguen en tu bandeja.</p></section>
+        <div class="pregunta__acciones"><a class="boton" href="configurar-cupo-artista.html">Abrir nuevo cupo</a></div>`;
+    } else {
+      caja.innerHTML = `
+        <p class="rotulo texto--suave cupos__rotulo">Respuestas que podrás dar</p>
+        <p class="titulo">${total}</p>
+        <p class="texto">${escapar(textoNivelMinimo(cupo.nivelMinimo))}</p>
+        <div class="encabezado-pagina cupos__encabezado">
+          <h1 class="titulo titulo--medio">Todo listo para conectar.</h1>
+          <p class="encabezado-pagina__bajada">Tu disponibilidad está configurada.</p>
+        </div>
+        <section class="tarjeta"><h2 class="tarjeta__titulo">Cupo cerrado</h2><p class="tarjeta__texto">Tu configuración está lista para abrir un nuevo cupo.</p></section>
+        <div class="pregunta__acciones">
+          <button type="button" class="boton" data-abrir-cupo>Abrir cupo</button>
+          <a class="boton boton--terciario" href="configurar-cupo-artista.html">Editar cupo</a>
+        </div>`;
+    }
+  }
+
+  // REAL: cambia el cupo en Supabase y lo anota en los datos cargados.
+  async function guardarCupo(cambios) {
+    const { data, error } = await baseDatos.from('cupos')
+      .update(cambios).eq('artista', artista.id).select().single();
+    if (error || !data) return false;
+    Object.assign(obtenerDatos('cupos').find(c => c.artista === artista.id), {
+      estado: data.estado,
+      preguntasUsadas: data.preguntas_usadas,
+      fechaApertura: data.fecha_apertura
+    });
+    return true;
+  }
+
+  // Abrir: empieza de cero y desde ahora.
+  caja.addEventListener('click', async evento => {
+    const abrir = evento.target.closest('[data-abrir-cupo]');
+    if (!abrir || abrir.disabled) return;
+    abrir.disabled = true;
+    const listo = await guardarCupo({ estado: 'abierto', preguntas_usadas: 0, fecha_apertura: new Date().toISOString() });
+    if (!listo) {
+      abrir.disabled = false;
+      mostrarAviso('No pudimos abrir el cupo. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    pintar();
+    mostrarAviso('Cupo abierto. Tus fans ya pueden participar.');
+    caja.querySelector('[data-cerrar-cupo]').focus();
+  });
+
+  // Cerrar: primero se confirma en el diálogo.
+  const velo = document.querySelector('[data-velo-cerrar]');
+  const botonConfirmar = document.querySelector('[data-confirmar-cerrar]');
+  const botonCancelar = document.querySelector('[data-cancelar-cerrar]');
+  function cerrarDialogo() {
+    velo.hidden = true;
+    const boton = caja.querySelector('[data-cerrar-cupo]');
+    if (boton) boton.focus();
+  }
+  caja.addEventListener('click', evento => {
+    if (!evento.target.closest('[data-cerrar-cupo]')) return;
+    velo.hidden = false;
+    botonCancelar.focus(); // el foco empieza en la opción segura
+  });
+  botonCancelar.addEventListener('click', cerrarDialogo);
+  velo.addEventListener('click', evento => { if (evento.target === velo) cerrarDialogo(); });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && !velo.hidden) cerrarDialogo();
+  });
+  botonConfirmar.addEventListener('click', async () => {
+    botonConfirmar.disabled = true;
+    const listo = await guardarCupo({ estado: 'cerrado' });
+    botonConfirmar.disabled = false;
+    velo.hidden = true;
+    if (!listo) {
+      mostrarAviso('No pudimos cerrar el cupo. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    pintar();
+    mostrarAviso('Cupo cerrado. Las preguntas en cola se conservan.');
+    caja.querySelector('[data-abrir-cupo]').focus();
+  });
+
+  pintar();
+}
+
+// ---------- Configurar cupo ----------
+function pantallaConfigurarCupoArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const cupo = obtenerDatos('cupos').find(c => c.artista === artista.id);
+  // Un cupo abierto no se configura: primero se cierra.
+  if (cupo && cupo.estado === 'abierto') {
+    location.replace('cupos-artista.html');
+    return;
+  }
+
+  const formulario = document.getElementById('formulario-cupo');
+  const respuestas = document.getElementById('respuestas');
+  const niveles = document.querySelector('[data-niveles]');
+  const boton = document.querySelector('button[form="formulario-cupo"]');
+  let nivel = cupo ? Math.min(3, cupo.nivelMinimo) : 1;
+  respuestas.value = cupo ? cupo.totalPreguntas : 5;
+
+  function pintarNivel() {
+    niveles.querySelectorAll('[data-nivel]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.nivel) === nivel)));
+  }
+  niveles.addEventListener('click', evento => {
+    const elegido = evento.target.closest('[data-nivel]');
+    if (!elegido) return;
+    nivel = Number(elegido.dataset.nivel);
+    pintarNivel();
+  });
+  respuestas.addEventListener('input', () => mostrarError('respuestas', ''));
+  pintarNivel();
+
+  formulario.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (boton.disabled) return;
+    const total = Number(respuestas.value);
+    // Solo números enteros de 1 a 100 (spec.md).
+    if (!Number.isInteger(total) || total < 1 || total > 100) {
+      mostrarError('respuestas', 'Escribe un número entero de 1 a 100.');
+      respuestas.focus();
+      return;
+    }
+    // REAL: guarda el cupo cerrado y listo para abrir. Si el artista no
+    // tenía cupo, aquí se crea.
+    boton.disabled = true;
+    const { error } = await baseDatos.from('cupos').upsert({
+      artista: artista.id,
+      estado: 'cerrado',
+      total_preguntas: total,
+      preguntas_usadas: 0,
+      nivel_minimo: nivel
+    }, { onConflict: 'artista' });
+    if (error) {
+      boton.disabled = false;
+      mostrarAviso('No pudimos guardar el cupo. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    location.replace('cupos-artista.html?aviso=guardado');
+  });
+}
+
 // ---------- Cola de reproducción ----------
 // Diseño aprobado por el equipo (09-11-2026): «Sonando ahora», «A continuación»
 // y un menú ⋯ en cada canción con Reproducir ahora, Subir, Bajar y Quitar.
@@ -3788,7 +3996,9 @@ const PANTALLAS = {
   'responder-artista': pantallaResponderArtista,
   'respuesta-enviada-artista': pantallaRespuestaEnviadaArtista,
   'respuesta-artista': pantallaRespuestaArtista,
-  'tu-conexion-fan': pantallaTuConexionFan
+  'tu-conexion-fan': pantallaTuConexionFan,
+  'cupos-artista': pantallaCuposArtista,
+  'configurar-cupo-artista': pantallaConfigurarCupoArtista
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
