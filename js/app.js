@@ -561,13 +561,15 @@ function pasoIdentidad({ rol, campoNombre, errorNombre, usuarioAutomatico, desti
 
 // ¿Algún fan o artista ya usa este @usuario? Si no hay conexión responde
 // que no: igual la base de datos lo vuelve a revisar al guardar el perfil.
-async function usuarioOcupado(nombreUsuario) {
+// Al editar un perfil, «propio» es su id: su mismo usuario no cuenta como tomado.
+async function usuarioOcupado(nombreUsuario, propio = null) {
   try {
     const [fans, artistas] = await Promise.all([
-      baseDatos.from('fans').select('id').eq('nombre_usuario', nombreUsuario).limit(1),
-      baseDatos.from('artistas').select('id').eq('nombre_usuario', nombreUsuario).limit(1)
+      baseDatos.from('fans').select('id').eq('nombre_usuario', nombreUsuario).limit(2),
+      baseDatos.from('artistas').select('id').eq('nombre_usuario', nombreUsuario).limit(2)
     ]);
-    return Boolean((fans.data && fans.data.length) || (artistas.data && artistas.data.length));
+    const otros = [...(fans.data || []), ...(artistas.data || [])].filter(fila => fila.id !== propio);
+    return otros.length > 0;
   } catch (e) {
     return false;
   }
@@ -1945,20 +1947,7 @@ function pantallaInicioFan() {
   document.querySelector('[data-lista-canciones]').innerHTML = lanzamientos.map(htmlFilaCancion).join('');
 
   // Tu recorrido: nivel y progreso al siguiente (tabla de spec.md).
-  const minutos = fan.minutosEscucha || 0;
-  const progreso = progresoNivel(minutos);
-  document.querySelector('[data-recorrido]').innerHTML = `
-    <div class="tarjeta">
-      <div class="tarjeta__encabezado">
-        <h3 class="tarjeta__titulo">Nivel ${progreso.nivel}</h3>
-        <span class="etiqueta">${minutos} min escuchados</span>
-      </div>
-      <div class="progreso" role="progressbar" aria-label="Progreso al nivel ${progreso.nivel + 1}" aria-valuemin="0"
-        aria-valuemax="100" aria-valuenow="${Math.round(progreso.porcentaje)}"><span class="progreso__barra"></span></div>
-      <p class="tarjeta__texto">Te faltan ${progreso.faltan} min de escucha para el nivel ${progreso.nivel + 1}.</p>
-      <div class="tarjeta__acciones"><a class="boton boton--terciario boton--bloque" href="recorrido-fan.html">Ver mi recorrido</a></div>
-    </div>`;
-  document.querySelector('[data-recorrido] .progreso__barra').style.width = `${progreso.porcentaje}%`;
+  document.querySelector('[data-recorrido]').innerHTML = htmlTarjetaNivel(fan.minutosEscucha);
 
   // Todos los botones ▶ de la página (destacado y canciones)
   activarBotonesReproducir(document.querySelector('main'));
@@ -3410,6 +3399,276 @@ function pantallaNuevaPublicacionArtista() {
   });
 }
 
+// ---------- Nivel del fan: tarjeta compartida ----------
+// Nivel, minutos escuchados, barra hacia el siguiente nivel y, si se pide,
+// «Ver mi recorrido». La usan Inicio, Perfil y Tu recorrido.
+function htmlTarjetaNivel(minutosEscucha, { enlace = true } = {}) {
+  const minutos = minutosEscucha || 0;
+  const progreso = progresoNivel(minutos);
+  return `
+    <div class="tarjeta">
+      <div class="tarjeta__encabezado">
+        <h3 class="tarjeta__titulo">Nivel ${progreso.nivel}</h3>
+        <span class="etiqueta">${minutos} min escuchados</span>
+      </div>
+      <div class="progreso" role="progressbar" aria-label="Progreso al nivel ${progreso.nivel + 1}" aria-valuemin="0"
+        aria-valuemax="100" aria-valuenow="${Math.round(progreso.porcentaje)}"><span class="progreso__barra" style="width: ${progreso.porcentaje.toFixed(1)}%"></span></div>
+      <p class="tarjeta__texto">Te faltan ${progreso.faltan} min de escucha para el nivel ${progreso.nivel + 1}.</p>
+      ${enlace ? '<div class="tarjeta__acciones"><a class="boton boton--terciario boton--bloque" href="recorrido-fan.html">Ver mi recorrido</a></div>' : ''}
+    </div>`;
+}
+
+// Tarjeta de una pregunta del fan, con su estado y el botón para verla.
+function htmlPreguntaDelFan(pregunta) {
+  const artista = obtenerDatos('artistas').find(a => a.id === pregunta.artista);
+  if (!artista) return '';
+  const respondida = pregunta.estado === 'respondida';
+  const etiqueta = respondida ? '<span class="etiqueta etiqueta--reconocimiento">Respondida</span>'
+    : pregunta.estado === 'seleccionada' ? '<span class="etiqueta etiqueta--borde">Seleccionada</span>' : '';
+  return `
+    <article class="tarjeta">
+      <div class="tarjeta__encabezado"><span class="tarjeta__meta">Para ${escapar(artista.nombreArtistico)}</span>${etiqueta}</div>
+      <p class="tarjeta__texto tarjeta__texto--principal">${escapar(pregunta.texto)}</p>
+      <p class="tarjeta__texto">${escapar(textoEstadoPregunta(pregunta, artista))}</p>
+      <div class="tarjeta__acciones">
+        <a class="boton ${respondida ? 'boton--secundario' : 'boton--terciario'}" href="tu-conexion-fan.html?id=${encodeURIComponent(pregunta.id)}">${respondida ? 'Ver respuesta' : 'Ver mi pregunta'}</a>
+      </div>
+    </article>`;
+}
+
+// Las preguntas del fan, de la más nueva a la más vieja.
+function preguntasDelFan(fan) {
+  return obtenerDatos('preguntas').filter(p => p.autor === fan.id)
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+}
+
+// ---------- F07a · Perfil del fan ----------
+function pantallaPerfilFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  if (new URLSearchParams(location.search).get('aviso') === 'guardado') mostrarAviso('Perfil actualizado.');
+  const artistas = obtenerDatos('artistas');
+  const fundador = fan.fanFundadorDe.map(id => artistas.find(a => a.id === id)).filter(Boolean);
+  const clubes = fan.fanClubs.map(id => artistas.find(a => a.id === id)).filter(Boolean);
+  const mias = preguntasDelFan(fan);
+  // «Explorar Fan Club»: el de un artista que sigue y del que aún no es miembro.
+  const paraExplorar = artistas.find(a => fan.artistasQueSigue.includes(a.id) && !fan.fanClubs.includes(a.id))
+    || artistas.find(a => !fan.fanClubs.includes(a.id));
+  const avatar = fan.foto
+    ? `<span class="avatar avatar--grande"><img src="${escapar(rutaRecurso(fan.foto))}" alt=""></span>`
+    : `<span class="avatar avatar--grande avatar--acento" aria-hidden="true">${escapar(iniciales(fan.nombrePerfil || '?'))}</span>`;
+
+  const reconocimientos = [
+    ...fundador.map(a => `
+      <article class="tarjeta">
+        <div class="tarjeta__encabezado"><h3 class="tarjeta__titulo">Fan fundador</h3><span class="etiqueta etiqueta--reconocimiento">${escapar(a.nombreArtistico)}</span></div>
+        <p class="tarjeta__texto">Fuiste parte del comienzo de ${escapar(a.nombreArtistico)}.</p>
+      </article>`),
+    ...clubes.map(a => `
+      <a class="tarjeta tarjeta--tocable" href="contenido-fan-club-fan.html?id=${encodeURIComponent(a.id)}">
+        <div class="tarjeta__encabezado"><h3 class="tarjeta__titulo">Fan Club</h3><span class="etiqueta etiqueta--acento">Miembro</span></div>
+        <p class="tarjeta__texto">Contenido exclusivo de ${escapar(a.nombreArtistico)}.</p>
+      </a>`)
+  ].join('');
+
+  document.querySelector('[data-perfil-fan]').innerHTML = `
+    <h1 class="titulo titulo--medio">Tu perfil</h1>
+    <div class="perfil-fan__cabecera">
+      ${avatar}
+      <div>
+        <h2 class="titulo titulo--pequeno">${escapar(fan.nombrePerfil)}</h2>
+        <p class="texto--pequeno texto--suave">@${escapar(fan.nombreUsuario)} · Tu música y tus conexiones</p>
+      </div>
+    </div>
+    <section class="perfil-fan__seccion" aria-label="Tu nivel">${htmlTarjetaNivel(fan.minutosEscucha)}</section>
+    <section class="perfil-fan__seccion" aria-labelledby="titulo-tus-preguntas">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-tus-preguntas">Tus preguntas</h2></div>
+      ${mias.length
+        ? `<div class="rejilla-tarjetas rejilla-tarjetas--dos">${mias.map(htmlPreguntaDelFan).join('')}</div>`
+        : '<div class="tarjeta"><p class="tarjeta__texto">Cuando envíes una pregunta, podrás seguir su estado aquí.</p></div>'}
+    </section>
+    ${reconocimientos ? `
+    <section class="perfil-fan__seccion" aria-labelledby="titulo-reconocimientos">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-reconocimientos">Reconocimientos</h2></div>
+      <div class="rejilla-tarjetas rejilla-tarjetas--dos">${reconocimientos}</div>
+    </section>` : ''}
+    <div class="pregunta__acciones">
+      ${paraExplorar ? `<a class="boton boton--terciario" href="fan-club-fan.html?id=${encodeURIComponent(paraExplorar.id)}">Explorar Fan Club</a>` : ''}
+    </div>
+    <div class="pregunta__acciones">
+      <a class="boton" href="editar-perfil-fan.html">Completar mi perfil</a>
+      <a class="boton boton--secundario" href="configuracion.html">Configuración</a>
+    </div>`;
+}
+
+// ---------- F07b · Tu recorrido ----------
+function pantallaRecorridoFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const ultimo = obtenerDatos('lanzamientos').slice()
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion))[0];
+  const caja = document.querySelector('[data-recorrido-fan]');
+  caja.innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">Cada escucha te acerca.</h1>
+      <p class="encabezado-pagina__bajada">Tu nivel crece con la escucha registrada en Looped.</p>
+    </div>
+    <div class="rejilla-tarjetas rejilla-tarjetas--dos">
+      ${htmlTarjetaNivel(fan.minutosEscucha, { enlace: false })}
+      <section class="tarjeta">
+        <h2 class="tarjeta__titulo">Nuevos beneficios</h2>
+        <p class="tarjeta__texto">Sigue descubriendo artistas y participando en su comunidad. Algunos artistas piden un nivel mínimo para enviar preguntas o votar.</p>
+      </section>
+    </div>
+    <p class="texto--pequeno texto--suave pregunta__bloque">El nivel 1 pide 15 minutos de escucha y cada nivel siguiente pide 1,5 veces lo del anterior.</p>
+    ${ultimo ? `
+    <div class="pregunta__acciones">
+      <button type="button" class="boton" data-reproducir="${escapar(ultimo.id)}" data-titulo="${escapar(ultimo.nombreCancion)}">
+        <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+        <span data-texto-reproducir="Continuar escuchando">Continuar escuchando</span>
+      </button>
+    </div>` : ''}`;
+  activarBotonesReproducir(caja);
+}
+
+// ---------- P01 · Editar perfil del fan ----------
+function pantallaEditarPerfilFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const formulario = document.getElementById('formulario-perfil');
+  const nombre = document.getElementById('nombre');
+  const usuario = document.getElementById('usuario');
+  const entradaFoto = document.querySelector('[data-foto-entrada]');
+  const avatar = document.querySelector('[data-foto-avatar]');
+  const textoFoto = document.querySelector('[data-foto-texto]');
+  const cajaQuitar = document.querySelector('[data-quitar-foto]');
+  const gustos = document.querySelector('[data-lista-generos]');
+  const intereses = document.querySelector('[data-lista-intereses]');
+  const boton = document.querySelector('button[form="formulario-perfil"]');
+
+  // La foto: la que tenía (enlace), una nueva (data URL, aún sin subir) o ninguna.
+  let foto = fan.foto || null;
+  nombre.value = fan.nombrePerfil || '';
+  usuario.value = '@' + (fan.nombreUsuario || '');
+  dibujarCasillas(gustos, obtenerDatos('generos'), 'generos', fan.gustosMusicales || []);
+  dibujarCasillas(intereses, obtenerDatos('intereses'), 'intereses', fan.intereses || []);
+
+  function pintarFoto() {
+    pintarAvatar(avatar, rutaRecurso(foto), nombre.value);
+    textoFoto.textContent = foto ? 'Toca para cambiarla.' : 'Toca para añadirla.';
+    cajaQuitar.innerHTML = foto
+      ? '<button type="button" class="boton boton--terciario boton--pequeno" data-quitar>Quitar foto</button>' : '';
+  }
+  entradaFoto.addEventListener('change', async () => {
+    const archivo = entradaFoto.files[0];
+    entradaFoto.value = '';
+    if (!archivo) return;
+    try {
+      foto = await reducirImagen(archivo, 512);
+      pintarFoto();
+    } catch (e) {
+      textoFoto.textContent = 'No pudimos usar esa imagen. Prueba con otra.';
+    }
+  });
+  cajaQuitar.addEventListener('click', evento => {
+    if (!evento.target.closest('[data-quitar]')) return;
+    foto = null;
+    pintarFoto();
+    entradaFoto.focus();
+  });
+  nombre.addEventListener('input', () => { mostrarError('nombre', ''); if (!foto) pintarFoto(); });
+  usuario.addEventListener('input', () => mostrarError('usuario', ''));
+  usuario.addEventListener('blur', () => {
+    const limpio = limpiarUsuario(usuario.value);
+    usuario.value = limpio ? '@' + limpio : '';
+  });
+  pintarFoto();
+
+  // Acceso a sus preguntas (spec.md).
+  const mias = preguntasDelFan(fan);
+  const cajaPreguntas = document.querySelector('[data-tus-preguntas]');
+  if (mias.length) {
+    cajaPreguntas.innerHTML = `<div class="rejilla-tarjetas rejilla-tarjetas--dos">${mias.map(htmlPreguntaDelFan).join('')}</div>`;
+  } else {
+    document.querySelector('[data-seccion-preguntas]').remove();
+  }
+
+  formulario.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (boton.disabled) return;
+    const textoNombre = nombre.value.trim();
+    const textoUsuario = limpiarUsuario(usuario.value);
+    if (!textoNombre) mostrarError('nombre', 'Escribe cómo quieres que te vean.');
+    if (!textoUsuario) mostrarError('usuario', 'Elige un nombre de usuario.');
+    const conError = formulario.querySelector('[aria-invalid="true"]');
+    if (conError) {
+      conError.focus();
+      return;
+    }
+
+    boton.disabled = true;
+    boton.textContent = 'Guardando…';
+    const fallar = mensaje => {
+      boton.disabled = false;
+      boton.textContent = 'Guardar cambios';
+      mostrarAviso(mensaje);
+    };
+    if (textoUsuario !== fan.nombreUsuario && await usuarioOcupado(textoUsuario, fan.id)) {
+      boton.disabled = false;
+      boton.textContent = 'Guardar cambios';
+      mostrarError('usuario', 'Este nombre de usuario ya está tomado. Prueba con otro.');
+      usuario.focus();
+      return;
+    }
+
+    // REAL: si hay foto nueva, se sube; después se guarda el perfil en «fans».
+    let enlaceFoto = foto;
+    if (foto && foto.startsWith('data:')) {
+      const usuarioId = await idDeLaCuenta();
+      if (!usuarioId) return fallar('Tu sesión se cerró. Inicia sesión otra vez para guardar.');
+      try { enlaceFoto = await subirFotoPerfil(usuarioId, foto); }
+      catch (e) { return fallar('No pudimos subir tu foto. Inténtalo otra vez.'); }
+    }
+    const { error } = await baseDatos.from('fans').update({
+      nombre_perfil: textoNombre,
+      nombre_usuario: textoUsuario,
+      foto: enlaceFoto,
+      gustos_musicales: casillasMarcadas(gustos),
+      intereses: casillasMarcadas(intereses)
+    }).eq('id', fan.id);
+    if (error) {
+      if (enlaceFoto !== fan.foto) borrarArchivoSubido(enlaceFoto).catch(() => {});
+      if (error.code === '23505') {
+        boton.disabled = false;
+        boton.textContent = 'Guardar cambios';
+        mostrarError('usuario', 'Este nombre de usuario ya está tomado. Prueba con otro.');
+        usuario.focus();
+        return;
+      }
+      return fallar('No pudimos guardar los cambios. Revisa tu conexión e inténtalo otra vez.');
+    }
+    // La foto vieja ya no se usa: se borra de Storage (si era nuestra).
+    if (fan.foto && fan.foto !== enlaceFoto) borrarArchivoSubido(fan.foto).catch(() => {});
+    // PROVISIONAL: también la copia de este navegador.
+    const copia = perfilGuardado();
+    if (copia && copia.id === fan.id) {
+      Object.assign(copia, { nombrePerfil: textoNombre, nombreUsuario: textoUsuario, foto: enlaceFoto,
+        gustosMusicales: casillasMarcadas(gustos), intereses: casillasMarcadas(intereses) });
+      try { localStorage.setItem('looped-perfil', JSON.stringify(copia)); } catch (e) { /* sin almacenamiento */ }
+    }
+    location.replace('perfil-fan.html?aviso=guardado');
+  });
+}
+
 // ---------- F08a · Conocer el Fan Club ----------
 function pantallaFanClubFan() {
   const fan = fanActual();
@@ -4404,7 +4663,10 @@ const PANTALLAS = {
   'comunidad-artista': pantallaComunidadArtista,
   'nueva-publicacion-artista': pantallaNuevaPublicacionArtista,
   'fan-club-fan': pantallaFanClubFan,
-  'contenido-fan-club-fan': pantallaContenidoFanClubFan
+  'contenido-fan-club-fan': pantallaContenidoFanClubFan,
+  'perfil-fan': pantallaPerfilFan,
+  'recorrido-fan': pantallaRecorridoFan,
+  'editar-perfil-fan': pantallaEditarPerfilFan
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

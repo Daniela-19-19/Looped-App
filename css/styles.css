@@ -310,6 +310,17 @@
 .comunidad__autor .tarjeta__meta,
 .comunidad__lista .tarjeta__cabecera .tarjeta__meta { display: block; }
 
+/* F07a · Perfil del fan */
+.perfil-fan__cabecera { display: flex; align-items: center; gap: var(--espacio-4); margin-top: var(--espacio-4); }
+.perfil-fan__cabecera > div { min-width: 0; }
+.perfil-fan__seccion { margin-top: var(--espacio-8); }
+.perfil-fan .tarjeta--tocable { color: inherit; text-decoration: none; }
+
+/* P01 · Editar perfil del fan */
+.editar__titulo { margin-top: var(--espacio-6); margin-bottom: var(--espacio-3); }
+.editar__seccion { margin-top: var(--espacio-8); }
+.editar__preguntas { margin-top: var(--espacio-3); }
+
 /* R08 · Cupos: el número grande (32 px, .titulo) y las filas de datos */
 .cupos__rotulo { margin-top: var(--espacio-3); }
 .cupos__encabezado { margin-top: var(--espacio-6); }
