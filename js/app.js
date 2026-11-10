@@ -113,32 +113,67 @@ async function leerArchivo(clave) {
 }
 
 // ---------- Sesión ----------
-// SIMULADO mientras no esté Supabase: busca el correo entre las cuentas
-// de ejemplo y acepta cualquier contraseña que no esté vacía.
-// Devuelve { rol, id } o null si el correo no tiene cuenta.
-// Con Supabase, aquí se llamará al inicio de sesión real.
-function iniciarSesion(correo, contrasena) {
-  const buscado = correo.toLowerCase();
-  // Primero, la cuenta creada en el registro (guardada en este navegador).
-  const propia = perfilGuardado();
-  if (propia && propia.correo.toLowerCase() === buscado && contrasena) {
-    return { rol: rolDelPerfil(propia), id: propia.id };
+// REAL: entra con Supabase Auth y busca el perfil de la cuenta.
+// Devuelve { rol, perfil } (perfil es null si no terminó el registro)
+// o lanza un error: 'datos-incorrectos' o 'sin-conexion'.
+async function iniciarSesion(correo, contrasena) {
+  let respuesta;
+  try {
+    respuesta = await baseDatos.auth.signInWithPassword({ email: correo, password: contrasena });
+  } catch (e) {
+    throw new Error('sin-conexion');
   }
-  const fan = obtenerDatos('fans').find(f => f.correo.toLowerCase() === buscado);
-  if (fan && contrasena) return { rol: 'fan', id: fan.id };
-  const artista = obtenerDatos('artistas').find(a => a.correo.toLowerCase() === buscado);
-  if (artista && contrasena) return { rol: 'artista', id: artista.id };
-  return null;
+  if (respuesta.error) {
+    throw new Error(respuesta.error.code === 'invalid_credentials' ? 'datos-incorrectos' : 'sin-conexion');
+  }
+  const usuario = respuesta.data.user;
+
+  // El rol se guardó con la cuenta al crearla. Si faltara, se busca en las dos tablas.
+  const rolGuardado = (usuario.user_metadata || {}).rol;
+  const tablas = rolGuardado === 'artista' ? ['artistas']
+    : rolGuardado === 'fan' ? ['fans'] : ['fans', 'artistas'];
+  for (const tabla of tablas) {
+    const { data, error } = await baseDatos.from(tabla).select('*').eq('usuario_id', usuario.id).maybeSingle();
+    if (error) throw new Error('sin-conexion');
+    if (data) {
+      const rol = tabla === 'artistas' ? 'artista' : 'fan';
+      return { rol, perfil: perfilDesdeFila(rol, data, usuario.email) };
+    }
+  }
+  return { rol: rolGuardado || 'fan', perfil: null };
 }
 
-// La cuenta creada al terminar el registro, guardada en este navegador
-// (SIMULADO hasta conectar Supabase). null si no hay ninguna.
+// Convierte una fila de Supabase al perfil que usan las pantallas
+// (los mismos nombres de campos de js/data.js).
+function perfilDesdeFila(rol, fila, correo) {
+  const comun = { id: fila.id, nombreUsuario: fila.nombre_usuario, correo, foto: fila.foto };
+  if (rol === 'artista') {
+    return Object.assign(comun, {
+      nombreArtistico: fila.nombre_artistico,
+      presentacion: fila.presentacion || '',
+      ciudad: fila.ciudad || '',
+      generos: fila.generos || [],
+      roles: fila.roles || [],
+      seguidores: fila.seguidores,
+      emergente: fila.emergente
+    });
+  }
+  return Object.assign(comun, {
+    nombrePerfil: fila.nombre_perfil,
+    gustosMusicales: fila.gustos_musicales || [],
+    intereses: fila.intereses || [],
+    minutosEscucha: fila.minutos_escucha,
+    artistasQueSigue: [],
+    fanClubs: [],
+    fanFundadorDe: [],
+    fechaRegistro: fila.fecha_registro
+  });
+}
+
+// PROVISIONAL: copia del perfil en este navegador, para las pantallas
+// que aún no leen de Supabase. null si no hay ninguna.
 function perfilGuardado() {
   try { return JSON.parse(localStorage.getItem('looped-perfil')); } catch (e) { return null; }
-}
-// Un perfil de artista tiene nombre artístico; uno de fan, nombre de perfil.
-function rolDelPerfil(perfil) {
-  return perfil.nombreArtistico ? 'artista' : 'fan';
 }
 
 // Guarda quién entró, en este navegador. Si el navegador no deja
@@ -230,8 +265,12 @@ function pantallaIniciarSesion() {
   correo.addEventListener('input', () => mostrarError('correo', ''));
   contrasena.addEventListener('input', () => mostrarError('contrasena', ''));
 
-  formulario.addEventListener('submit', evento => {
+  const botonEntrar = document.querySelector('button[form="formulario-sesion"]');
+  const textoBoton = botonEntrar.textContent;
+
+  formulario.addEventListener('submit', async evento => {
     evento.preventDefault();
+    if (botonEntrar.disabled) return; // ya se está entrando
     const textoCorreo = correo.value.trim();
     let valido = true;
 
@@ -248,14 +287,34 @@ function pantallaIniciarSesion() {
       return;
     }
 
-    const sesion = iniciarSesion(textoCorreo, contrasena.value);
-    if (!sesion) {
-      mostrarError('correo', 'No encontramos una cuenta con este correo.');
-      correo.focus();
+    botonEntrar.disabled = true;
+    botonEntrar.textContent = 'Entrando…';
+    let sesion;
+    try {
+      sesion = await iniciarSesion(textoCorreo, contrasena.value);
+    } catch (e) {
+      botonEntrar.disabled = false;
+      botonEntrar.textContent = textoBoton;
+      if (e.message === 'datos-incorrectos') {
+        mostrarError('contrasena', 'El correo o la contraseña no son correctos.');
+        contrasena.focus();
+      } else {
+        mostrarError('correo', 'No pudimos entrar. Revisa tu conexión e inténtalo otra vez.');
+        correo.focus();
+      }
       return;
     }
 
-    guardarSesion(sesion);
+    // Registro sin terminar: vuelve al primer paso del perfil de su rol.
+    if (!sesion.perfil) {
+      guardarRegistro({ rol: sesion.rol, correo: textoCorreo });
+      location.href = sesion.rol === 'artista' ? 'identidad-artista.html' : 'perfil-basico-fan.html';
+      return;
+    }
+
+    // PROVISIONAL: copia en este navegador para las pantallas que aún no leen de Supabase.
+    try { localStorage.setItem('looped-perfil', JSON.stringify(sesion.perfil)); } catch (e) { /* sin almacenamiento */ }
+    guardarSesion({ rol: sesion.rol, id: sesion.perfil.id });
     // Cada rol abre su lado: el fan su inicio y el artista su panel.
     location.href = sesion.rol === 'artista' ? 'panel-artista.html' : 'inicio-fan.html';
   });
