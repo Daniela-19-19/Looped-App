@@ -67,8 +67,18 @@ create table artistas (
   fecha_registro date not null default current_date
 );
 
--- Qué artistas sigue cada fan (y si es su fan fundador).
+-- Qué artistas sigue cada fan.
 create table seguimientos (
+  fan text references fans on delete cascade,
+  artista text references artistas on delete cascade,
+  fecha timestamptz not null default now(),
+  primary key (fan, artista)
+);
+
+-- La primera visita de cada fan a cada artista. «Fan fundador» se gana
+-- al visitar a un artista con menos de 1000 seguidores (lo decide un
+-- trigger más abajo, no el navegador).
+create table visitas (
   fan text references fans on delete cascade,
   artista text references artistas on delete cascade,
   es_fan_fundador boolean not null default false,
@@ -240,6 +250,18 @@ end $$;
 create trigger seguimientos_contar after insert or delete on seguimientos
   for each row execute function contar_seguidores();
 
+-- Decide si una visita da «Fan fundador»: menos de 1000 seguidores.
+create function decidir_fan_fundador() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.es_fan_fundador := coalesce((select seguidores < 1000 from artistas where id = new.artista), false);
+  new.fecha := now();
+  return new;
+end $$;
+
+create trigger visitas_fan_fundador before insert on visitas
+  for each row execute function decidir_fan_fundador();
+
 
 -- ----------------------------------------------------------
 -- 6. Seguridad (RLS): quién lee y quién escribe
@@ -250,6 +272,7 @@ alter table intereses enable row level security;
 alter table fans enable row level security;
 alter table artistas enable row level security;
 alter table seguimientos enable row level security;
+alter table visitas enable row level security;
 alter table miembros_fan_club enable row level security;
 alter table cupos enable row level security;
 alter table lanzamientos enable row level security;
@@ -268,6 +291,7 @@ create policy "Todos leen" on intereses for select using (true);
 create policy "Todos leen" on fans for select using (true);
 create policy "Todos leen" on artistas for select using (true);
 create policy "Todos leen" on seguimientos for select using (true);
+create policy "Todos leen" on visitas for select using (true);
 create policy "Todos leen" on miembros_fan_club for select using (true);
 create policy "Todos leen" on cupos for select using (true);
 create policy "Todos leen" on lanzamientos for select using (true);
@@ -284,6 +308,7 @@ create policy "Edita su perfil" on artistas for update using (usuario_id = auth.
 -- El fan sigue, deja de seguir y entra o sale de Fan Clubs.
 create policy "El fan sigue" on seguimientos for insert with check (fan = mi_fan());
 create policy "El fan deja de seguir" on seguimientos for delete using (fan = mi_fan());
+create policy "El fan visita" on visitas for insert with check (fan = mi_fan());
 create policy "El fan entra" on miembros_fan_club for insert with check (fan = mi_fan());
 create policy "El fan sale" on miembros_fan_club for delete using (fan = mi_fan());
 

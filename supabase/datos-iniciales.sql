@@ -41,11 +41,15 @@ insert into artistas (id, nombre_artistico, nombre_usuario, foto, presentacion, 
   ('nadia-cruz', 'Nadia Cruz', 'nadiacruz', null, 'R&B con guitarras limpias y letras que cuentan lo cotidiano.', 'Cali', '{rnb,musica-latina}', '{solista}', true),
   ('los-faroles', 'Los Faroles', 'losfaroles', null, 'Banda de rock que ensaya en un garaje desde 2019.', 'Bucaramanga', '{rock,indie}', '{integrante-banda}', false);
 
-insert into seguimientos (fan, artista, es_fan_fundador) values
-  ('fan-alex', 'nadia-cruz', false),
-  ('fan-tomas', 'mara-sol', false),
-  ('fan-lucia', 'mara-sol', true),
-  ('fan-sebastian', 'mara-sol', false);
+insert into seguimientos (fan, artista) values
+  ('fan-alex', 'nadia-cruz'),
+  ('fan-tomas', 'mara-sol'),
+  ('fan-lucia', 'mara-sol'),
+  ('fan-sebastian', 'mara-sol');
+
+-- Lucía visitó a Mara Sol cuando tenía menos de 1000 seguidores: fan fundador.
+insert into visitas (fan, artista) values
+  ('fan-lucia', 'mara-sol');
 
 insert into miembros_fan_club (fan, artista) values
   ('fan-lucia', 'mara-sol');

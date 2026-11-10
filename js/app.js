@@ -12,19 +12,13 @@ let datosCargados = {};
 
 // Única puerta a los datos: todas las pantallas leen por aquí.
 function obtenerDatos(tipo) {
-  const lista = datosCargados[tipo] || [];
-  if (tipo === 'artistas') {
-    // PROVISIONAL: «seguir» aún se guarda en este navegador y suma aquí.
-    const cambios = leerCambiosSeguidores();
-    return lista.map(a => cambios[a.id] ? { ...a, seguidores: Math.max(0, a.seguidores + cambios[a.id]) } : a);
-  }
-  return lista;
+  return datosCargados[tipo] || [];
 }
 
 // Trae de Supabase todas las tablas que muestran las pantallas.
 // Lanza un error si no hay conexión.
 async function cargarDatos() {
-  const tablas = ['generos', 'roles', 'intereses', 'artistas', 'fans', 'seguimientos',
+  const tablas = ['generos', 'roles', 'intereses', 'artistas', 'fans', 'seguimientos', 'visitas',
     'miembros_fan_club', 'lanzamientos', 'cupos', 'preguntas', 'respuestas'];
   const respuestas = await Promise.all(tablas.map(tabla => baseDatos.from(tabla).select('*')));
   const filas = {};
@@ -40,7 +34,8 @@ async function cargarDatos() {
     artistas: filas.artistas.map(fila => perfilDesdeFila('artista', fila)),
     fans: filas.fans.map(fila => Object.assign(perfilDesdeFila('fan', fila), {
       artistasQueSigue: filas.seguimientos.filter(s => s.fan === fila.id).map(s => s.artista),
-      fanFundadorDe: filas.seguimientos.filter(s => s.fan === fila.id && s.es_fan_fundador).map(s => s.artista),
+      artistasVisitados: filas.visitas.filter(v => v.fan === fila.id).map(v => v.artista),
+      fanFundadorDe: filas.visitas.filter(v => v.fan === fila.id && v.es_fan_fundador).map(v => v.artista),
       fanClubs: filas.miembros_fan_club.filter(m => m.fan === fila.id).map(m => m.artista)
     })),
     lanzamientos: filas.lanzamientos.map(fila => ({
@@ -111,10 +106,8 @@ async function eliminarLanzamiento(lanzamiento) {
   try { await borrarArchivoSubido(lanzamiento.portada); } catch (e) { /* queda el archivo suelto */ }
 }
 
-// Lo que el fan hace en este navegador (SIMULADO): a quién sigue, de quién es
-// fan fundador y qué perfiles ya visitó. Se guarda por fan y fanActual() lo
-// junta con sus datos. También se lleva la cuenta de seguidores que se suman
-// o restan. Con Supabase, esto se guardará en la base de datos.
+// PROVISIONAL: lo que el fan escucha (segundosEscucha) aún se guarda en
+// este navegador. Seguir, fan fundador y visitas ya están en Supabase.
 function leerCambiosFan(fanId) {
   try { return (JSON.parse(localStorage.getItem('looped-fan-cambios')) || {})[fanId] || {}; } catch (e) { return {}; }
 }
@@ -123,14 +116,6 @@ function guardarCambiosFan(fanId, cambios) {
   try { todos = JSON.parse(localStorage.getItem('looped-fan-cambios')) || {}; } catch (e) { /* empieza vacío */ }
   todos[fanId] = { ...(todos[fanId] || {}), ...cambios };
   localStorage.setItem('looped-fan-cambios', JSON.stringify(todos));
-}
-function leerCambiosSeguidores() {
-  try { return JSON.parse(localStorage.getItem('looped-seguidores')) || {}; } catch (e) { return {}; }
-}
-function sumarSeguidor(artistaId, cuanto) {
-  const cambios = leerCambiosSeguidores();
-  cambios[artistaId] = (cambios[artistaId] || 0) + cuanto;
-  localStorage.setItem('looped-seguidores', JSON.stringify(cambios));
 }
 
 // ---------- Sesión ----------
@@ -1164,10 +1149,11 @@ function fanActual() {
   const propia = perfilGuardado();
   const fan = obtenerDatos('fans').find(f => f.id === sesion.id) || (propia && propia.id === sesion.id ? propia : null);
   if (!fan) return null;
-  const cambios = leerCambiosFan(fan.id);
-  const unido = { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan, ...cambios };
+  // Del navegador solo se usa lo escuchado (PROVISIONAL); lo demás viene de Supabase.
+  const segundosEscucha = leerCambiosFan(fan.id).segundosEscucha || 0;
+  const unido = { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan, segundosEscucha };
   // Minutos de escucha: los de los datos más lo escuchado en este navegador.
-  unido.minutosEscucha = (fan.minutosEscucha || 0) + Math.floor((cambios.segundosEscucha || 0) / 60);
+  unido.minutosEscucha = (fan.minutosEscucha || 0) + Math.floor(segundosEscucha / 60);
   return unido;
 }
 
@@ -1969,7 +1955,6 @@ function pantallaNuevosLanzamientosFan() {
 }
 
 // ---------- F02 · Perfil del artista (visto por el fan) ----------
-const UMBRAL_FAN_FUNDADOR = 1000; // spec.md: menos de 1000 seguidores
 
 function pantallaPerfilArtistaFan() {
   // Sin sesión de fan, a iniciar sesión.
@@ -1991,14 +1976,25 @@ function pantallaPerfilArtistaFan() {
   let artista = obtenerDatos('artistas').find(a => a.id === id);
   if (!artista) return; // queda el mensaje del HTML
 
-  // Fan fundador (spec.md): en la primera visita, si el artista tiene menos de 1000 seguidores.
-  if (!fan.artistasVisitados.includes(id)) {
-    const cambios = { artistasVisitados: fan.artistasVisitados.concat(id) };
-    const nuevoFundador = artista.seguidores < UMBRAL_FAN_FUNDADOR && !fan.fanFundadorDe.includes(id);
-    if (nuevoFundador) cambios.fanFundadorDe = fan.fanFundadorDe.concat(id);
-    guardarCambiosFan(fan.id, cambios);
-    fan = fanActual();
-    if (nuevoFundador) mostrarAviso(`Eres fan fundador de ${artista.nombreArtistico}. Lo descubriste en su comienzo.`);
+  // El fan de la sesión dentro de los datos cargados: aquí se anotan los
+  // cambios (seguir, visita) para redibujar sin volver a cargar todo.
+  const fanEnDatos = obtenerDatos('fans').find(f => f.id === fan.id);
+  const artistaEnDatos = obtenerDatos('artistas').find(a => a.id === id);
+
+  // Fan fundador (spec.md): en la primera visita, si el artista tiene menos
+  // de 1000 seguidores. REAL: se guarda la visita y la base de datos decide.
+  async function registrarVisita() {
+    if (!fanEnDatos || fan.artistasVisitados.includes(id)) return;
+    const { data, error } = await baseDatos.from('visitas')
+      .insert({ fan: fan.id, artista: id }).select().single();
+    if (error) return; // si falla, se intenta en la próxima visita
+    fanEnDatos.artistasVisitados = fanEnDatos.artistasVisitados.concat(id);
+    if (data.es_fan_fundador) {
+      fanEnDatos.fanFundadorDe = fanEnDatos.fanFundadorDe.concat(id);
+      fan = fanActual();
+      pintar();
+      mostrarAviso(`Eres fan fundador de ${artista.nombreArtistico}. Lo descubriste en su comienzo.`);
+    }
   }
 
   document.title = `Looped · ${artista.nombreArtistico}`;
@@ -2095,20 +2091,33 @@ function pantallaPerfilArtistaFan() {
 
     activarBotonesReproducir(caja);
 
-    // Seguir / dejar de seguir (Real, guardado en este navegador).
-    caja.querySelector('[data-seguir]').addEventListener('click', () => {
+    // Seguir / dejar de seguir. REAL: guarda o borra la fila en «seguimientos»;
+    // la base de datos suma o resta el seguidor sola.
+    const botonSeguir = caja.querySelector('[data-seguir]');
+    botonSeguir.addEventListener('click', async () => {
+      if (botonSeguir.disabled) return;
+      botonSeguir.disabled = true;
       const seguia = fan.artistasQueSigue.includes(id);
-      guardarCambiosFan(fan.id, {
-        artistasQueSigue: seguia ? fan.artistasQueSigue.filter(x => x !== id) : fan.artistasQueSigue.concat(id)
-      });
-      sumarSeguidor(id, seguia ? -1 : 1);
+      const { error } = seguia
+        ? await baseDatos.from('seguimientos').delete().match({ fan: fan.id, artista: id })
+        : await baseDatos.from('seguimientos').insert({ fan: fan.id, artista: id });
+      if (error || !fanEnDatos) {
+        botonSeguir.disabled = false;
+        mostrarAviso('No pudimos guardar el cambio. Revisa tu conexión e inténtalo otra vez.');
+        return;
+      }
+      fanEnDatos.artistasQueSigue = seguia
+        ? fanEnDatos.artistasQueSigue.filter(x => x !== id)
+        : fanEnDatos.artistasQueSigue.concat(id);
+      artistaEnDatos.seguidores = Math.max(0, artistaEnDatos.seguidores + (seguia ? -1 : 1));
       fan = fanActual();
-      artista = obtenerDatos('artistas').find(a => a.id === id);
+      artista = artistaEnDatos;
       pintar();
       caja.querySelector('[data-seguir]').focus(); // el foco no se pierde al redibujar
     });
   }
   pintar();
+  registrarVisita();
 }
 
 // ---------- Cola de reproducción ----------
