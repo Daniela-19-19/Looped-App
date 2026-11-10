@@ -19,7 +19,7 @@ function obtenerDatos(tipo) {
 // Lanza un error si no hay conexión.
 async function cargarDatos() {
   const tablas = ['generos', 'roles', 'intereses', 'artistas', 'fans', 'seguimientos', 'visitas',
-    'miembros_fan_club', 'lanzamientos', 'cupos', 'preguntas', 'respuestas'];
+    'miembros_fan_club', 'lanzamientos', 'cupos', 'preguntas', 'votos', 'respuestas'];
   const respuestas = await Promise.all(tablas.map(tabla => baseDatos.from(tabla).select('*')));
   const filas = {};
   respuestas.forEach((respuesta, i) => {
@@ -67,6 +67,7 @@ async function cargarDatos() {
       estado: fila.estado,
       fecha: fila.fecha
     })),
+    votos: filas.votos, // { fan, pregunta }
     respuestas: filas.respuestas.map(fila => ({
       id: fila.id,
       pregunta: fila.pregunta,
@@ -2188,6 +2189,263 @@ function pantallaPerfilArtistaFan() {
   registrarVisita();
 }
 
+// ---------- F05 · Conectar con el artista ----------
+// Minutos de escucha que pide llegar a un nivel (tabla de spec.md).
+function minutosParaNivel(nivel) {
+  let total = 0;
+  for (let n = 0; n < nivel; n++) total += Math.round(15 * Math.pow(1.5, n));
+  return total;
+}
+
+// Qué le pasa a una pregunta, dicho para el fan.
+function textoEstadoPregunta(pregunta, artista) {
+  switch (pregunta.estado) {
+    case 'nueva':
+    case 'pendiente': return 'En cola. El artista decide qué responder.';
+    case 'seleccionada': return `${artista.nombreArtistico} seleccionó esta pregunta. Espera su respuesta.`;
+    case 'respondida': return 'La respuesta está disponible.';
+    case 'descartada': return 'No fue seleccionada en este cupo.';
+  }
+  return '';
+}
+
+// ¿Puede el fan participar en el cupo del artista? Devuelve el caso:
+// 'cerrado', 'nivel' (no le alcanza) o 'abierto'. La base de datos
+// revisa lo mismo al guardar (supabase/cambio-03-preguntas-y-votos.sql).
+function participacion(fan, cupo) {
+  if (!cupo || cupo.estado !== 'abierto') return 'cerrado';
+  if (nivelPorMinutos(fan.minutosEscucha) < cupo.nivelMinimo) return 'nivel';
+  return 'abierto';
+}
+
+// Mensaje para el fan cuando la base de datos no deja preguntar o votar.
+function mensajeErrorParticipacion(error) {
+  const texto = (error && error.message) || '';
+  if (texto.includes('cupo-cerrado')) return 'El cupo ya no está abierto.';
+  if (texto.includes('nivel-insuficiente')) return 'Todavía no tienes el nivel que pide este cupo.';
+  if (texto.includes('voto-propio')) return 'No puedes votar tu propia pregunta.';
+  return 'No pudimos guardar. Revisa tu conexión e inténtalo otra vez.';
+}
+
+function pantallaConectarFan() {
+  // Sin sesión de fan, a iniciar sesión.
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const id = new URLSearchParams(location.search).get('id');
+  const artista = obtenerDatos('artistas').find(a => a.id === id);
+  const caja = document.querySelector('[data-conectar]');
+  // Volver: al perfil de este artista.
+  const volver = document.querySelector('[data-volver]');
+  if (!artista) return; // queda el mensaje del HTML
+  volver.href = `perfil-artista-fan.html?id=${encodeURIComponent(id)}`;
+
+  const nombre = escapar(artista.nombreArtistico);
+  document.title = `Looped · Conecta con ${artista.nombreArtistico}`;
+  document.querySelector('[data-titulo-conectar]').textContent = `Conecta con ${artista.nombreArtistico}`;
+  if (new URLSearchParams(location.search).get('enviada')) mostrarAviso('Pregunta enviada. Está en cola.');
+
+  const cupo = obtenerDatos('cupos').find(c => c.artista === id);
+  const caso = participacion(fan, cupo);
+  const sigue = fan.artistasQueSigue.includes(id);
+  const nombresFans = Object.fromEntries(obtenerDatos('fans').map(f => [f.id, f.nombrePerfil]));
+
+  function pintar() {
+    const votos = obtenerDatos('votos');
+    const preguntas = obtenerDatos('preguntas').filter(p => p.artista === id);
+    const mias = preguntas.filter(p => p.autor === fan.id)
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    const comunidad = preguntas
+      .filter(p => p.autor !== fan.id && ['nueva', 'pendiente', 'seleccionada'].includes(p.estado))
+      .sort((a, b) => (b.votos - a.votos) || (new Date(a.fecha) - new Date(b.fecha)));
+
+    // Encabezado, tarjetas y botón según el caso del flujo.
+    let titulo, bajada, tarjetas, acciones;
+    if (caso === 'cerrado') {
+      titulo = 'Volvamos a encontrarnos.';
+      bajada = 'El artista todavía no ha abierto un nuevo cupo.';
+      tarjetas = `
+        <section class="tarjeta"><h2 class="tarjeta__titulo">Cupo cerrado</h2><p class="tarjeta__texto">${nombre} aún no ha abierto un nuevo cupo.</p></section>
+        <section class="tarjeta"><h2 class="tarjeta__titulo">Qué puedes hacer</h2><p class="tarjeta__texto">Sigue escuchando y vuelve cuando haya un nuevo espacio para participar.</p></section>`;
+      acciones = `<a class="boton" href="${escapar(volver.href)}">Volver al perfil</a>`;
+    } else if (caso === 'nivel') {
+      const nivel = nivelPorMinutos(fan.minutosEscucha);
+      const meta = minutosParaNivel(cupo.nivelMinimo);
+      const faltan = Math.max(1, meta - fan.minutosEscucha);
+      const avance = Math.min(100, (fan.minutosEscucha / meta) * 100);
+      titulo = 'Revisa las condiciones.';
+      bajada = 'Todavía no puedes enviar una pregunta o votar.';
+      tarjetas = `
+        <section class="tarjeta">
+          <h2 class="tarjeta__titulo">Revisa las condiciones</h2>
+          <p class="tarjeta__texto">Este cupo pide nivel ${cupo.nivelMinimo} o superior. Tu nivel actual es ${nivel}.</p>
+          <div class="progreso" role="progressbar" aria-label="Avance hacia el nivel ${cupo.nivelMinimo}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(avance)}"><span class="progreso__barra" style="width: ${avance.toFixed(1)}%"></span></div>
+          <p class="tarjeta__texto">Te faltan ${faltan} min de escucha registrada.</p>
+        </section>`;
+      const ultimo = obtenerDatos('lanzamientos').filter(l => l.artista === id)
+        .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion))[0];
+      acciones = `<a class="boton" href="${escapar(volver.href)}">Volver al perfil</a>` + (ultimo ? `
+        <button type="button" class="boton boton--secundario" data-reproducir="${escapar(ultimo.id)}" data-titulo="${escapar(ultimo.nombreCancion)}">
+          <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+          <span data-texto-reproducir="Escuchar a ${nombre}">Escuchar a ${nombre}</span>
+        </button>` : '');
+    } else {
+      titulo = sigue ? 'Sigue la conversación.' : 'Tu primer contacto.';
+      bajada = sigue ? 'Continúa tu relación con el artista.' : 'Puedes participar aunque todavía no sigas al artista.';
+      tarjetas = `
+        <section class="tarjeta">
+          <h2 class="tarjeta__titulo">Cupo abierto</h2>
+          <p class="tarjeta__texto">Puedes enviar una pregunta si cumples las condiciones.</p>
+          <div class="tarjeta__encabezado"><span class="texto--pequeno texto--suave">Respuestas disponibles</span><b class="texto--pequeno">${Math.max(0, cupo.totalPreguntas - cupo.preguntasUsadas)} de ${cupo.totalPreguntas}</b></div>
+          <div class="tarjeta__encabezado"><span class="texto--pequeno texto--suave">Condición</span><b class="texto--pequeno">${escapar(textoNivelMinimo(cupo.nivelMinimo))}</b></div>
+        </section>`;
+      acciones = `<a class="boton" href="escribir-pregunta-fan.html?id=${encodeURIComponent(id)}">Hacer una pregunta</a>`;
+    }
+
+    const tarjetaMia = p => {
+      const respondida = p.estado === 'respondida';
+      const etiqueta = respondida ? '<span class="etiqueta etiqueta--reconocimiento">Respondida</span>'
+        : p.estado === 'seleccionada' ? '<span class="etiqueta etiqueta--borde">Seleccionada</span>' : '';
+      return `
+        <article class="tarjeta">
+          <div class="tarjeta__encabezado"><span class="tarjeta__meta">Para ${nombre}</span>${etiqueta}</div>
+          <p class="tarjeta__texto tarjeta__texto--principal">${escapar(p.texto)}</p>
+          <p class="tarjeta__texto">${escapar(textoEstadoPregunta(p, artista))}</p>
+        </article>`;
+    };
+    const tarjetaComunidad = p => {
+      const voto = votos.some(v => v.fan === fan.id && v.pregunta === p.id);
+      return `
+        <article class="tarjeta">
+          <div class="tarjeta__encabezado">
+            <span class="tarjeta__meta">${escapar(nombresFans[p.autor] || 'Fan')}${p.autorEsFanClub ? ' · Fan Club' : ''}</span>
+            <span class="votos" aria-label="${p.votos} ${p.votos === 1 ? 'voto' : 'votos'}"><svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-votos"></use></svg>${p.votos}</span>
+          </div>
+          <p class="tarjeta__texto tarjeta__texto--principal">${escapar(p.texto)}</p>
+          <p class="tarjeta__texto">${voto ? 'Tu voto está registrado.' : escapar(textoEstadoPregunta(p, artista))}</p>
+          <div class="tarjeta__acciones">
+            <button type="button" class="boton boton--terciario" data-votar="${escapar(p.id)}" aria-pressed="${voto}" ${caso === 'abierto' ? '' : 'disabled'}>${voto ? 'Retirar voto' : 'Votar'}</button>
+          </div>
+        </article>`;
+    };
+
+    caja.innerHTML = `
+      <div class="encabezado-pagina">
+        <h1 class="titulo titulo--medio">${titulo}</h1>
+        <p class="encabezado-pagina__bajada">${bajada}</p>
+      </div>
+      <div class="rejilla-tarjetas rejilla-tarjetas--dos">${tarjetas}</div>
+      <div class="conectar__acciones">${acciones}</div>
+
+      ${mias.length ? `
+      <section class="conectar__seccion" aria-labelledby="titulo-tus-preguntas">
+        <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-tus-preguntas">Tus preguntas</h2></div>
+        <div class="rejilla-tarjetas rejilla-tarjetas--dos">${mias.map(tarjetaMia).join('')}</div>
+      </section>` : ''}
+
+      <section class="conectar__seccion" aria-labelledby="titulo-comunidad">
+        <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-comunidad">Preguntas de la comunidad</h2></div>
+        ${comunidad.length
+          ? `<div class="rejilla-tarjetas rejilla-tarjetas--dos">${comunidad.map(tarjetaComunidad).join('')}</div>`
+          : '<div class="tarjeta"><p class="tarjeta__texto">Todavía no hay preguntas de otros fans en este cupo.</p></div>'}
+        <p class="texto--pequeno texto--suave conectar__nota">Votar ayuda al artista a ver qué interesa más. No garantiza una respuesta.</p>
+      </section>`;
+
+    activarBotonesReproducir(caja);
+  }
+
+  // Votar o retirar el voto. REAL: guarda o borra en «votos»; la base de
+  // datos suma o resta el voto de la pregunta y revisa cupo y nivel.
+  caja.addEventListener('click', async evento => {
+    const boton = evento.target.closest('[data-votar]');
+    if (!boton || boton.disabled) return;
+    boton.disabled = true;
+    const preguntaId = boton.dataset.votar;
+    const votos = obtenerDatos('votos');
+    const yaVoto = votos.some(v => v.fan === fan.id && v.pregunta === preguntaId);
+    const { error } = yaVoto
+      ? await baseDatos.from('votos').delete().match({ fan: fan.id, pregunta: preguntaId })
+      : await baseDatos.from('votos').insert({ fan: fan.id, pregunta: preguntaId });
+    if (error) {
+      boton.disabled = false;
+      mostrarAviso(mensajeErrorParticipacion(error));
+      return;
+    }
+    const pregunta = obtenerDatos('preguntas').find(p => p.id === preguntaId);
+    if (yaVoto) {
+      datosCargados.votos = votos.filter(v => !(v.fan === fan.id && v.pregunta === preguntaId));
+      pregunta.votos = Math.max(0, pregunta.votos - 1);
+    } else {
+      datosCargados.votos = votos.concat({ fan: fan.id, pregunta: preguntaId });
+      pregunta.votos += 1;
+    }
+    pintar(); // reordena la lista por votos
+    const mismo = caja.querySelector(`[data-votar="${CSS.escape(preguntaId)}"]`);
+    if (mismo) mismo.focus(); // el foco sigue en la pregunta votada
+    mostrarAviso(yaVoto ? 'Retiraste tu voto.' : 'Voto registrado.');
+  });
+
+  pintar();
+}
+
+// ---------- F05e · Escribir pregunta ----------
+function pantallaEscribirPreguntaFan() {
+  // Sin sesión de fan, a iniciar sesión.
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const id = new URLSearchParams(location.search).get('id');
+  const artista = obtenerDatos('artistas').find(a => a.id === id);
+  if (!artista) {
+    location.replace('explorar-fan.html');
+    return;
+  }
+  const conectar = `conectar-fan.html?id=${encodeURIComponent(id)}`;
+  document.querySelector('[data-volver-conectar]').href = conectar;
+  document.querySelector('[data-nombre-artista]').textContent = artista.nombreArtistico;
+
+  // Si ya no puede participar (cupo cerrado o nivel), vuelve a Conectar, que explica por qué.
+  const cupo = obtenerDatos('cupos').find(c => c.artista === id);
+  if (participacion(fan, cupo) !== 'abierto') {
+    location.replace(conectar);
+    return;
+  }
+
+  const formulario = document.getElementById('formulario-pregunta');
+  const pregunta = document.getElementById('pregunta');
+  const boton = document.querySelector('button[form="formulario-pregunta"]');
+  activarContador(pregunta, document.querySelector('[data-contador]'));
+  pregunta.addEventListener('input', () => mostrarError('pregunta', ''));
+
+  formulario.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (boton.disabled) return;
+    const texto = pregunta.value.trim();
+    if (texto.length < 5) {
+      mostrarError('pregunta', texto ? 'Escribe al menos 5 caracteres.' : 'Escribe tu pregunta.');
+      pregunta.focus();
+      return;
+    }
+
+    // REAL: se guarda en «preguntas» y llega a la bandeja del artista.
+    // La base de datos revisa cupo y nivel, y marca primer contacto y Fan Club.
+    boton.disabled = true;
+    boton.textContent = 'Enviando…';
+    const { error } = await baseDatos.from('preguntas').insert({ artista: id, autor: fan.id, texto });
+    if (error) {
+      boton.disabled = false;
+      boton.textContent = 'Enviar pregunta';
+      mostrarAviso(mensajeErrorParticipacion(error));
+      return;
+    }
+    location.replace(`${conectar}&enviada=1`);
+  });
+}
+
 // ---------- Cola de reproducción ----------
 // Diseño aprobado por el equipo (09-11-2026): «Sonando ahora», «A continuación»
 // y un menú ⋯ en cada canción con Reproducir ahora, Subir, Bajar y Quitar.
@@ -2825,7 +3083,9 @@ const PANTALLAS = {
   'lanzamiento-artista': pantallaLanzamientoArtista,
   'nuevos-lanzamientos-fan': pantallaNuevosLanzamientosFan,
   'perfil-artista-fan': pantallaPerfilArtistaFan,
-  'cola-fan': pantallaColaFan
+  'cola-fan': pantallaColaFan,
+  'conectar-fan': pantallaConectarFan,
+  'escribir-pregunta-fan': pantallaEscribirPreguntaFan
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

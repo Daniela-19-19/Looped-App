@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es" data-rol="fan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Tu pregunta</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="escribir-pregunta-fan">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- F05e · Escribir pregunta (el artista llega por ?id=) -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="conectar-fan.html" aria-label="Volver" data-volver-conectar>
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span class="barra-superior__titulo">Tu pregunta</span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">Pregunta a <span data-nombre-artista>tu artista</span>.</h1>
+      <p class="encabezado-pagina__bajada">El artista elige qué responder. Enviarla no garantiza una respuesta.</p>
+    </div>
+
+    <form id="formulario-pregunta" novalidate>
+      <div class="campo" data-campo="pregunta">
+        <label class="campo__etiqueta" for="pregunta">Tu pregunta</label>
+        <textarea class="area-texto" id="pregunta" name="pregunta" maxlength="200"
+          placeholder="¿Qué te gustaría conocer?" aria-describedby="contador-pregunta error-pregunta"></textarea>
+        <span class="campo__contador" id="contador-pregunta" data-contador>0/200</span>
+        <p class="campo__mensaje-error" id="error-pregunta" role="alert"></p>
+      </div>
+    </form>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="submit" class="boton boton--bloque" form="formulario-pregunta">Enviar pregunta</button>
+  </footer>
+
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

@@ -73,11 +73,15 @@ insert into cupos (id, artista, estado, total_preguntas, preguntas_usadas, nivel
   ('cupo-nadia-cruz', 'nadia-cruz', 'abierto', 10, 2, 2, now() - interval '20 hours'),
   ('cupo-los-faroles', 'los-faroles', 'abierto', 4, 1, 1, now() - interval '30 hours');
 
+-- Las preguntas de ejemplo traen sus votos y estados: se apaga un momento
+-- la regla que pone en 0 los votos de las preguntas nuevas.
+alter table preguntas disable trigger preguntas_preparar;
 insert into preguntas (id, artista, autor, autor_es_fan_club, primer_contacto, texto, votos, estado, fecha) values
   ('pregunta-tomas', 'mara-sol', 'fan-tomas', false, false, '¿Cómo nació Aire de vuelta?', 14, 'nueva', now() - interval '2 hours'),
   ('pregunta-lucia', 'mara-sol', 'fan-lucia', true, false, '¿Vas a tocar Segundo sol en vivo este año?', 6, 'nueva', now() - interval '1 hour'),
   ('pregunta-alex', 'nadia-cruz', 'fan-alex', false, false, '¿Qué canción te gustaría que escucháramos primero?', 2, 'pendiente', now() - interval '6 hours'),
   ('pregunta-sebastian', 'mara-sol', 'fan-sebastian', false, false, '¿Qué instrumento usaste para la introducción?', 3, 'respondida', now() - interval '40 hours');
+alter table preguntas enable trigger preguntas_preparar;
 
 insert into respuestas (id, pregunta, tipo, texto, fecha) values
   ('respuesta-sebastian', 'pregunta-sebastian', 'texto', 'Una guitarra de nylon que encontré en casa de mi abuela. La grabé con el celular primero.', now() - interval '30 hours');

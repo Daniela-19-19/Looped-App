@@ -260,6 +260,22 @@
 .perfil-artista__mas { margin-top: var(--espacio-3); }
 .perfil-artista__comunidad { display: flex; justify-content: center; margin-top: var(--espacio-3); }
 
+
+/* ---------- F05 · Conectar con el artista ---------- */
+/* Botones uno debajo del otro en celular; en pantallas grandes, en fila y sin estirarse de más. */
+.conectar__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-3);
+  max-width: var(--ancho-pantalla);
+  margin-top: var(--espacio-5);
+}
+.conectar__acciones > .boton { flex: 1 1 12rem; }
+.conectar .tarjeta__encabezado { margin-top: var(--espacio-3); }
+.conectar .progreso { margin-block: var(--espacio-3); }
+.conectar__seccion { margin-top: var(--espacio-8); }
+.conectar__nota { margin-top: var(--espacio-3); }
+
 /* ---------- Cola de reproducción ---------- */
 /* Una columna angosta: es una lista, no necesita todo el ancho. */
 .cola { max-width: var(--ancho-pantalla-media); }
