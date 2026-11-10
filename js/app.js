@@ -970,7 +970,12 @@ function fanActual() {
   if (!sesion || sesion.rol !== 'fan') return null;
   const propia = perfilGuardado();
   const fan = obtenerDatos('fans').find(f => f.id === sesion.id) || (propia && propia.id === sesion.id ? propia : null);
-  return fan ? { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan, ...leerCambiosFan(fan.id) } : null;
+  if (!fan) return null;
+  const cambios = leerCambiosFan(fan.id);
+  const unido = { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan, ...cambios };
+  // Minutos de escucha: los de los datos más lo escuchado en este navegador.
+  unido.minutosEscucha = (fan.minutosEscucha || 0) + Math.floor((cambios.segundosEscucha || 0) / 60);
+  return unido;
 }
 
 // Dónde está el fan dentro de su nivel: minutos al empezar el nivel
@@ -983,54 +988,433 @@ function progresoNivel(minutos) {
   return { nivel, inicio, fin, faltan: fin - minutos, porcentaje: ((minutos - inicio) / (fin - inicio)) * 100 };
 }
 
-// ---------- Reproducir un lanzamiento ----------
-// Por ahora solo suena y se pausa. El minirreproductor, la cola y sumar
-// minutos al nivel llegan con el reproductor (tramo 4).
-const reproduccion = { audio: null, id: null };
+// ---------- Reproductor (minirreproductor y vista ampliada) ----------
+// La app son páginas separadas y, al cambiar de página, el navegador corta
+// el audio. Por eso el estado del reproductor (cola, canción, segundo, si
+// sonaba, aleatorio y bucle) se guarda en este navegador y cada página lo
+// retoma donde iba. Con Supabase, la cola se guardará en la cuenta del fan.
+const CLAVE_REPRODUCTOR = 'looped-reproductor';
+const MODOS_BUCLE = ['apagado', 'cola', 'una']; // cada toque pasa al siguiente
+const TEXTO_BUCLE = { apagado: 'Bucle: apagado', cola: 'Bucle: toda la cola', una: 'Bucle: una canción' };
 
-// Los botones con data-reproducir="id" muestran ▶ o ⏸ según lo que suena.
-function actualizarBotonesReproducir() {
-  document.querySelectorAll('[data-reproducir]').forEach(boton => {
-    const sonando = reproduccion.id === boton.dataset.reproducir && reproduccion.audio && !reproduccion.audio.paused;
-    boton.querySelector('use').setAttribute('href', sonando ? '#icono-pausa' : '#icono-reproducir');
-    // Botones con texto (p. ej. «Escuchar lanzamiento»): el texto cambia a «Pausar».
-    const texto = boton.querySelector('[data-texto-reproducir]');
-    if (texto) texto.textContent = sonando ? 'Pausar' : texto.dataset.textoReproducir;
-    // El nombre para lectores de pantalla empieza igual que el texto visible y dice qué suena.
-    const accion = texto ? texto.textContent : (sonando ? 'Pausar' : 'Reproducir');
-    boton.setAttribute('aria-label', `${accion} ${boton.dataset.titulo}`);
+const reproductor = {
+  audio: null,
+  estado: null,          // { cola, mezcla, actual, tiempo, sonando, aleatorio, bucle }
+  url: null,             // dirección del audio cargado
+  ultimoTiempo: null,    // para contar los segundos escuchados
+  segundosPendientes: 0, // escuchados y aún sin guardar en el nivel
+  ultimoGuardado: 0,
+  arrastrando: false,    // mientras se mueve la barra de avance
+  abiertoDesde: null     // botón que abrió la vista ampliada (para devolver el foco)
+};
+
+function leerEstadoReproductor() {
+  try { return JSON.parse(localStorage.getItem(CLAVE_REPRODUCTOR)); } catch (e) { return null; }
+}
+function guardarEstadoReproductor() {
+  const estado = reproductor.estado;
+  if (!estado) return;
+  if (reproductor.audio && reproductor.url) {
+    estado.tiempo = reproductor.audio.currentTime || 0;
+    estado.sonando = !reproductor.audio.paused;
+  }
+  reproductor.ultimoGuardado = Date.now();
+  try { localStorage.setItem(CLAVE_REPRODUCTOR, JSON.stringify(estado)); } catch (e) { /* sin espacio: no se guarda */ }
+}
+
+function lanzamientoSonando() {
+  const estado = reproductor.estado;
+  return estado ? obtenerDatos('lanzamientos').find(l => l.id === estado.actual) || null : null;
+}
+// El orden en que suenan: el de la cola o, con aleatorio, el mezclado.
+function ordenDeLaCola() {
+  const estado = reproductor.estado;
+  return estado.aleatorio ? estado.mezcla : estado.cola;
+}
+function estaSonando(id) {
+  return Boolean(reproductor.estado && reproductor.estado.actual === id && reproductor.audio && !reproductor.audio.paused);
+}
+
+// Al tocar ▶ en una canción, la cola es esa canción y después las demás,
+// de la más nueva a la más vieja. Aleatorio y bucle se mantienen.
+function armarCola(id) {
+  const otras = obtenerDatos('lanzamientos')
+    .filter(l => l.id !== id)
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion))
+    .map(l => l.id);
+  const anterior = reproductor.estado || {};
+  reproductor.estado = {
+    cola: [id].concat(otras),
+    mezcla: [id].concat(mezclar(otras)),
+    actual: id,
+    tiempo: 0,
+    sonando: true,
+    aleatorio: Boolean(anterior.aleatorio),
+    bucle: anterior.bucle || 'apagado'
+  };
+}
+
+// El único elemento <audio> de la página, con sus eventos.
+function audioDelReproductor() {
+  if (reproductor.audio) return reproductor.audio;
+  const audio = new Audio();
+  audio.preload = 'metadata';
+  audio.addEventListener('timeupdate', () => {
+    contarEscucha();
+    actualizarReproductor();
+    if (Date.now() - reproductor.ultimoGuardado > 2000) guardarEstadoReproductor();
+  });
+  audio.addEventListener('loadedmetadata', actualizarReproductor);
+  audio.addEventListener('play', () => { guardarEstadoReproductor(); actualizarReproductor(); });
+  audio.addEventListener('pause', () => {
+    reproductor.ultimoTiempo = null;
+    guardarSegundosEscucha();
+    guardarEstadoReproductor();
+    actualizarReproductor();
+  });
+  audio.addEventListener('ended', () => siguienteCancion(true));
+  reproductor.audio = audio;
+  return audio;
+}
+
+// Carga una canción de la cola. tiempo: segundo donde empieza. sonar: si arranca sola.
+async function cargarCancion(id, { tiempo = 0, sonar = true } = {}) {
+  const lanzamiento = obtenerDatos('lanzamientos').find(l => l.id === id);
+  if (!lanzamiento) return false;
+  const url = await urlDeAudio(lanzamiento.audio);
+  if (!url) {
+    mostrarAviso('Este audio no está disponible en este navegador.');
+    return false;
+  }
+  const audio = audioDelReproductor();
+  if (reproductor.url && reproductor.url.startsWith('blob:')) URL.revokeObjectURL(reproductor.url);
+  reproductor.url = url;
+  reproductor.estado.actual = id;
+  reproductor.ultimoTiempo = null;
+  audio.src = url;
+  audio.loop = reproductor.estado.bucle === 'una';
+  if (tiempo > 0) {
+    audio.addEventListener('loadedmetadata', () => { audio.currentTime = Math.min(tiempo, audio.duration || tiempo); }, { once: true });
+  }
+  pintarReproductor();
+  if (sonar) {
+    try { await audio.play(); } catch (e) { /* el navegador pide tocar ▶ primero (p. ej. Safari) */ }
+  }
+  guardarEstadoReproductor();
+  actualizarReproductor();
+  return true;
+}
+
+// ▶ / ⏸ de una canción. Si es otra canción, arma la cola desde ella.
+async function alternarCancion(id, abrir = false) {
+  if (reproductor.estado && reproductor.estado.actual === id && reproductor.url) {
+    alternarPausa();
+    return;
+  }
+  armarCola(id);
+  const cargo = await cargarCancion(id);
+  if (cargo && abrir) abrirReproductor();
+}
+function alternarPausa() {
+  const audio = reproductor.audio;
+  if (!audio || !reproductor.url) return;
+  if (audio.paused) audio.play().catch(() => {});
+  else audio.pause();
+}
+
+// Siguiente: al terminar la última, vuelve a la primera solo con bucle de cola.
+function siguienteCancion(alTerminar = false) {
+  const estado = reproductor.estado;
+  if (!estado) return;
+  const orden = ordenDeLaCola();
+  const i = orden.indexOf(estado.actual);
+  if (i < orden.length - 1) cargarCancion(orden[i + 1]);
+  else if (estado.bucle === 'cola' || !alTerminar) cargarCancion(orden[0]);
+  else actualizarReproductor(); // fin de la cola: se queda en pausa
+}
+// Anterior: si ya avanzó más de 3 segundos, vuelve al inicio de la canción.
+function cancionAnterior() {
+  const estado = reproductor.estado;
+  const audio = reproductor.audio;
+  if (!estado || !audio) return;
+  const orden = ordenDeLaCola();
+  const i = orden.indexOf(estado.actual);
+  if (audio.currentTime > 3 || (i === 0 && estado.bucle !== 'cola')) audio.currentTime = 0;
+  else cargarCancion(orden[i > 0 ? i - 1 : orden.length - 1]);
+}
+
+function alternarAleatorio() {
+  const estado = reproductor.estado;
+  estado.aleatorio = !estado.aleatorio;
+  // La que suena queda primera y las demás se mezclan.
+  if (estado.aleatorio) estado.mezcla = [estado.actual].concat(mezclar(estado.cola.filter(id => id !== estado.actual)));
+  guardarEstadoReproductor();
+  actualizarReproductor();
+}
+function cambiarBucle() {
+  const estado = reproductor.estado;
+  estado.bucle = MODOS_BUCLE[(MODOS_BUCLE.indexOf(estado.bucle) + 1) % MODOS_BUCLE.length];
+  if (reproductor.audio) reproductor.audio.loop = estado.bucle === 'una';
+  guardarEstadoReproductor();
+  actualizarReproductor();
+}
+
+// Minutos de escucha (spec.md): solo el fan, solo mientras suena de verdad.
+function contarEscucha() {
+  const audio = reproductor.audio;
+  if (audio.paused) { reproductor.ultimoTiempo = null; return; }
+  const t = audio.currentTime;
+  if (reproductor.ultimoTiempo !== null) {
+    const pasaron = t - reproductor.ultimoTiempo;
+    if (pasaron > 0 && pasaron < 1.5) reproductor.segundosPendientes += pasaron; // saltos de la barra no cuentan
+  }
+  reproductor.ultimoTiempo = t;
+  if (reproductor.segundosPendientes >= 5) guardarSegundosEscucha();
+}
+function guardarSegundosEscucha() {
+  const segundos = reproductor.segundosPendientes;
+  reproductor.segundosPendientes = 0;
+  const fan = fanActual();
+  if (!fan || segundos <= 0) return;
+  const nivelAntes = nivelPorMinutos(fan.minutosEscucha);
+  guardarCambiosFan(fan.id, { segundosEscucha: (fan.segundosEscucha || 0) + segundos });
+  const nivelDespues = nivelPorMinutos(fanActual().minutosEscucha);
+  if (nivelDespues > nivelAntes) mostrarAviso(`Subiste al nivel ${nivelDespues}.`);
+}
+
+// Para la música y borra la cola (lo usará «Cerrar sesión»).
+function detenerMusica() {
+  guardarSegundosEscucha();
+  if (reproductor.audio) {
+    reproductor.audio.pause();
+    reproductor.audio.removeAttribute('src');
+  }
+  if (reproductor.url && reproductor.url.startsWith('blob:')) URL.revokeObjectURL(reproductor.url);
+  reproductor.url = null;
+  reproductor.estado = null;
+  localStorage.removeItem(CLAVE_REPRODUCTOR);
+  cerrarReproductor();
+  pintarReproductor();
+  actualizarReproductor();
+}
+
+// ----- Lo que se ve -----
+function icono(nombre, clases = '') {
+  return `<svg class="icono ${clases}" aria-hidden="true"><use href="#icono-${nombre}"></use></svg>`;
+}
+
+// Pone en la página el minirreproductor (sobre la navegación) y la vista ampliada.
+function crearReproductor() {
+  const pantalla = document.querySelector('.pantalla--con-navegacion');
+  if (!pantalla || document.querySelector('[data-minirreproductor]')) return;
+  pantalla.insertAdjacentHTML('beforeend', '<div class="minirreproductor pantalla__minirreproductor" data-minirreproductor hidden></div>');
+  document.body.insertAdjacentHTML('beforeend', `
+    <section class="reproductor" role="dialog" aria-modal="true" aria-labelledby="reproductor-titulo" data-reproductor></section>`);
+  if (!document.querySelector('[data-avisos]')) {
+    pantalla.insertAdjacentHTML('beforeend', '<div class="pantalla__avisos" aria-live="polite" data-avisos></div>');
+  }
+
+  const mini = document.querySelector('[data-minirreproductor]');
+  const ampliado = document.querySelector('[data-reproductor]');
+  mini.addEventListener('click', evento => {
+    if (evento.target.closest('[data-abrir-reproductor]')) abrirReproductor(evento.target.closest('button'));
+    else if (evento.target.closest('[data-alternar]')) alternarPausa();
+  });
+  ampliado.addEventListener('click', evento => {
+    const boton = evento.target.closest('button');
+    if (!boton) return;
+    if (boton.matches('[data-cerrar-reproductor]')) cerrarReproductor();
+    else if (boton.matches('[data-alternar]')) alternarPausa();
+    else if (boton.matches('[data-siguiente]')) siguienteCancion();
+    else if (boton.matches('[data-anterior]')) cancionAnterior();
+    else if (boton.matches('[data-aleatorio]')) alternarAleatorio();
+    else if (boton.matches('[data-bucle]')) cambiarBucle();
+  });
+  // Barra de avance: moverla cambia el segundo de la canción.
+  ampliado.addEventListener('input', evento => {
+    if (!evento.target.matches('[data-avance]') || !reproductor.audio) return;
+    reproductor.arrastrando = true;
+    reproductor.audio.currentTime = Number(evento.target.value);
+    reproductor.ultimoTiempo = null;
+    actualizarReproductor(true);
+  });
+  ampliado.addEventListener('change', evento => {
+    if (evento.target.matches('[data-avance]')) reproductor.arrastrando = false;
+  });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && ampliado.classList.contains('reproductor--abierto')) cerrarReproductor();
+  });
+  // Al salir de la página se guarda dónde iba, para retomarlo en la siguiente.
+  window.addEventListener('pagehide', () => {
+    guardarSegundosEscucha();
+    guardarEstadoReproductor();
   });
 }
 
-async function alternarReproduccion(lanzamiento) {
-  if (reproduccion.id === lanzamiento.id && reproduccion.audio) {
-    if (reproduccion.audio.paused) reproduccion.audio.play();
-    else reproduccion.audio.pause();
-  } else {
-    if (reproduccion.audio) reproduccion.audio.pause();
-    const url = await urlDeAudio(lanzamiento.audio);
-    if (!url) { // el audio no está en este navegador
-      mostrarAviso('Este audio no está disponible en este navegador.');
-      return;
-    }
-    reproduccion.audio = new Audio(url);
-    reproduccion.id = lanzamiento.id;
-    ['play', 'pause', 'ended'].forEach(evento => reproduccion.audio.addEventListener(evento, actualizarBotonesReproducir));
-    reproduccion.audio.play();
+// Dibuja el mini y la vista ampliada para la canción actual.
+function pintarReproductor() {
+  const mini = document.querySelector('[data-minirreproductor]');
+  const ampliado = document.querySelector('[data-reproductor]');
+  if (!mini) return;
+  const lanzamiento = lanzamientoSonando();
+  if (!lanzamiento) {
+    mini.hidden = true;
+    mini.innerHTML = '';
+    ampliado.innerHTML = '';
+    return;
   }
-  actualizarBotonesReproducir();
+  const artista = obtenerDatos('artistas').find(a => a.id === lanzamiento.artista);
+  const nombreArtista = artista ? artista.nombreArtistico : '';
+  const esFan = Boolean(fanActual());
+  const cancion = escapar(lanzamiento.nombreCancion);
+
+  mini.innerHTML = `
+    <button type="button" class="minirreproductor__abrir" data-abrir-reproductor
+      aria-label="Abrir reproductor: ${cancion}, de ${escapar(nombreArtista)}">
+      ${lanzamiento.portada
+        ? `<img class="portada portada--pequena" src="${escapar(rutaRecurso(lanzamiento.portada))}" alt="">`
+        : '<span class="portada portada--pequena"></span>'}
+      <span class="minirreproductor__info">
+        <span class="minirreproductor__titulo">${cancion}</span>
+        <span class="minirreproductor__detalle">${escapar(nombreArtista)}</span>
+      </span>
+    </button>
+    <button type="button" class="boton-icono" data-alternar aria-label="Reproducir">${icono('reproducir')}</button>
+    <div class="progreso minirreproductor__progreso" aria-hidden="true"><span class="progreso__barra" data-progreso-mini></span></div>`;
+  mini.hidden = false;
+
+  ampliado.innerHTML = `
+    <div class="atmosfera atmosfera--inferior" aria-hidden="true"></div>
+    <div class="reproductor__cuerpo">
+      <header class="barra-superior">
+        <button type="button" class="boton-icono" data-cerrar-reproductor aria-label="Cerrar reproductor">${icono('bajar')}</button>
+        <span class="barra-superior__titulo" id="reproductor-titulo">Reproduciendo</span>
+        ${esFan ? `<a class="boton-icono" href="cola-fan.html" aria-label="Ver la cola de reproducción">${icono('cola')}</a>` : '<span></span>'}
+      </header>
+      ${htmlPortada(lanzamiento, 'reproductor__portada')}
+      <div class="reproductor__info">
+        <h2 class="titulo titulo--medio">${cancion}</h2>
+        <p class="texto--pequeno texto--suave reproductor__detalle">${escapar(nombreArtista)} · ${escapar(lanzamiento.nombreLanzamiento)}</p>
+      </div>
+      <div class="avance">
+        <input class="avance__control" type="range" min="0" max="0" step="1" value="0" aria-label="Posición de la canción" data-avance>
+        <div class="avance__tiempos"><span data-tiempo-actual>0:00</span><span data-tiempo-total>0:00</span></div>
+      </div>
+      <div class="reproductor__controles">
+        <button type="button" class="boton-icono" data-aleatorio aria-label="Aleatorio" aria-pressed="false">${icono('aleatorio')}</button>
+        <button type="button" class="boton-icono boton-icono--relleno" data-anterior aria-label="Canción anterior">${icono('cancion-anterior')}</button>
+        <button type="button" class="boton-icono boton-icono--relleno boton-icono--grande" data-alternar aria-label="Reproducir">${icono('reproducir')}</button>
+        <button type="button" class="boton-icono boton-icono--relleno" data-siguiente aria-label="Canción siguiente">${icono('cancion-siguiente')}</button>
+        <button type="button" class="boton-icono" data-bucle aria-label="Bucle: apagado" aria-pressed="false">${icono('bucle')}</button>
+      </div>
+      ${esFan && artista ? `<a class="boton boton--secundario boton--bloque" href="perfil-artista-fan.html?id=${encodeURIComponent(artista.id)}">Conocer a ${escapar(nombreArtista)}</a>` : ''}
+      ${lanzamiento.audio === AUDIO_DE_MUESTRA ? '<p class="texto--pequeno texto--suave reproductor__nota">Audio de muestra original para la demostración.</p>' : ''}
+    </div>`;
+}
+
+// Pone al día botones, barra y tiempos (se llama varias veces por segundo).
+function actualizarReproductor(desdeLaBarra = false) {
+  const estado = reproductor.estado;
+  const audio = reproductor.audio;
+  const sonando = Boolean(estado && audio && !audio.paused);
+
+  document.querySelectorAll('[data-minirreproductor] [data-alternar], [data-reproductor] [data-alternar]').forEach(boton => {
+    boton.querySelector('use').setAttribute('href', sonando ? '#icono-pausa' : '#icono-reproducir');
+    boton.setAttribute('aria-label', sonando ? 'Pausar' : 'Reproducir');
+  });
+
+  // Botones de las pantallas (data-reproducir="id"): ▶ o ⏸, y «Escuchar» o «Pausar».
+  document.querySelectorAll('[data-reproducir]').forEach(boton => {
+    const esta = estaSonando(boton.dataset.reproducir);
+    boton.querySelector('use').setAttribute('href', esta ? '#icono-pausa' : '#icono-reproducir');
+    const texto = boton.querySelector('[data-texto-reproducir]');
+    if (texto) texto.textContent = esta ? 'Pausar' : texto.dataset.textoReproducir;
+    // El nombre para lectores de pantalla empieza igual que el texto visible y dice qué suena.
+    const accion = texto ? texto.textContent : (esta ? 'Pausar' : 'Reproducir');
+    boton.setAttribute('aria-label', `${accion} ${boton.dataset.titulo}`);
+  });
+
+  if (!estado || !audio) return;
+  const duracion = isFinite(audio.duration) ? audio.duration : 0;
+  const tiempo = audio.currentTime || 0;
+  const porcentaje = duracion ? (tiempo / duracion) * 100 : 0;
+
+  const barraMini = document.querySelector('[data-progreso-mini]');
+  if (barraMini) barraMini.style.width = `${porcentaje}%`;
+
+  const barra = document.querySelector('[data-avance]');
+  if (barra) {
+    barra.max = String(Math.floor(duracion));
+    if (!reproductor.arrastrando || desdeLaBarra) barra.value = String(Math.floor(tiempo));
+    barra.style.setProperty('--avance', `${porcentaje}%`);
+    barra.setAttribute('aria-valuetext', `${formatoDuracion(tiempo)} de ${formatoDuracion(duracion)}`);
+  }
+  const actual = document.querySelector('[data-tiempo-actual]');
+  if (actual) actual.textContent = formatoDuracion(tiempo);
+  const total = document.querySelector('[data-tiempo-total]');
+  if (total) total.textContent = formatoDuracion(duracion);
+
+  const aleatorio = document.querySelector('[data-aleatorio]');
+  if (aleatorio) aleatorio.setAttribute('aria-pressed', String(estado.aleatorio));
+  const bucle = document.querySelector('[data-bucle]');
+  if (bucle) {
+    bucle.setAttribute('aria-pressed', String(estado.bucle !== 'apagado'));
+    bucle.setAttribute('aria-label', TEXTO_BUCLE[estado.bucle]);
+    bucle.querySelector('use').setAttribute('href', estado.bucle === 'una' ? '#icono-bucle-una' : '#icono-bucle');
+  }
+}
+
+function abrirReproductor(desde) {
+  const ampliado = document.querySelector('[data-reproductor]');
+  if (!ampliado || !lanzamientoSonando()) return;
+  reproductor.abiertoDesde = desde || document.activeElement;
+  ampliado.classList.add('reproductor--abierto');
+  const pantalla = document.querySelector('.pantalla');
+  if (pantalla) pantalla.inert = true; // lo de atrás no se puede tocar ni enfocar
+  setTimeout(() => {
+    const cerrar = ampliado.querySelector('[data-cerrar-reproductor]');
+    if (cerrar) cerrar.focus();
+  }, 50);
+}
+function cerrarReproductor() {
+  const ampliado = document.querySelector('[data-reproductor]');
+  if (!ampliado || !ampliado.classList.contains('reproductor--abierto')) return;
+  ampliado.classList.remove('reproductor--abierto');
+  const pantalla = document.querySelector('.pantalla');
+  if (pantalla) pantalla.inert = false;
+  const volver = reproductor.abiertoDesde && document.contains(reproductor.abiertoDesde)
+    ? reproductor.abiertoDesde
+    : document.querySelector('[data-abrir-reproductor]');
+  if (volver) volver.focus();
+}
+
+// Al abrir cualquier página con navegación: pone el reproductor y retoma
+// la canción donde iba (si el navegador no deja que suene solo, queda en pausa).
+function iniciarReproductor() {
+  crearReproductor();
+  if (!document.querySelector('[data-minirreproductor]')) return;
+  const guardado = leerEstadoReproductor();
+  if (!guardado || !leerSesion()) return;
+  const existen = obtenerDatos('lanzamientos').map(l => l.id);
+  guardado.cola = guardado.cola.filter(id => existen.includes(id));
+  guardado.mezcla = guardado.mezcla.filter(id => existen.includes(id));
+  if (!existen.includes(guardado.actual)) {
+    localStorage.removeItem(CLAVE_REPRODUCTOR); // la canción ya no existe
+    return;
+  }
+  reproductor.estado = guardado;
+  cargarCancion(guardado.actual, { tiempo: guardado.tiempo, sonar: guardado.sonando });
 }
 
 // Activa todos los botones data-reproducir que hay dentro de un contenedor.
+// Los que tienen texto («Escuchar») también abren la vista ampliada.
 function activarBotonesReproducir(contenedor) {
-  const lanzamientos = obtenerDatos('lanzamientos');
   contenedor.querySelectorAll('[data-reproducir]').forEach(boton => {
     boton.addEventListener('click', () => {
-      const lanzamiento = lanzamientos.find(l => l.id === boton.dataset.reproducir);
-      if (lanzamiento) alternarReproduccion(lanzamiento);
+      alternarCancion(boton.dataset.reproducir, Boolean(boton.querySelector('[data-texto-reproducir]')));
     });
   });
-  actualizarBotonesReproducir();
+  actualizarReproductor();
 }
 
 // HTML de un botón de reproducir (▶) para un lanzamiento.
@@ -1589,7 +1973,7 @@ function pantallaLanzamientoArtista() {
   });
   botonConfirmar.addEventListener('click', async () => {
     botonConfirmar.disabled = true;
-    if (reproduccion.id === lanzamiento.id && reproduccion.audio) reproduccion.audio.pause();
+    if (reproductor.estado && reproductor.estado.actual === lanzamiento.id) detenerMusica();
     await eliminarLanzamiento(lanzamiento.id);
     location.replace('musica-artista.html?eliminado=1');
   });
@@ -1928,4 +2312,5 @@ const PANTALLAS = {
 document.addEventListener('DOMContentLoaded', () => {
   const pantalla = PANTALLAS[document.body.dataset.pantalla];
   if (pantalla) pantalla();
+  iniciarReproductor(); // solo aparece en las pantallas con navegación
 });

@@ -462,7 +462,10 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   - El minirreproductor abre la vista ampliada.
   - Cerrar sesión detiene la música.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
-- **Nota:** el reproductor, el minirreproductor y los íconos de aleatorio, bucle y cola no están todavía en el design kit. Hay que agregarlos al kit y a `componentes.html` antes de construirlo.
+- **Decisiones del equipo (09-11-2026):**
+  - Los controles van en una sola fila: aleatorio, anterior, reproducir o pausar, siguiente y bucle. El botón de la cola va arriba a la derecha.
+  - Como la app son páginas separadas, al cambiar de página la canción se retoma en el mismo segundo (hay un corte breve; si el navegador no deja que suene sola, queda en pausa y se toca ▶).
+  - Al tocar ▶ en una canción, la cola es esa canción y después los demás lanzamientos, del más nuevo al más viejo.
 
 ### Cola de reproducción (pantalla nueva)
 - **Archivo de diseño:** no tiene diseño todavía. El equipo debe diseñarla o aprobarla antes de construirla.

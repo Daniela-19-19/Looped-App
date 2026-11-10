@@ -968,3 +968,135 @@ button, input, textarea { font: inherit; color: inherit; }
   line-height: var(--interlineado-sm);
 }
 .toast__texto { flex: 1; }
+
+/* ---------- Botón de ícono activado (aleatorio, bucle) ----------
+   Un botón de ícono que se prende y se apaga lleva aria-pressed.
+   Prendido se rellena del color del rol. */
+.boton-icono[aria-pressed="true"] { background: var(--color-primario); color: var(--color-sobre-primario); }
+.boton-icono[aria-pressed="true"]:hover { background: var(--color-primario-hover); }
+
+/* ---------- Barra de avance (canción) ----------
+   Un control deslizante para moverse dentro de la canción, con los
+   tiempos debajo. La parte avanzada se pinta con --avance (de 0% a 100%),
+   que pone el JavaScript. */
+.avance__control {
+  --avance: 0%;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: var(--espacio-6);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.avance__control::-webkit-slider-runnable-track {
+  height: var(--espacio-2);
+  border-radius: var(--radio-total);
+  background: linear-gradient(to right, var(--color-primario) var(--avance), var(--color-superficie-alta) var(--avance));
+}
+.avance__control::-moz-range-track { height: var(--espacio-2); border-radius: var(--radio-total); background: var(--color-superficie-alta); }
+.avance__control::-moz-range-progress { height: var(--espacio-2); border-radius: var(--radio-total); background: var(--color-primario); }
+.avance__control::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: var(--espacio-4);
+  height: var(--espacio-4);
+  margin-top: calc((var(--espacio-2) - var(--espacio-4)) / 2);
+  border-radius: var(--radio-total);
+  background: var(--color-texto);
+}
+.avance__control::-moz-range-thumb { width: var(--espacio-4); height: var(--espacio-4); border: 0; border-radius: var(--radio-total); background: var(--color-texto); }
+.avance__control:focus-visible { outline: var(--grosor-foco) solid var(--color-foco); outline-offset: var(--espacio-1); border-radius: var(--radio-total); }
+.avance__tiempos {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-xs);
+  line-height: var(--interlineado-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Minirreproductor ----------
+   Cápsula de vidrio con la canción que suena. Al tocar la portada o el
+   nombre se abre el reproductor; el botón de la derecha pausa. La línea
+   de abajo muestra el avance. */
+.minirreproductor {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  padding: var(--espacio-2);
+  overflow: hidden;
+  border-radius: var(--radio-lg);
+  background: var(--color-vidrio);
+  -webkit-backdrop-filter: blur(var(--desenfoque-vidrio)) saturate(150%);
+  backdrop-filter: blur(var(--desenfoque-vidrio)) saturate(150%);
+  box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde), var(--sombra-suave);
+}
+.minirreproductor__abrir {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.minirreproductor__info { display: grid; min-width: 0; }
+.minirreproductor__titulo,
+.minirreproductor__detalle { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.minirreproductor__titulo { font-weight: var(--peso-fuerte); font-size: var(--texto-sm); line-height: var(--interlineado-sm); }
+.minirreproductor__detalle { color: var(--color-texto-suave); font-size: var(--texto-xs); line-height: var(--interlineado-xs); }
+.minirreproductor__progreso {
+  position: absolute;
+  left: var(--espacio-4);
+  right: var(--espacio-4);
+  bottom: 0;
+  height: var(--grosor-foco);
+}
+
+/* ---------- Reproductor (vista ampliada) ----------
+   Panel que sube desde abajo y cubre la pantalla: portada grande,
+   canción, barra de avance y controles en una fila (aleatorio, anterior,
+   reproducir o pausar, siguiente y bucle). La cola va arriba a la derecha. */
+.reproductor {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  isolation: isolate; /* la atmósfera queda detrás del contenido */
+  overflow-y: auto;
+  background: var(--color-fondo);
+  transform: translateY(100%);
+  visibility: hidden;
+  transition: transform var(--duracion-salida) var(--curva-salida), visibility 0s linear var(--duracion-salida);
+}
+.reproductor--abierto {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--duracion-salida) var(--curva), visibility 0s;
+}
+.reproductor__cuerpo {
+  position: relative;
+  width: 100%;
+  max-width: calc(var(--ancho-pantalla) + var(--espacio-6) * 2);
+  margin-inline: auto;
+  padding: 0 var(--espacio-6) calc(var(--espacio-8) + env(safe-area-inset-bottom));
+}
+.reproductor__portada { margin-top: var(--espacio-2); box-shadow: var(--sombra-media); }
+.reproductor__info { margin-top: var(--espacio-8); }
+.reproductor__info .titulo { overflow-wrap: anywhere; }
+.reproductor__detalle { margin-top: var(--espacio-1); }
+.reproductor .avance { margin-top: var(--espacio-6); }
+.reproductor__controles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: var(--espacio-4) 0 var(--espacio-7);
+}
+.reproductor__nota { margin-top: var(--espacio-4); text-align: center; }

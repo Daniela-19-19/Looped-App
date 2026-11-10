@@ -118,6 +118,34 @@
   .pantalla--con-navegacion .barra-marca__logo { visibility: hidden; }
 }
 
+/* ---------- Minirreproductor (en las pantallas con navegación) ---------- */
+/* Flota justo encima de la navegación, con el mismo ancho. */
+.pantalla__minirreproductor {
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--espacio-2) + env(safe-area-inset-bottom) + var(--alto-control) + var(--espacio-2) * 2 + var(--espacio-2));
+  width: calc(100% - var(--espacio-6) * 2);
+  max-width: var(--ancho-pantalla);
+  margin-inline: auto;
+}
+.pantalla__minirreproductor[hidden] { display: none; }
+/* Mientras está, el contenido deja también su espacio abajo. */
+.pantalla--con-navegacion:has(> .pantalla__minirreproductor:not([hidden])) .pantalla__contenido {
+  padding-bottom: calc((var(--alto-control) + var(--espacio-2) * 2) * 2 + var(--espacio-2) + var(--espacio-8) + env(safe-area-inset-bottom));
+}
+/* Computador: la navegación está a la izquierda, así que va abajo, a la derecha de ella. */
+@media (min-width: 1024px) {
+  .pantalla__minirreproductor {
+    left: var(--ancho-barra-lateral);
+    bottom: var(--espacio-4);
+  }
+  .pantalla--con-navegacion:has(> .pantalla__minirreproductor:not([hidden])) .pantalla__contenido {
+    padding-bottom: calc(var(--alto-control) + var(--espacio-2) * 2 + var(--espacio-4) + var(--espacio-8));
+  }
+}
+
 /* ---------- R01 · Panel del artista ---------- */
 .panel__accesos {
   display: grid;

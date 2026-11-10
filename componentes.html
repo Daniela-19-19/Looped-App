@@ -45,6 +45,9 @@
     [data-demo-logo] { display: grid; justify-items: center; gap: var(--espacio-8); padding-bottom: var(--espacio-8); }
     [data-demo-logo] [data-repetir-logo] { justify-self: start; }
     [data-demo-atmosfera] { position: relative; isolation: isolate; overflow: hidden; min-height: calc(var(--alto-control) * 6); }
+    /* El reproductor real cubre la pantalla; aquí se muestra dentro de su caja. */
+    .cat-reproductor { position: relative; overflow: hidden; border-radius: var(--radio-lg); box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-borde-suave); }
+    .cat-reproductor .reproductor { position: relative; inset: auto; transform: none; visibility: visible; overflow: visible; }
   </style>
 </head>
 <body>
@@ -79,6 +82,13 @@
     <symbol id="icono-audio" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></symbol>
     <symbol id="icono-imagen" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 16l-4.5-4.5L7 20"/></symbol>
     <symbol id="icono-eliminar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4.5 7h15M9.5 7V5h5v2M6.5 7l1 12.5h9l1-12.5"/></symbol>
+    <symbol id="icono-cancion-anterior" viewBox="0 0 24 24"><rect x="5" y="5" width="2.6" height="14" rx="1.3" fill="currentColor"/><path fill="currentColor" d="M19 6.4v11.2c0 .9-1 1.4-1.7.9l-8.3-5.6c-.6-.4-.6-1.4 0-1.8l8.3-5.6c.7-.5 1.7 0 1.7.9z"/></symbol>
+    <symbol id="icono-cancion-siguiente" viewBox="0 0 24 24"><rect x="16.4" y="5" width="2.6" height="14" rx="1.3" fill="currentColor"/><path fill="currentColor" d="M5 6.4v11.2c0 .9 1 1.4 1.7.9l8.3-5.6c.6-.4.6-1.4 0-1.8L6.7 5.5C6 5 5 5.5 5 6.4z"/></symbol>
+    <symbol id="icono-aleatorio" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h3c3.5 0 5.5 10 9 10h4M4 17h3c1.4 0 2.5-1.5 3.4-3.4M13.6 10.4C14.5 8.5 15.6 7 17 7h3M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5"/></symbol>
+    <symbol id="icono-bucle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 3.5l3 3-3 3M4 11.5V10a3.5 3.5 0 0 1 3.5-3.5H20M7 20.5l-3-3 3-3M20 12.5V14a3.5 3.5 0 0 1-3.5 3.5H4"/></symbol>
+    <symbol id="icono-bucle-una" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 3.5l3 3-3 3M4 11.5V10a3.5 3.5 0 0 1 3.5-3.5H20M7 20.5l-3-3 3-3M20 12.5V14a3.5 3.5 0 0 1-3.5 3.5H4M11 10.6l1.4-.8v4.6"/></symbol>
+    <symbol id="icono-cola" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 6.5h16M4 12h16M4 17.5h8"/><path fill="currentColor" d="M15 14.9v5.2c0 .6.7 1 1.2.6l3.6-2.6c.4-.3.4-.9 0-1.2l-3.6-2.6c-.5-.4-1.2 0-1.2.6z"/></symbol>
+    <symbol id="icono-bajar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 9l7 7 7-7"/></symbol>
   </defs>
 </svg>
 
@@ -693,6 +703,59 @@
           <p class="toast__texto">Pregunta enviada a Mara Sol.</p>
           <button type="button" class="boton boton--terciario boton--pequeno">Ver</button>
         </div>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Minirreproductor · <code>.minirreproductor</code></h3>
+      <p class="texto--pequeno texto--suave">Va sobre la navegación mientras suena algo (en computador, abajo a la derecha de la barra lateral). Al tocar la portada o el nombre se abre el reproductor. La línea de abajo es el avance.</p>
+      <div class="demo demo--columna">
+        <div class="minirreproductor">
+          <button type="button" class="minirreproductor__abrir" aria-label="Abrir reproductor: Segundo sol">
+            <img class="portada portada--pequena" src="assets/portada-segundo-sol.jpg" alt="">
+            <span class="minirreproductor__info">
+              <span class="minirreproductor__titulo">Segundo sol</span>
+              <span class="minirreproductor__detalle">Mara Sol</span>
+            </span>
+          </button>
+          <button type="button" class="boton-icono" aria-label="Pausar"><svg class="icono" aria-hidden="true"><use href="#icono-pausa"></use></svg></button>
+          <div class="progreso minirreproductor__progreso" aria-hidden="true"><span class="progreso__barra" style="width: 35%"></span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="cat-componente">
+      <h3 class="titulo titulo--pequeno">Reproductor · <code>.reproductor</code> + <code>.avance</code></h3>
+      <p class="texto--pequeno texto--suave">Vista ampliada: sube desde abajo y cubre la pantalla (<code>.reproductor--abierto</code>). Controles en una fila: aleatorio, anterior, reproducir o pausar, siguiente y bucle. Aleatorio y bucle llevan <code>aria-pressed</code> y se rellenan del color del rol cuando están prendidos; el bucle cambia de ícono para «una canción» (<code>#icono-bucle-una</code>). La cola va arriba a la derecha. La barra de avance pinta lo avanzado con la variable <code>--avance</code>.</p>
+      <div class="demo demo--columna cat-reproductor">
+        <section class="reproductor reproductor--abierto" role="dialog" aria-label="Reproductor">
+          <div class="atmosfera atmosfera--inferior" aria-hidden="true"></div>
+          <div class="reproductor__cuerpo">
+            <header class="barra-superior">
+              <button type="button" class="boton-icono" aria-label="Cerrar reproductor"><svg class="icono" aria-hidden="true"><use href="#icono-bajar"></use></svg></button>
+              <span class="barra-superior__titulo">Reproduciendo</span>
+              <a class="boton-icono" href="#" aria-label="Ver la cola de reproducción"><svg class="icono" aria-hidden="true"><use href="#icono-cola"></use></svg></a>
+            </header>
+            <img class="portada reproductor__portada" src="assets/portada-segundo-sol.jpg" alt="Portada de Segundo sol">
+            <div class="reproductor__info">
+              <h2 class="titulo titulo--medio">Segundo sol</h2>
+              <p class="texto--pequeno texto--suave reproductor__detalle">Mara Sol · Segundo sol</p>
+            </div>
+            <div class="avance">
+              <input class="avance__control" type="range" min="0" max="1000" value="350" aria-label="Posición de la canción" style="--avance: 35%">
+              <div class="avance__tiempos"><span>1:12</span><span>3:24</span></div>
+            </div>
+            <div class="reproductor__controles">
+              <button type="button" class="boton-icono" aria-label="Aleatorio" aria-pressed="true"><svg class="icono" aria-hidden="true"><use href="#icono-aleatorio"></use></svg></button>
+              <button type="button" class="boton-icono boton-icono--relleno" aria-label="Anterior"><svg class="icono" aria-hidden="true"><use href="#icono-cancion-anterior"></use></svg></button>
+              <button type="button" class="boton-icono boton-icono--relleno boton-icono--grande" aria-label="Pausar"><svg class="icono" aria-hidden="true"><use href="#icono-pausa"></use></svg></button>
+              <button type="button" class="boton-icono boton-icono--relleno" aria-label="Siguiente"><svg class="icono" aria-hidden="true"><use href="#icono-cancion-siguiente"></use></svg></button>
+              <button type="button" class="boton-icono" aria-label="Bucle: apagado" aria-pressed="false"><svg class="icono" aria-hidden="true"><use href="#icono-bucle"></use></svg></button>
+            </div>
+            <a class="boton boton--secundario boton--bloque" href="#">Conocer a Mara Sol</a>
+            <p class="texto--pequeno texto--suave reproductor__nota">Audio de muestra original para la demostración.</p>
+          </div>
+        </section>
       </div>
     </article>
 

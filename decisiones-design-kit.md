@@ -73,7 +73,11 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Enlaces con forma de chip o tarjeta:** `.chip` y `.tarjeta--tocable` pueden ser `<a>` sin subrayado. En `.tarjeta--fila`, el texto va en `.tarjeta__info`.
 - **Chips a 48 px de alto** (antes 36): cumplen el área táctil mínima de la revisión responsive.
 - **Menú desplegable** (`.desplegable`, `.menu`, `.menu__opcion`): vidrio como la navegación, opciones de 48 px y ✓ en la elegida; se cierra al tocar fuera o con Esc. Ícono `filtro`. El buscador puede llevar una ✕ para borrar lo escrito.
-- **Fuera del kit por ahora:** reproductor y minirreproductor. Se agregan cuando se construyan esas pantallas.
+- **Reproductor** (`.reproductor`, `.reproductor--abierto`): vista ampliada que sube desde abajo y cubre la pantalla. Decisión del equipo (2026-11-09): los cinco controles en una fila (aleatorio, anterior, reproducir o pausar, siguiente, bucle) y la cola arriba a la derecha, en la barra superior.
+- **Minirreproductor** (`.minirreproductor`): cápsula de vidrio sobre la navegación; en computador va abajo, a la derecha de la barra lateral.
+- **Barra de avance** (`.avance`): control deslizante con los tiempos; lo avanzado se pinta con la variable `--avance`.
+- **Botón de ícono prendido** (`.boton-icono[aria-pressed="true"]`): se rellena del color del rol (aleatorio y bucle). Se usa relleno y no solo color de ícono porque el turquesa sobre blanco no tiene contraste suficiente.
+- **Íconos** `cancion-anterior`, `cancion-siguiente`, `aleatorio`, `bucle`, `bucle-una`, `cola` y `bajar`.
 
 ## Historial de cambios
 
@@ -97,3 +101,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Menú desplegable, ícono `filtro` y ✕ del buscador | Construcción de explorar (F01b) |
 | 2026-11-07 | Panel del artista: los cuatro botones con borde, morados solo al pasar, tocar o enfocar; `.boton--rellenar` también se rellena al presionar | Pedido del equipo |
 | 2026-11-07 | Íconos `audio` e `imagen` | Construcción de publicar lanzamiento (R03) |
+| 2026-11-09 | Reproductor, minirreproductor, barra de avance, botón de ícono prendido e íconos del reproductor | Construcción del reproductor (tramo 4) |
