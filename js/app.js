@@ -462,8 +462,11 @@ function pasoIdentidad({ rol, campoNombre, errorNombre, usuarioAutomatico, desti
     usuario.value = limpio ? '@' + limpio : '';
   });
 
-  formulario.addEventListener('submit', evento => {
+  const botonContinuar = document.querySelector('button[form="formulario-identidad"]');
+
+  formulario.addEventListener('submit', async evento => {
     evento.preventDefault();
+    if (botonContinuar && botonContinuar.disabled) return; // ya se está revisando
     const textoNombre = nombre.value.trim();
     const textoUsuario = limpiarUsuario(usuario.value);
 
@@ -476,9 +479,33 @@ function pasoIdentidad({ rol, campoNombre, errorNombre, usuarioAutomatico, desti
       return;
     }
 
+    // REAL: revisa en Supabase que nadie más tenga este @usuario.
+    if (botonContinuar) botonContinuar.disabled = true;
+    const ocupado = await usuarioOcupado(textoUsuario);
+    if (botonContinuar) botonContinuar.disabled = false;
+    if (ocupado) {
+      mostrarError('usuario', 'Este nombre de usuario ya está tomado. Prueba con otro.');
+      usuario.focus();
+      return;
+    }
+
     guardarRegistro({ [campoNombre]: textoNombre, nombreUsuario: textoUsuario, foto });
     location.href = destino;
   });
+}
+
+// ¿Algún fan o artista ya usa este @usuario? Si no hay conexión responde
+// que no: igual la base de datos lo vuelve a revisar al guardar el perfil.
+async function usuarioOcupado(nombreUsuario) {
+  try {
+    const [fans, artistas] = await Promise.all([
+      baseDatos.from('fans').select('id').eq('nombre_usuario', nombreUsuario).limit(1),
+      baseDatos.from('artistas').select('id').eq('nombre_usuario', nombreUsuario).limit(1)
+    ]);
+    return Boolean((fans.data && fans.data.length) || (artistas.data && artistas.data.length));
+  } catch (e) {
+    return false;
+  }
 }
 
 // ---------- A05r · Identidad del artista ----------
@@ -673,13 +700,64 @@ function perfilDelRegistro(registro) {
   });
 }
 
-// SIMULADO: crea la cuenta guardando el perfil en este navegador.
-// Con Supabase, aquí se crea la cuenta de verdad (la contraseña la
-// maneja Supabase; nunca se guarda en el código ni en el navegador).
-function crearCuentaSimulada(registro) {
-  const perfil = perfilDelRegistro(registro);
+// Sube la foto de perfil (data URL) a la carpeta «fotos» de Supabase,
+// dentro de la carpeta de la cuenta, y devuelve su enlace público.
+async function subirFotoPerfil(usuarioId, fotoDataUrl) {
+  const archivo = await (await fetch(fotoDataUrl)).blob();
+  const ruta = `${usuarioId}/perfil-${Date.now()}.jpg`;
+  const { error } = await baseDatos.storage.from('fotos').upload(ruta, archivo, { contentType: 'image/jpeg' });
+  if (error) throw error;
+  return baseDatos.storage.from('fotos').getPublicUrl(ruta).data.publicUrl;
+}
+
+// REAL: guarda el perfil en la tabla «fans» o «artistas», unido a la
+// cuenta creada en «Crear cuenta». Devuelve el perfil guardado.
+// Si algo falla, lanza un error con un mensaje para mostrar.
+async function guardarPerfil(registro) {
+  const { data: { user } } = await baseDatos.auth.getUser();
+  if (!user) throw new Error('Tu sesión se cerró. Inicia sesión para terminar tu perfil.');
+
+  let foto = null;
+  if (registro.foto) {
+    try { foto = await subirFotoPerfil(user.id, registro.foto); }
+    catch (e) { throw new Error('No pudimos subir tu foto. Inténtalo otra vez.'); }
+  }
+
+  const esArtista = registro.rol === 'artista';
+  const fila = esArtista ? {
+    usuario_id: user.id,
+    nombre_artistico: registro.nombreArtistico,
+    nombre_usuario: registro.nombreUsuario,
+    foto,
+    presentacion: registro.presentacion || '',
+    ciudad: registro.ciudad || null,
+    generos: registro.generos || [],
+    roles: registro.roles || []
+  } : {
+    usuario_id: user.id,
+    nombre_perfil: registro.nombrePerfil,
+    nombre_usuario: registro.nombreUsuario,
+    foto,
+    gustos_musicales: registro.gustosMusicales || [],
+    intereses: registro.intereses || []
+  };
+
+  // upsert: si ya lo había guardado (p. ej. volvió atrás), lo actualiza.
+  const { data, error } = await baseDatos
+    .from(esArtista ? 'artistas' : 'fans')
+    .upsert(fila, { onConflict: 'usuario_id' })
+    .select()
+    .single();
+  if (error) {
+    if (error.code === '23505') throw new Error('Tu nombre de usuario ya está tomado. Vuelve atrás para cambiarlo.');
+    throw new Error('No pudimos guardar tu perfil. Revisa tu conexión e inténtalo otra vez.');
+  }
+
+  // PROVISIONAL: copia en este navegador para las pantallas que aún no
+  // leen de Supabase (inicio del fan, panel del artista…).
+  const perfil = Object.assign(perfilDelRegistro(registro), { id: data.id, correo: user.email, foto });
   try { localStorage.setItem('looped-perfil', JSON.stringify(perfil)); } catch (e) { /* sin almacenamiento */ }
-  guardarSesion({ rol: registro.rol, id: perfil.id });
+  guardarSesion({ rol: registro.rol, id: data.id });
   try { sessionStorage.removeItem('looped-registro'); } catch (e) { /* sin almacenamiento */ }
   return perfil;
 }
@@ -713,10 +791,21 @@ function pasoPerfilListo({ rol, pasoAnterior, campoNombre, campoGeneros, etiquet
   });
   document.querySelector('[data-resumen-etiquetas]').replaceChildren(...etiquetas);
 
-  // Al entrar, la cuenta queda creada. replace: «atrás» no vuelve al registro.
-  document.querySelector('[data-entrar]').addEventListener('click', () => {
-    crearCuentaSimulada(registro);
-    location.replace(destino);
+  // Al entrar, el perfil se guarda en Supabase. replace: «atrás» no vuelve al registro.
+  const botonEntrar = document.querySelector('[data-entrar]');
+  const textoBoton = botonEntrar.textContent;
+  botonEntrar.addEventListener('click', async () => {
+    if (botonEntrar.disabled) return;
+    botonEntrar.disabled = true;
+    botonEntrar.textContent = 'Guardando…';
+    try {
+      await guardarPerfil(registro);
+      location.replace(destino);
+    } catch (e) {
+      botonEntrar.disabled = false;
+      botonEntrar.textContent = textoBoton;
+      mostrarAviso(e.message || 'No pudimos guardar tu perfil. Inténtalo otra vez.');
+    }
   });
 }
 
