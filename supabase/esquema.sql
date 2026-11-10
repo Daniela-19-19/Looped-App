@@ -49,6 +49,7 @@ create table fans (
   gustos_musicales text[] not null default '{}',  -- ids de generos
   intereses text[] not null default '{}',         -- ids de intereses
   minutos_escucha integer not null default 0,     -- definen el nivel
+  segundos_escucha integer not null default 0,    -- de aquí salen los minutos (sumar_escucha)
   fecha_registro date not null default current_date
 );
 
@@ -349,6 +350,37 @@ create policy "Sus preferencias" on preferencias for all
 -- Permisos base (RLS sigue decidiendo fila por fila).
 grant select on all tables in schema public to anon, authenticated;
 grant insert, update, delete on all tables in schema public to authenticated;
+
+-- Contadores protegidos: minutos, seguidores y votos solo los cambia la
+-- base de datos (funciones y triggers), nunca el navegador.
+revoke insert, update on fans from authenticated;
+grant insert (usuario_id, nombre_perfil, nombre_usuario, foto, gustos_musicales, intereses),
+      update (usuario_id, nombre_perfil, nombre_usuario, foto, gustos_musicales, intereses)
+  on fans to authenticated;
+revoke insert, update on artistas from authenticated;
+grant insert (usuario_id, nombre_artistico, nombre_usuario, foto, presentacion, ciudad, generos, roles),
+      update (usuario_id, nombre_artistico, nombre_usuario, foto, presentacion, ciudad, generos, roles)
+  on artistas to authenticated;
+revoke insert, update on preguntas from authenticated;
+grant insert (artista, autor, autor_es_fan_club, primer_contacto, texto),
+      update (estado)
+  on preguntas to authenticated;
+
+-- Suma lo escuchado al fan que inició sesión y devuelve sus minutos
+-- (como mucho 60 segundos por llamada).
+create function sumar_escucha(segundos integer) returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  minutos integer;
+begin
+  update fans
+    set segundos_escucha = segundos_escucha + least(greatest(segundos, 0), 60),
+        minutos_escucha = (segundos_escucha + least(greatest(segundos, 0), 60)) / 60
+    where usuario_id = auth.uid()
+    returning minutos_escucha into minutos;
+  return minutos;
+end $$;
+grant execute on function sumar_escucha(integer) to authenticated;
 
 
 -- ----------------------------------------------------------

@@ -34,6 +34,7 @@ insert into fans (id, nombre_perfil, nombre_usuario, gustos_musicales, intereses
   ('fan-tomas', 'Tomás', 'tomas', '{indie}', '{conocer-artistas}', 80, '2026-10-20'),
   ('fan-lucia', 'Lucía', 'lucia', '{pop}', '{comunidades}', 130, '2026-10-12'),
   ('fan-sebastian', 'Sebastián', 'sebastian', '{indie,rock}', '{nuevos-lanzamientos}', 40, '2026-10-25');
+update fans set segundos_escucha = minutos_escucha * 60;
 
 insert into artistas (id, nombre_artistico, nombre_usuario, foto, presentacion, ciudad, generos, roles, emergente) values
   ('mara-sol', 'Mara Sol', 'marasol', 'assets/mara-sol.jpg', 'Canciones íntimas y melodías que encuentran su espacio.', 'Bogotá', '{indie,pop}', '{solista,compositor}', true),

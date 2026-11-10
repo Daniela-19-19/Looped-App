@@ -106,17 +106,6 @@ async function eliminarLanzamiento(lanzamiento) {
   try { await borrarArchivoSubido(lanzamiento.portada); } catch (e) { /* queda el archivo suelto */ }
 }
 
-// PROVISIONAL: lo que el fan escucha (segundosEscucha) aún se guarda en
-// este navegador. Seguir, fan fundador y visitas ya están en Supabase.
-function leerCambiosFan(fanId) {
-  try { return (JSON.parse(localStorage.getItem('looped-fan-cambios')) || {})[fanId] || {}; } catch (e) { return {}; }
-}
-function guardarCambiosFan(fanId, cambios) {
-  let todos = {};
-  try { todos = JSON.parse(localStorage.getItem('looped-fan-cambios')) || {}; } catch (e) { /* empieza vacío */ }
-  todos[fanId] = { ...(todos[fanId] || {}), ...cambios };
-  localStorage.setItem('looped-fan-cambios', JSON.stringify(todos));
-}
 
 // ---------- Sesión ----------
 // REAL: entra con Supabase Auth y busca el perfil de la cuenta.
@@ -143,10 +132,10 @@ async function iniciarSesion(correo, contrasena) {
     if (error) throw new Error('sin-conexion');
     if (data) {
       const rol = tabla === 'artistas' ? 'artista' : 'fan';
-      return { rol, perfil: perfilDesdeFila(rol, data, usuario.email) };
+      return { rol, perfil: perfilDesdeFila(rol, data, usuario.email), usuarioId: usuario.id };
     }
   }
-  return { rol: rolGuardado || 'fan', perfil: null };
+  return { rol: rolGuardado || 'fan', perfil: null, usuarioId: usuario.id };
 }
 
 // Convierte una fila de Supabase al perfil que usan las pantallas
@@ -218,7 +207,7 @@ function activarMostrarContrasena(control, boton) {
 // ---------- Registro en curso ----------
 // Lo que la persona va llenando en los pasos del registro (rol, correo…),
 // guardado solo en esta pestaña. Nunca se guarda la contraseña.
-// SIMULADO: con Supabase, la cuenta se crea de verdad al continuar.
+// La cuenta ya existe en Supabase (se creó en «Crear cuenta»).
 function leerRegistro() {
   try { return JSON.parse(sessionStorage.getItem('looped-registro')) || {}; } catch (e) { return {}; }
 }
@@ -321,6 +310,7 @@ function pantallaIniciarSesion() {
     // PROVISIONAL: copia en este navegador para las pantallas que aún no leen de Supabase.
     try { localStorage.setItem('looped-perfil', JSON.stringify(sesion.perfil)); } catch (e) { /* sin almacenamiento */ }
     guardarSesion({ rol: sesion.rol, id: sesion.perfil.id });
+    await traerAjustesDeLaCuenta(sesion.usuarioId, sesion.rol === 'fan' ? sesion.perfil.id : null);
     // Cada rol abre su lado: el fan su inicio y el artista su panel.
     location.href = sesion.rol === 'artista' ? 'panel-artista.html' : 'inicio-fan.html';
   });
@@ -469,7 +459,7 @@ function pintarAvatar(avatar, foto, nombre) {
 }
 
 // Pasos de identidad (A05r artista y A05f fan): foto opcional, nombre y usuario.
-// SIMULADO: con Supabase, aquí se guardan el perfil y la foto de verdad.
+// Lo escrito se recuerda en esta pestaña; el perfil se guarda en Supabase al final (guardarPerfil).
 function pasoIdentidad({ rol, campoNombre, errorNombre, usuarioAutomatico, destino }) {
   // Solo se llega aquí después de crear la cuenta con este rol.
   const registro = leerRegistro();
@@ -603,7 +593,7 @@ function activarContador(control, contador) {
 }
 
 // ---------- A06r · Presentación ----------
-// SIMULADO: con Supabase, aquí se guardan la presentación y la ciudad.
+// Lo escrito se recuerda en esta pestaña; se guarda en Supabase al final (guardarPerfil).
 function pantallaPresentacionArtista() {
   // Solo se llega aquí después de la identidad del artista.
   const registro = leerRegistro();
@@ -664,7 +654,7 @@ function casillasMarcadas(contenedor) {
 // e intereses (A07f). Muestra la lista de datos indicada en el grupo
 // .casillas del formulario de la pantalla.
 // El botón principal guarda lo marcado; «Lo haré después» avanza sin guardar.
-// SIMULADO: con Supabase, aquí se guarda lo marcado de verdad.
+// Lo marcado se recuerda en esta pestaña; se guarda en Supabase al final (guardarPerfil).
 function pasoCasillas({ rol, pasoAnterior, lista, campo, destino }) {
   // Solo se llega aquí después del paso anterior del registro.
   const registro = leerRegistro();
@@ -1003,8 +993,10 @@ function preguntasNuevas(artistaId) {
 }
 
 // ---------- Apariencia (tema claro u oscuro) ----------
-// SIMULADO: la preferencia se recuerda en este navegador; con Supabase
-// se guardará en «preferencias» y seguirá igual al volver a iniciar sesión.
+// REAL: se guarda en «preferencias» de la cuenta. Además se recuerda en
+// este navegador para aplicarla apenas abre cada página, sin esperar a
+// Supabase (así la pantalla no parpadea). Al iniciar sesión se trae de
+// la cuenta con traerAjustesDeLaCuenta().
 function leerPreferencias() {
   try { return JSON.parse(localStorage.getItem('looped-preferencias')) || {}; } catch (e) { return {}; }
 }
@@ -1025,8 +1017,57 @@ function activarCambioDeTema(boton) {
     try { localStorage.setItem('looped-preferencias', JSON.stringify(preferencias)); } catch (e) { /* sin almacenamiento */ }
     aplicarTema();
     actualizar();
+    guardarApariencia(preferencias.apariencia);
   });
   actualizar();
+}
+
+// El id de la cuenta que inició sesión (sin ir a internet), o null.
+async function idDeLaCuenta() {
+  if (typeof baseDatos === 'undefined') return null;
+  const { data } = await baseDatos.auth.getSession();
+  return data.session ? data.session.user.id : null;
+}
+
+// Guarda la apariencia en la cuenta. Si falla, queda en este navegador.
+async function guardarApariencia(apariencia) {
+  const usuarioId = await idDeLaCuenta();
+  if (!usuarioId) return;
+  await baseDatos.from('preferencias').upsert({
+    usuario_id: usuarioId,
+    apariencia: apariencia === 'claro' ? 'clara' : 'oscura'
+  });
+}
+
+// Al iniciar sesión: trae la apariencia y (si es fan) su cola de la cuenta.
+async function traerAjustesDeLaCuenta(usuarioId, fanId) {
+  try {
+    const { data: preferencias } = await baseDatos.from('preferencias')
+      .select('apariencia').eq('usuario_id', usuarioId).maybeSingle();
+    if (preferencias) {
+      const locales = leerPreferencias();
+      locales.apariencia = preferencias.apariencia === 'clara' ? 'claro' : 'oscuro';
+      localStorage.setItem('looped-preferencias', JSON.stringify(locales));
+    }
+    // Otra cuenta no debe heredar la música de la anterior.
+    localStorage.removeItem(CLAVE_REPRODUCTOR);
+    if (!fanId) return;
+    const { data: cola } = await baseDatos.from('colas').select('*').eq('fan', fanId).maybeSingle();
+    if (cola && cola.canciones.length) {
+      const actual = cola.canciones.includes(cola.cancion_actual) ? cola.cancion_actual : cola.canciones[0];
+      localStorage.setItem(CLAVE_REPRODUCTOR, JSON.stringify({
+        cola: cola.canciones,
+        mezcla: [actual].concat(mezclar(cola.canciones.filter(id => id !== actual))),
+        actual,
+        tiempo: 0,
+        sonando: false,
+        aleatorio: cola.aleatorio,
+        bucle: cola.bucle === 'toda' ? 'cola' : cola.bucle
+      }));
+    }
+  } catch (e) {
+    /* sin conexión o sin almacenamiento: se entra igual, con lo del navegador */
+  }
 }
 
 // ---------- R01 · Panel del artista ----------
@@ -1149,12 +1190,7 @@ function fanActual() {
   const propia = perfilGuardado();
   const fan = obtenerDatos('fans').find(f => f.id === sesion.id) || (propia && propia.id === sesion.id ? propia : null);
   if (!fan) return null;
-  // Del navegador solo se usa lo escuchado (PROVISIONAL); lo demás viene de Supabase.
-  const segundosEscucha = leerCambiosFan(fan.id).segundosEscucha || 0;
-  const unido = { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan, segundosEscucha };
-  // Minutos de escucha: los de los datos más lo escuchado en este navegador.
-  unido.minutosEscucha = (fan.minutosEscucha || 0) + Math.floor(segundosEscucha / 60);
-  return unido;
+  return { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan };
 }
 
 // Dónde está el fan dentro de su nivel: minutos al empezar el nivel
@@ -1171,7 +1207,7 @@ function progresoNivel(minutos) {
 // La app son páginas separadas y, al cambiar de página, el navegador corta
 // el audio. Por eso el estado del reproductor (cola, canción, segundo, si
 // sonaba, aleatorio y bucle) se guarda en este navegador y cada página lo
-// retoma donde iba. Con Supabase, la cola se guardará en la cuenta del fan.
+// retoma donde iba. La cola, además, se guarda en la cuenta del fan (guardarColaEnLaCuenta).
 const CLAVE_REPRODUCTOR = 'looped-reproductor';
 const MODOS_BUCLE = ['apagado', 'cola', 'una']; // cada toque pasa al siguiente
 const TEXTO_BUCLE = { apagado: 'Bucle: apagado', cola: 'Bucle: toda la cola', una: 'Bucle: una canción' };
@@ -1199,6 +1235,29 @@ function guardarEstadoReproductor() {
   }
   reproductor.ultimoGuardado = Date.now();
   try { localStorage.setItem(CLAVE_REPRODUCTOR, JSON.stringify(estado)); } catch (e) { /* sin espacio: no se guarda */ }
+  guardarColaEnLaCuenta();
+}
+
+// REAL: la cola del fan (canciones, actual, aleatorio y bucle) se guarda
+// en «colas». El segundo exacto y si sonaba quedan solo en este navegador,
+// para seguir sonando al cambiar de página. Solo escribe si algo cambió.
+let ultimaColaGuardada = '';
+async function guardarColaEnLaCuenta() {
+  const estado = reproductor.estado;
+  const fan = fanActual();
+  if (!estado || !fan || typeof baseDatos === 'undefined') return;
+  const fila = {
+    fan: fan.id,
+    canciones: estado.cola,
+    cancion_actual: estado.actual,
+    aleatorio: Boolean(estado.aleatorio),
+    bucle: estado.bucle === 'cola' ? 'toda' : estado.bucle
+  };
+  const texto = JSON.stringify(fila);
+  if (texto === ultimaColaGuardada) return;
+  ultimaColaGuardada = texto;
+  const { error } = await baseDatos.from('colas').upsert(fila);
+  if (error) ultimaColaGuardada = ''; // se intenta otra vez en el próximo cambio
 }
 
 function lanzamientoSonando() {
@@ -1404,14 +1463,23 @@ function contarEscucha() {
   reproductor.ultimoTiempo = t;
   if (reproductor.segundosPendientes >= 5) guardarSegundosEscucha();
 }
-function guardarSegundosEscucha() {
-  const segundos = reproductor.segundosPendientes;
-  reproductor.segundosPendientes = 0;
+// REAL: suma lo escuchado en Supabase (función sumar_escucha) y avisa si
+// el fan subió de nivel.
+async function guardarSegundosEscucha() {
+  const segundos = Math.round(reproductor.segundosPendientes);
   const fan = fanActual();
   if (!fan || segundos <= 0) return;
-  const nivelAntes = nivelPorMinutos(fan.minutosEscucha);
-  guardarCambiosFan(fan.id, { segundosEscucha: (fan.segundosEscucha || 0) + segundos });
-  const nivelDespues = nivelPorMinutos(fanActual().minutosEscucha);
+  reproductor.segundosPendientes -= segundos;
+  const { data: minutos, error } = await baseDatos.rpc('sumar_escucha', { segundos });
+  if (error || minutos === null) {
+    reproductor.segundosPendientes += segundos; // se intenta otra vez en la próxima
+    return;
+  }
+  const fanEnDatos = obtenerDatos('fans').find(f => f.id === fan.id);
+  if (!fanEnDatos) return;
+  const nivelAntes = nivelPorMinutos(fanEnDatos.minutosEscucha);
+  fanEnDatos.minutosEscucha = minutos;
+  const nivelDespues = nivelPorMinutos(minutos);
   if (nivelDespues > nivelAntes) mostrarAviso(`Subiste al nivel ${nivelDespues}.`);
 }
 
