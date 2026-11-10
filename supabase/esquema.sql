@@ -556,3 +556,39 @@ end $$;
 
 create trigger miembros_marcar_preguntas after insert or delete on miembros_fan_club
   for each row execute function marcar_preguntas_fan_club();
+
+
+-- ----------------------------------------------------------
+-- 11. Notificaciones: suscripciones al celular y aviso de pregunta nueva
+-- ----------------------------------------------------------
+create table suscripciones_push (
+  endpoint text primary key,   -- la dirección que da el navegador
+  usuario_id uuid not null references auth.users on delete cascade,
+  p256dh text not null,        -- claves públicas del navegador (no son secretas)
+  auth text not null,
+  fecha timestamptz not null default now()
+);
+alter table suscripciones_push enable row level security;
+create policy "Sus suscripciones" on suscripciones_push for all
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+grant select, insert, update, delete on suscripciones_push to authenticated;
+
+-- 2. Aviso al artista: «Lucía te envió una pregunta.»
+create function avisar_pregunta_nueva() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  artista_usuario uuid;
+  fan_nombre text;
+begin
+  select usuario_id into artista_usuario from artistas where id = new.artista;
+  select nombre_perfil into fan_nombre from fans where id = new.autor;
+  if artista_usuario is not null then
+    insert into notificaciones (usuario_id, texto, accion)
+      values (artista_usuario, coalesce(fan_nombre, 'Un fan') || ' te envió una pregunta.',
+              'revisar-pregunta-artista.html?id=' || new.id);
+  end if;
+  return null;
+end $$;
+
+create trigger preguntas_avisar after insert on preguntas
+  for each row execute function avisar_pregunta_nueva();

@@ -118,6 +118,21 @@
           <button type="button" class="boton boton--secundario" data-valor="claro" aria-pressed="false">Claro</button>
         </div>
       </div>
+      <!-- Accesibilidad (F12): data-movimiento="reducido" y data-transparencia="reducida" en <html> -->
+      <div>
+        <span class="rotulo texto--suave">Movimiento</span>
+        <div class="selector" data-control="movimiento">
+          <button type="button" class="boton boton--secundario" data-valor="normal" aria-pressed="true">Normal</button>
+          <button type="button" class="boton boton--secundario" data-valor="reducido" aria-pressed="false">Reducido</button>
+        </div>
+      </div>
+      <div>
+        <span class="rotulo texto--suave">Transparencia</span>
+        <div class="selector" data-control="transparencia">
+          <button type="button" class="boton boton--secundario" data-valor="normal" aria-pressed="true">Normal</button>
+          <button type="button" class="boton boton--secundario" data-valor="reducida" aria-pressed="false">Reducida</button>
+        </div>
+      </div>
     </div>
 
     <div class="aviso" id="estado-fuentes">
@@ -782,6 +797,13 @@
       if (grupo.dataset.control === 'rol') html.dataset.rol = b.dataset.valor;
       if (grupo.dataset.control === 'tema') {
         if (b.dataset.valor === 'claro') html.dataset.tema = 'claro'; else delete html.dataset.tema;
+      }
+      // Accesibilidad: sin atributo es lo normal.
+      if (grupo.dataset.control === 'movimiento') {
+        if (b.dataset.valor === 'reducido') html.dataset.movimiento = 'reducido'; else delete html.dataset.movimiento;
+      }
+      if (grupo.dataset.control === 'transparencia') {
+        if (b.dataset.valor === 'reducida') html.dataset.transparencia = 'reducida'; else delete html.dataset.transparencia;
       }
       pintarColores();
     });

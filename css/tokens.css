@@ -199,3 +199,20 @@
     --duracion-larga: 0ms;
   }
 }
+
+/* Lo mismo cuando se pide desde la app: Accesibilidad → «Reducir movimiento».
+   js/app.js pone data-movimiento="reducido" en <html>. */
+:root[data-movimiento="reducido"] {
+  --duracion-rapida: 0ms;
+  --duracion-media: 0ms;
+  --duracion-salida: 0ms;
+  --duracion-larga: 0ms;
+}
+
+/* Accesibilidad → «Reducir transparencia»: el vidrio (navegación,
+   minirreproductor, avisos) pasa a ser sólido, del color de las tarjetas.
+   js/app.js pone data-transparencia="reducida" en <html>. */
+:root[data-transparencia="reducida"] {
+  --color-vidrio: var(--color-superficie);
+  --desenfoque-vidrio: 0px;
+}

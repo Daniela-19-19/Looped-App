@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es" data-rol="fan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Accesibilidad</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="accesibilidad">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.2 4.2L19 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- F12 / R12 · Accesibilidad: reducir movimiento y transparencia (se guarda en la cuenta). -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="configuracion.html" aria-label="Volver a configuración" data-volver>
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span class="barra-superior__titulo">Accesibilidad</span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">Más cómodo para ti.</h1>
+    </div>
+    <fieldset class="casillas" aria-label="Accesibilidad">
+        <label class="casilla">
+          <input type="checkbox" name="movimiento" value="reducido" id="reducir-movimiento">
+          <span class="casilla__caja"><svg class="icono" aria-hidden="true"><use href="#icono-check"></use></svg></span>
+          Reducir movimiento
+        </label>
+      <p class="campo__ayuda">Cambia los desplazamientos por transiciones discretas.</p>
+        <label class="casilla">
+          <input type="checkbox" name="transparencia" value="reducida" id="reducir-transparencia">
+          <span class="casilla__caja"><svg class="icono" aria-hidden="true"><use href="#icono-check"></use></svg></span>
+          Reducir transparencia
+        </label>
+      <p class="campo__ayuda">Da un fondo más sólido a la navegación y al minirreproductor.</p>
+    </fieldset>
+  </main>
+
+  <!-- Avisos flotantes -->
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

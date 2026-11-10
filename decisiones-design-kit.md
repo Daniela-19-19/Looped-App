@@ -20,6 +20,7 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 - **Error con color propio:** `#FF5468` en oscuro y `#C8233A` en claro. Contraste de al menos 5,2 a 1. (10)
 - **Sin color de éxito** hasta que una pantalla lo necesite.
 - **Foco del artista `#B07BFF`:** se mantiene, pero falta agregarlo al manual. (72)
+- **Accesibilidad desde la app** (decisión del equipo del 2026-11-10): además de lo que pide el sistema del dispositivo, la persona puede elegir en Accesibilidad (F12). `data-movimiento="reducido"` en `<html>` deja en 0 las duraciones (como `prefers-reduced-motion`). `data-transparencia="reducida"` vuelve sólido el vidrio: `--color-vidrio` toma el color de `--color-superficie` y el desenfoque queda en 0.
 
 ## Tipografía
 
@@ -103,3 +104,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-07 | Íconos `audio` e `imagen` | Construcción de publicar lanzamiento (R03) |
 | 2026-11-09 | Reproductor, minirreproductor, barra de avance, botón de ícono prendido e íconos del reproductor | Construcción del reproductor (tramo 4) |
 | 2026-11-09 | Ícono `opciones` (⋯) | Construcción de la cola de reproducción (menú en cada fila, aprobado por el equipo) |
+| 2026-11-10 | Accesibilidad desde la app: `data-movimiento="reducido"` y `data-transparencia="reducida"`, con sus selectores en componentes.html | Construcción de accesibilidad (F12 / R12): «Reducir movimiento» y «Reducir transparencia» |

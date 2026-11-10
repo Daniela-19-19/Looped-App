@@ -22,7 +22,7 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
 7. **Prioridad de las preguntas:** primero las más votadas, y solo de fans con el nivel suficiente para ese cupo.
 8. **Música:** subida de audio real y reproductor completo: anterior, reproducir o pausar, siguiente, aleatorio, bucle y cola de reproducción que el fan puede editar.
 9. **Notificaciones al celular (push):** entran en el MVP.
-10. **Datos de ejemplo** (Mara Sol, Río Lento, Nadia Cruz, Los Faroles y sus lanzamientos y preguntas): se mantienen por ahora como datos iniciales, igual que la opción «Borrar datos de la demostración».
+10. **Datos de ejemplo** (Mara Sol, Río Lento, Nadia Cruz, Los Faroles y sus lanzamientos y preguntas): se mantienen por ahora como datos iniciales. Decisión del equipo del 10-11-2026: como los datos ahora son reales y compartidos en Supabase, la opción «Borrar datos de la demostración» pasa a ser «Borrar datos de este dispositivo»: cierra la sesión y borra solo lo guardado en el navegador (preferencias y música), sin tocar Supabase.
 
 11. **Fan Club, lo más sencillo posible:**
     - Entrar es gratis en el MVP. El cobro (suscripción) queda para Después.
@@ -874,10 +874,10 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   1. «A tu manera.»
   2. Apariencia, notificaciones y accesibilidad.
   3. «Cerrar sesión».
-  4. «Borrar datos de la demostración», con confirmación.
+  4. «Borrar datos de este dispositivo», con confirmación (decisión 10).
 - **Qué funciona de verdad:**
   - Cerrar sesión: Real.
-  - Borrar datos de la demostración: se mantiene por ahora (decisión 10).
+  - Borrar datos de este dispositivo: Real (cierra la sesión y limpia el navegador; no toca Supabase).
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Cerrar sesión detiene la música y vuelve a la bienvenida.

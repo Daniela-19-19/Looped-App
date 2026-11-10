@@ -20,6 +20,8 @@ Looped: una app de música con espacios de conversación que el artista controla
 - js/: código. app.js (comportamiento) y data.js (datos de ejemplo iniciales, separados del diseño).
 - index.html: la pantalla de inicio, la puerta de entrada de la app. Las demás pantallas van en la carpeta pages/.
 - componentes.html: en la raíz, junto a index.html. Muestra todos los componentes del design kit.
+- sw.js y manifest.webmanifest: en la raíz. El service worker recibe las notificaciones al celular; el manifiesto deja instalar la app (en iPhone, las notificaciones solo llegan si se agregó a la pantalla de inicio).
+- supabase/functions/enviar-push/index.js: la Edge Function que envía las notificaciones. Se pega en el panel de Supabase; sus claves van en los Secrets de Supabase, nunca en el código.
 - Nombres de archivos y carpetas: minúsculas, sin tildes, ñ ni espacios, con guiones.
 
 ## Reglas de trabajo
@@ -34,6 +36,7 @@ Looped: una app de música con espacios de conversación que el artista controla
 ## Componentes disponibles
 Definidos en css/components.css y mostrados en componentes.html (ahí está el HTML completo de cada uno). Decisiones en decisiones-design-kit.md.
 - Rol y apariencia: en `<html>` usa `data-rol="fan"` o `data-rol="artista"`, y `data-tema="claro"` para el tema claro (sin el atributo, la apariencia es oscura).
+- Accesibilidad: en `<html>`, `data-movimiento="reducido"` (sin animaciones) y `data-transparencia="reducida"` (vidrio sólido). Los pone js/app.js según Accesibilidad.
 - Tamaños de pantalla: celular (menos de 768 px), tablet (768 px o más) y computador (1024 px o más). Las pantallas con navegación usan `.pantalla--con-navegacion` y la navegación `.navegacion--adaptable`; los formularios quedan en una columna angosta. Ver «Criterios para todas las pantallas» en spec.md.
 - Íconos: copia el bloque `<svg>` con los `<symbol>` del inicio de componentes.html y usa `<svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>`. Variante: `.icono--pequeno`. Para mostrar u ocultar: `#icono-ver` y `#icono-ocultar`. Votos: `#icono-votos`. Reproducir y pausar: `#icono-reproducir` y `#icono-pausa`. Filtros: `#icono-filtro`. Archivos: `#icono-audio` y `#icono-imagen`. Archivos de referencia en assets/iconos/.
 - Texto: `.titulo` (32), `.titulo--medio` (24), `.titulo--pequeno` (20), `.texto`, `.texto--pequeno`, `.texto--suave`, `.rotulo`, `.rotulo--pequeno`. Ej.: `<h1 class="titulo">Descubre</h1>`

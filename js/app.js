@@ -240,7 +240,7 @@ function rolDelRegistro() {
 function pantallaIndex() {
   const splash = document.querySelector('.splash');
   if (!splash) return;
-  const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducir = movimientoReducido(); // del dispositivo o de Accesibilidad
   const salida = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--duracion-salida')) || 0;
   const total = reducir ? 900 : 3500; // milisegundos hasta llegar a la bienvenida
   let saliendo = false;
@@ -1014,9 +1014,30 @@ function preguntasNuevas(artistaId) {
 function leerPreferencias() {
   try { return JSON.parse(localStorage.getItem('looped-preferencias')) || {}; } catch (e) { return {}; }
 }
+// Aplica las preferencias guardadas en <html>: apariencia (data-tema) y
+// accesibilidad (data-movimiento y data-transparencia, del design kit).
 function aplicarTema() {
-  if (leerPreferencias().apariencia === 'claro') document.documentElement.dataset.tema = 'claro';
-  else delete document.documentElement.dataset.tema;
+  const preferencias = leerPreferencias();
+  const html = document.documentElement;
+  if (preferencias.apariencia === 'claro') html.dataset.tema = 'claro';
+  else delete html.dataset.tema;
+  if (preferencias.reducirMovimiento) html.dataset.movimiento = 'reducido';
+  else delete html.dataset.movimiento;
+  if (preferencias.reducirTransparencia) html.dataset.transparencia = 'reducida';
+  else delete html.dataset.transparencia;
+}
+
+// Cambia preferencias: en este navegador (para aplicarlas al instante) y en la cuenta.
+function cambiarPreferencias(cambios) {
+  const preferencias = Object.assign(leerPreferencias(), cambios);
+  try { localStorage.setItem('looped-preferencias', JSON.stringify(preferencias)); } catch (e) { /* sin almacenamiento */ }
+  aplicarTema();
+  guardarPreferenciasEnLaCuenta(cambios);
+}
+
+// ¿Pidió menos movimiento (en el dispositivo o en Accesibilidad)?
+function movimientoReducido() {
+  return matchMedia('(prefers-reduced-motion: reduce)').matches || Boolean(leerPreferencias().reducirMovimiento);
 }
 // Activa un botón que alterna claro y oscuro (con su aria-label al día).
 function activarCambioDeTema(boton) {
@@ -1026,12 +1047,8 @@ function activarCambioDeTema(boton) {
     boton.setAttribute('aria-label', claro ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro');
   };
   boton.addEventListener('click', () => {
-    const preferencias = leerPreferencias();
-    preferencias.apariencia = preferencias.apariencia === 'claro' ? 'oscuro' : 'claro';
-    try { localStorage.setItem('looped-preferencias', JSON.stringify(preferencias)); } catch (e) { /* sin almacenamiento */ }
-    aplicarTema();
+    cambiarPreferencias({ apariencia: leerPreferencias().apariencia === 'claro' ? 'oscuro' : 'claro' });
     actualizar();
-    guardarApariencia(preferencias.apariencia);
   });
   actualizar();
 }
@@ -1043,25 +1060,32 @@ async function idDeLaCuenta() {
   return data.session ? data.session.user.id : null;
 }
 
-// Guarda la apariencia en la cuenta. Si falla, queda en este navegador.
-async function guardarApariencia(apariencia) {
+// Guarda en la cuenta («preferencias») solo lo que cambió. Si falla,
+// queda en este navegador.
+async function guardarPreferenciasEnLaCuenta(cambios) {
   const usuarioId = await idDeLaCuenta();
   if (!usuarioId) return;
-  await baseDatos.from('preferencias').upsert({
-    usuario_id: usuarioId,
-    apariencia: apariencia === 'claro' ? 'clara' : 'oscura'
-  });
+  const fila = { usuario_id: usuarioId };
+  if ('apariencia' in cambios) fila.apariencia = cambios.apariencia === 'claro' ? 'clara' : 'oscura';
+  if ('reducirMovimiento' in cambios) fila.reducir_movimiento = cambios.reducirMovimiento;
+  if ('reducirTransparencia' in cambios) fila.reducir_transparencia = cambios.reducirTransparencia;
+  if ('notificaciones' in cambios) fila.notificaciones = cambios.notificaciones;
+  await baseDatos.from('preferencias').upsert(fila);
 }
 
-// Al iniciar sesión: trae la apariencia y (si es fan) su cola de la cuenta.
+// Al iniciar sesión: trae las preferencias y (si es fan) su cola de la cuenta.
 async function traerAjustesDeLaCuenta(usuarioId, fanId) {
   try {
     const { data: preferencias } = await baseDatos.from('preferencias')
-      .select('apariencia').eq('usuario_id', usuarioId).maybeSingle();
+      .select('apariencia, reducir_movimiento, reducir_transparencia, notificaciones')
+      .eq('usuario_id', usuarioId).maybeSingle();
     if (preferencias) {
-      const locales = leerPreferencias();
-      locales.apariencia = preferencias.apariencia === 'clara' ? 'claro' : 'oscuro';
-      localStorage.setItem('looped-preferencias', JSON.stringify(locales));
+      localStorage.setItem('looped-preferencias', JSON.stringify(Object.assign(leerPreferencias(), {
+        apariencia: preferencias.apariencia === 'clara' ? 'claro' : 'oscuro',
+        reducirMovimiento: preferencias.reducir_movimiento,
+        reducirTransparencia: preferencias.reducir_transparencia,
+        notificaciones: preferencias.notificaciones
+      })));
     }
     // Otra cuenta no debe heredar la música de la anterior.
     localStorage.removeItem(CLAVE_REPRODUCTOR);
@@ -3803,6 +3827,237 @@ function pantallaContenidoFanClubFan() {
   });
 }
 
+// ---------- Notificaciones al celular (push) ----------
+// Clave PÚBLICA VAPID: identifica a Looped ante el servicio de avisos del
+// navegador. Está hecha para estar en la app. La privada vive solo en los
+// Secrets de Supabase (la usa supabase/functions/enviar-push).
+const VAPID_PUBLICA = 'BCue20npRuM57V9-AelSBMa3P8tUpAygKESyMxa4ju8979B2LORfxyoc8iysUI-WRCv43GQ1QV7LzMZm5oILWw8';
+
+// ¿Este navegador puede recibir notificaciones? En iPhone, solo si la app
+// se agregó a la pantalla de inicio.
+function pushDisponible() {
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+
+// La clave en el formato que pide el navegador.
+function claveComoBytes(clave) {
+  const base64 = (clave + '='.repeat((4 - clave.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  return Uint8Array.from(atob(base64), letra => letra.charCodeAt(0));
+}
+
+// El service worker (sw.js, en la raíz) recibe los avisos con la app cerrada.
+function registrarServiceWorker() {
+  return navigator.serviceWorker.register(`${RAIZ}sw.js`, { scope: RAIZ || './' });
+}
+
+// REAL: pide permiso y guarda este navegador en «suscripciones_push».
+// Devuelve 'activo', 'bloqueado' o 'no-disponible'.
+async function activarPush() {
+  if (!pushDisponible()) return 'no-disponible';
+  const permiso = await Notification.requestPermission();
+  if (permiso !== 'granted') return 'bloqueado';
+  const registro = await registrarServiceWorker();
+  await navigator.serviceWorker.ready;
+  const suscripcion = await registro.pushManager.getSubscription()
+    || await registro.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: claveComoBytes(VAPID_PUBLICA) });
+  const datos = suscripcion.toJSON();
+  const usuarioId = await idDeLaCuenta();
+  if (!usuarioId) return 'no-disponible';
+  const { error } = await baseDatos.from('suscripciones_push').upsert({
+    endpoint: datos.endpoint, usuario_id: usuarioId, p256dh: datos.keys.p256dh, auth: datos.keys.auth
+  });
+  if (error) throw error;
+  return 'activo';
+}
+
+// Deja de recibir avisos en este navegador (al desactivarlos o al salir).
+async function desactivarPush() {
+  if (!pushDisponible()) return;
+  try {
+    const registro = await navigator.serviceWorker.getRegistration(`${RAIZ}sw.js`) || await navigator.serviceWorker.getRegistration();
+    const suscripcion = registro && await registro.pushManager.getSubscription();
+    if (!suscripcion) return;
+    await baseDatos.from('suscripciones_push').delete().eq('endpoint', suscripcion.endpoint);
+    await suscripcion.unsubscribe();
+  } catch (e) {
+    /* si falla, la Edge Function la borra sola cuando el navegador la rechace */
+  }
+}
+
+// ¿Este navegador ya está recibiendo avisos?
+async function pushActivo() {
+  if (!pushDisponible() || Notification.permission !== 'granted') return false;
+  const registro = await navigator.serviceWorker.getRegistration(`${RAIZ}sw.js`);
+  return Boolean(registro && await registro.pushManager.getSubscription());
+}
+
+// ---------- Cerrar sesión ----------
+// REAL: deja de recibir avisos aquí, detiene la música, cierra la sesión
+// en Supabase y borra las copias de este navegador. Vuelve a la bienvenida.
+async function cerrarSesion({ borrarTodo = false } = {}) {
+  await desactivarPush();
+  detenerMusica();
+  try { await baseDatos.auth.signOut(); } catch (e) { /* sin conexión: se borra lo local igual */ }
+  try {
+    ['looped-sesion', 'looped-perfil', CLAVE_REPRODUCTOR].forEach(clave => localStorage.removeItem(clave));
+    sessionStorage.removeItem('looped-registro');
+    if (borrarTodo) {
+      // «Borrar datos de este dispositivo»: también preferencias y lo viejo del navegador.
+      Object.keys(localStorage).filter(clave => clave.startsWith('looped-')).forEach(clave => localStorage.removeItem(clave));
+      sessionStorage.clear();
+    }
+  } catch (e) { /* sin almacenamiento */ }
+  location.replace('bienvenida.html');
+}
+
+// ---------- Pantallas compartidas (Configuración) ----------
+// Las usan fan y artista: toman el color del rol de la sesión.
+const PANTALLAS_COMPARTIDAS = ['configuracion', 'apariencia', 'notificaciones', 'accesibilidad'];
+function sesionParaAjustes() {
+  const sesion = leerSesion();
+  if (!sesion) {
+    location.replace('iniciar-sesion.html');
+    return null;
+  }
+  return sesion;
+}
+
+// ---------- F09 / R09 · Configuración ----------
+function pantallaConfiguracion() {
+  const sesion = sesionParaAjustes();
+  if (!sesion) return;
+  const artista = sesion.rol === 'artista';
+  document.querySelector('[data-volver]').href = artista ? 'panel-artista.html' : 'perfil-fan.html';
+  document.querySelector('[data-volver]').setAttribute('aria-label', artista ? 'Volver al panel' : 'Volver a tu perfil');
+  document.querySelector('[data-editar-perfil]').href = artista ? 'editar-perfil-artista.html' : 'editar-perfil-fan.html';
+
+  const salir = document.querySelector('[data-cerrar-sesion]');
+  salir.addEventListener('click', () => {
+    salir.disabled = true;
+    salir.textContent = 'Cerrando sesión…';
+    cerrarSesion();
+  });
+
+  // Borrar datos de este dispositivo: primero se confirma (decisión del equipo del 10-11-2026).
+  const botonBorrar = document.querySelector('[data-borrar-dispositivo]');
+  const velo = document.querySelector('[data-velo-borrar]');
+  const botonConfirmar = document.querySelector('[data-confirmar-borrar]');
+  const botonCancelar = document.querySelector('[data-cancelar-borrar]');
+  function cerrarDialogo() {
+    velo.hidden = true;
+    botonBorrar.focus();
+  }
+  botonBorrar.addEventListener('click', () => {
+    velo.hidden = false;
+    botonCancelar.focus(); // el foco empieza en la opción segura
+  });
+  botonCancelar.addEventListener('click', cerrarDialogo);
+  velo.addEventListener('click', evento => { if (evento.target === velo) cerrarDialogo(); });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && !velo.hidden) cerrarDialogo();
+  });
+  botonConfirmar.addEventListener('click', () => {
+    botonConfirmar.disabled = true;
+    cerrarSesion({ borrarTodo: true });
+  });
+}
+
+// ---------- F10 / R10 · Apariencia ----------
+function pantallaApariencia() {
+  const sesion = sesionParaAjustes();
+  if (!sesion) return;
+  document.querySelector('[data-nombre-rol]').textContent = sesion.rol;
+  const elegida = leerPreferencias().apariencia === 'claro' ? 'claro' : 'oscuro';
+  document.querySelectorAll('input[name="apariencia"]').forEach(opcion => {
+    opcion.checked = opcion.value === elegida;
+    // El cambio se ve de inmediato y se guarda en la cuenta.
+    opcion.addEventListener('change', () => { if (opcion.checked) cambiarPreferencias({ apariencia: opcion.value }); });
+  });
+}
+
+// ---------- F11 / R11 · Notificaciones ----------
+function pantallaNotificaciones() {
+  const sesion = sesionParaAjustes();
+  if (!sesion) return;
+  const casilla = document.getElementById('avisos');
+  const estado = document.querySelector('[data-estado-push]');
+  casilla.checked = leerPreferencias().notificaciones !== false;
+
+  // Qué pasa con el celular en este navegador.
+  async function pintarEstado() {
+    if (!casilla.checked) {
+      estado.textContent = 'Los avisos están desactivados: no llegarán notificaciones al celular.';
+    } else if (!pushDisponible()) {
+      estado.textContent = 'Este navegador no recibe notificaciones. En iPhone, agrega Looped a tu pantalla de inicio (Compartir → Agregar a inicio) y actívalas desde ahí.';
+    } else if (Notification.permission === 'denied') {
+      estado.textContent = 'Tu navegador bloqueó las notificaciones de Looped. Puedes permitirlas en sus ajustes.';
+    } else if (await pushActivo()) {
+      estado.textContent = 'Este dispositivo recibe notificaciones de Looped.';
+    } else {
+      estado.textContent = 'Toca la casilla para recibir notificaciones también en este dispositivo.';
+    }
+  }
+
+  casilla.addEventListener('change', async () => {
+    casilla.disabled = true;
+    cambiarPreferencias({ notificaciones: casilla.checked });
+    if (casilla.checked) {
+      try {
+        const resultado = await activarPush(); // el permiso se pide al tocar, como piden los navegadores
+        if (resultado === 'activo') mostrarAviso('Listo: recibirás notificaciones en este dispositivo.');
+      } catch (e) {
+        mostrarAviso('No pudimos activar las notificaciones. Inténtalo otra vez.');
+      }
+    } else {
+      await desactivarPush();
+    }
+    casilla.disabled = false;
+    pintarEstado();
+  });
+  // Si los avisos están activos y el permiso ya se dio, este dispositivo queda suscrito.
+  if (casilla.checked && pushDisponible() && Notification.permission === 'granted') activarPush().catch(() => {}).then(pintarEstado);
+  pintarEstado();
+
+  // Recientes: los últimos avisos de la cuenta; cada uno lleva a su pantalla.
+  const caja = document.querySelector('[data-recientes]');
+  const vacio = sesion.rol === 'artista'
+    ? 'Cuando un fan te envíe una pregunta, verás el aviso aquí.'
+    : 'Cuando un artista responda tu pregunta, verás el aviso aquí.';
+  baseDatos.from('notificaciones').select('*').order('fecha', { ascending: false }).limit(5).then(({ data, error }) => {
+    if (error || !data || !data.length) {
+      caja.innerHTML = `<div class="tarjeta"><p class="tarjeta__texto">${error ? 'No pudimos cargar tus avisos.' : vacio}</p></div>`;
+      return;
+    }
+    caja.innerHTML = data.map(aviso => `
+      <article class="tarjeta">
+        <div class="tarjeta__encabezado">
+          <p class="tarjeta__texto tarjeta__texto--principal">${escapar(aviso.texto)}</p>
+          ${aviso.leida ? '' : '<span class="etiqueta etiqueta--reconocimiento">Nuevo</span>'}
+        </div>
+        <p class="tarjeta__meta">${escapar(haceCuanto(aviso.fecha))}</p>
+        ${aviso.accion ? `<div class="tarjeta__acciones"><a class="boton boton--terciario" href="${escapar(aviso.accion)}" data-aviso="${escapar(aviso.id)}">Abrir</a></div>` : ''}
+      </article>`).join('');
+  });
+  // Al abrir un aviso, queda como leído.
+  caja.addEventListener('click', evento => {
+    const enlace = evento.target.closest('[data-aviso]');
+    if (enlace) baseDatos.from('notificaciones').update({ leida: true }).eq('id', enlace.dataset.aviso);
+  });
+}
+
+// ---------- F12 / R12 · Accesibilidad ----------
+function pantallaAccesibilidad() {
+  if (!sesionParaAjustes()) return;
+  const preferencias = leerPreferencias();
+  const movimiento = document.getElementById('reducir-movimiento');
+  const transparencia = document.getElementById('reducir-transparencia');
+  movimiento.checked = Boolean(preferencias.reducirMovimiento);
+  transparencia.checked = Boolean(preferencias.reducirTransparencia);
+  // El cambio se ve de inmediato (atributos del kit en <html>) y se guarda en la cuenta.
+  movimiento.addEventListener('change', () => cambiarPreferencias({ reducirMovimiento: movimiento.checked }));
+  transparencia.addEventListener('change', () => cambiarPreferencias({ reducirTransparencia: transparencia.checked }));
+}
+
 // ---------- R08 · Cupos ----------
 // Una fila de dato y valor dentro de una tarjeta («Respuestas: 5»).
 function htmlDato(nombre, valor) {
@@ -4626,6 +4881,11 @@ function pantallaExplorarFan() {
 // ---------- Arranque ----------
 // El tema guardado se aplica en todas las páginas apenas carga este archivo.
 aplicarTema();
+// Las pantallas compartidas toman el color del rol de la sesión antes de dibujarse.
+if (PANTALLAS_COMPARTIDAS.includes(document.body.dataset.pantalla)) {
+  const sesionCompartida = leerSesion();
+  if (sesionCompartida) document.documentElement.dataset.rol = sesionCompartida.rol;
+}
 const PANTALLAS = {
   'index': pantallaIndex,
   'iniciar-sesion': pantallaIniciarSesion,
@@ -4666,7 +4926,11 @@ const PANTALLAS = {
   'contenido-fan-club-fan': pantallaContenidoFanClubFan,
   'perfil-fan': pantallaPerfilFan,
   'recorrido-fan': pantallaRecorridoFan,
-  'editar-perfil-fan': pantallaEditarPerfilFan
+  'editar-perfil-fan': pantallaEditarPerfilFan,
+  'configuracion': pantallaConfiguracion,
+  'apariencia': pantallaApariencia,
+  'notificaciones': pantallaNotificaciones,
+  'accesibilidad': pantallaAccesibilidad
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

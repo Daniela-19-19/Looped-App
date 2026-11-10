@@ -195,6 +195,9 @@ button, input, textarea { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .logo-animado, .logo-animado * { animation-duration: var(--duracion-media) !important; animation-delay: 0ms !important; }
 }
+/* Igual cuando se pide desde la app (data-movimiento="reducido" en <html>). */
+:root[data-movimiento="reducido"] .logo-animado,
+:root[data-movimiento="reducido"] .logo-animado * { animation-duration: var(--duracion-media) !important; animation-delay: 0ms !important; }
 
 /* ---------- Botón ---------- */
 .boton {
