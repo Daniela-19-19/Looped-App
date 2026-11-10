@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Editar perfil</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="editar-perfil-artista">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-perfil" viewBox="0 0 24 24"><circle cx="12" cy="7.8" r="4" fill="currentColor"/><path fill="currentColor" d="M4.6 19c0-3.5 3.3-6 7.4-6s7.4 2.5 7.4 6c0 1-.8 1.8-1.8 1.8H6.4c-1 0-1.8-.8-1.8-1.8z"/></symbol>
+    <symbol id="icono-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.2 4.2L19 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- P02 / P03 · Editar perfil del artista: paso 1 (identidad) y paso 2 (presentación, géneros y roles) -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="perfil-propio-artista.html" aria-label="Volver a tu perfil" data-volver>
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span class="barra-superior__titulo">Editar perfil</span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <form id="formulario-perfil" novalidate>
+      <!-- P02 · Paso 1: identidad -->
+      <section data-paso="1" aria-labelledby="titulo-paso-1">
+        <div class="encabezado-pagina">
+          <h1 class="titulo" id="titulo-paso-1">Tu identidad como artista.</h1>
+          <p class="encabezado-pagina__bajada">El nombre que acompañará tu música.</p>
+        </div>
+
+        <label class="selector-foto">
+          <input class="selector-foto__entrada" type="file" accept="image/*" data-foto-entrada>
+          <span class="avatar avatar--grande" data-foto-avatar>
+            <svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg>
+          </span>
+          <span>
+            <span class="selector-foto__titulo">Foto de perfil</span>
+            <span class="selector-foto__texto" data-foto-texto>Toca para añadirla.</span>
+          </span>
+        </label>
+        <!-- «Quitar foto»: lo pone js/app.js cuando hay foto -->
+        <div data-quitar-foto></div>
+
+        <div class="campo" data-campo="nombre">
+          <label class="campo__etiqueta" for="nombre">Nombre artístico</label>
+          <input class="campo__control" id="nombre" name="nombre" type="text" placeholder="Tu nombre artístico"
+            maxlength="40" aria-describedby="error-nombre">
+          <p class="campo__mensaje-error" id="error-nombre" role="alert"></p>
+        </div>
+
+        <div class="campo" data-campo="usuario">
+          <label class="campo__etiqueta" for="usuario">Nombre de usuario</label>
+          <input class="campo__control" id="usuario" name="usuario" type="text" placeholder="@tunombre"
+            maxlength="21" autocapitalize="off" autocomplete="username" spellcheck="false" aria-describedby="error-usuario">
+          <p class="campo__mensaje-error" id="error-usuario" role="alert"></p>
+        </div>
+      </section>
+
+      <!-- P03 · Paso 2: presentación, ciudad, géneros y roles -->
+      <section data-paso="2" aria-labelledby="titulo-paso-2" hidden>
+        <div class="encabezado-pagina">
+          <h1 class="titulo" id="titulo-paso-2">Cuéntanos sobre ti.</h1>
+          <p class="encabezado-pagina__bajada">Una presentación breve para quienes te descubran.</p>
+        </div>
+
+        <div class="campo" data-campo="presentacion">
+          <label class="campo__etiqueta" for="presentacion">Presentación</label>
+          <textarea class="area-texto" id="presentacion" name="presentacion" maxlength="160"
+            placeholder="Qué música haces y qué buscas" aria-describedby="contador-presentacion error-presentacion"></textarea>
+          <span class="campo__contador" id="contador-presentacion" data-contador>0/160</span>
+          <p class="campo__mensaje-error" id="error-presentacion" role="alert"></p>
+        </div>
+
+        <div class="campo" data-campo="ciudad">
+          <label class="campo__etiqueta" for="ciudad">Ciudad, opcional</label>
+          <input class="campo__control" id="ciudad" name="ciudad" type="text" maxlength="40"
+            placeholder="Tu ciudad" autocomplete="address-level2">
+        </div>
+
+        <h2 class="encabezado-seccion__titulo editar__titulo" id="titulo-generos">Géneros</h2>
+        <!-- Las casillas las dibuja js/app.js con obtenerDatos("generos") y obtenerDatos("roles") -->
+        <fieldset class="casillas casillas--dos-columnas" aria-labelledby="titulo-generos" data-lista-generos></fieldset>
+
+        <h2 class="encabezado-seccion__titulo editar__titulo" id="titulo-roles">Roles</h2>
+        <fieldset class="casillas" aria-labelledby="titulo-roles" data-lista-roles></fieldset>
+      </section>
+    </form>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="submit" class="boton boton--bloque" form="formulario-perfil" data-boton-paso>Continuar</button>
+  </footer>
+
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

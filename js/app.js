@@ -3561,6 +3561,60 @@ function pantallaRecorridoFan() {
   activarBotonesReproducir(caja);
 }
 
+// ---------- Editar perfil: piezas compartidas (fan y artista) ----------
+// Foto con el .selector-foto del kit: cambiarla o quitarla. Devuelve
+// { foto() }: el enlace que ya tenía, una imagen nueva (data URL, aún sin
+// subir) o null si la quitó.
+function activarFotoEditable({ fotoInicial, entradaFoto, avatar, textoFoto, cajaQuitar, nombre }) {
+  let foto = fotoInicial || null;
+  function pintar() {
+    pintarAvatar(avatar, rutaRecurso(foto), nombre.value);
+    textoFoto.textContent = foto ? 'Toca para cambiarla.' : 'Toca para añadirla.';
+    cajaQuitar.innerHTML = foto
+      ? '<button type="button" class="boton boton--terciario boton--pequeno" data-quitar>Quitar foto</button>' : '';
+  }
+  entradaFoto.addEventListener('change', async () => {
+    const archivo = entradaFoto.files[0];
+    entradaFoto.value = '';
+    if (!archivo) return;
+    try {
+      foto = await reducirImagen(archivo, 512);
+      pintar();
+    } catch (e) {
+      textoFoto.textContent = 'No pudimos usar esa imagen. Prueba con otra.';
+    }
+  });
+  cajaQuitar.addEventListener('click', evento => {
+    if (!evento.target.closest('[data-quitar]')) return;
+    foto = null;
+    pintar();
+    entradaFoto.focus();
+  });
+  // Sin foto, el círculo muestra las iniciales del nombre mientras se escribe.
+  nombre.addEventListener('input', () => { if (!foto) pintar(); });
+  pintar();
+  return { foto: () => foto };
+}
+
+// El campo @usuario: borra su error al escribir y queda limpio al salir.
+function activarCampoUsuario(usuario) {
+  usuario.addEventListener('input', () => mostrarError('usuario', ''));
+  usuario.addEventListener('blur', () => {
+    const limpio = limpiarUsuario(usuario.value);
+    usuario.value = limpio ? '@' + limpio : '';
+  });
+}
+
+// Si la foto es nueva (data URL), la sube a Supabase y devuelve su enlace;
+// si no, devuelve la misma (enlace o null). Lanza un error con mensaje.
+async function subirFotoSiEsNueva(foto) {
+  if (!foto || !foto.startsWith('data:')) return foto;
+  const usuarioId = await idDeLaCuenta();
+  if (!usuarioId) throw new Error('Tu sesión se cerró. Inicia sesión otra vez para guardar.');
+  try { return await subirFotoPerfil(usuarioId, foto); }
+  catch (e) { throw new Error('No pudimos subir tu foto. Inténtalo otra vez.'); }
+}
+
 // ---------- P01 · Editar perfil del fan ----------
 function pantallaEditarPerfilFan() {
   const fan = fanActual();
@@ -3579,43 +3633,13 @@ function pantallaEditarPerfilFan() {
   const intereses = document.querySelector('[data-lista-intereses]');
   const boton = document.querySelector('button[form="formulario-perfil"]');
 
-  // La foto: la que tenía (enlace), una nueva (data URL, aún sin subir) o ninguna.
-  let foto = fan.foto || null;
   nombre.value = fan.nombrePerfil || '';
   usuario.value = '@' + (fan.nombreUsuario || '');
   dibujarCasillas(gustos, obtenerDatos('generos'), 'generos', fan.gustosMusicales || []);
   dibujarCasillas(intereses, obtenerDatos('intereses'), 'intereses', fan.intereses || []);
-
-  function pintarFoto() {
-    pintarAvatar(avatar, rutaRecurso(foto), nombre.value);
-    textoFoto.textContent = foto ? 'Toca para cambiarla.' : 'Toca para añadirla.';
-    cajaQuitar.innerHTML = foto
-      ? '<button type="button" class="boton boton--terciario boton--pequeno" data-quitar>Quitar foto</button>' : '';
-  }
-  entradaFoto.addEventListener('change', async () => {
-    const archivo = entradaFoto.files[0];
-    entradaFoto.value = '';
-    if (!archivo) return;
-    try {
-      foto = await reducirImagen(archivo, 512);
-      pintarFoto();
-    } catch (e) {
-      textoFoto.textContent = 'No pudimos usar esa imagen. Prueba con otra.';
-    }
-  });
-  cajaQuitar.addEventListener('click', evento => {
-    if (!evento.target.closest('[data-quitar]')) return;
-    foto = null;
-    pintarFoto();
-    entradaFoto.focus();
-  });
-  nombre.addEventListener('input', () => { mostrarError('nombre', ''); if (!foto) pintarFoto(); });
-  usuario.addEventListener('input', () => mostrarError('usuario', ''));
-  usuario.addEventListener('blur', () => {
-    const limpio = limpiarUsuario(usuario.value);
-    usuario.value = limpio ? '@' + limpio : '';
-  });
-  pintarFoto();
+  const fotoEditable = activarFotoEditable({ fotoInicial: fan.foto, entradaFoto, avatar, textoFoto, cajaQuitar, nombre });
+  nombre.addEventListener('input', () => mostrarError('nombre', ''));
+  activarCampoUsuario(usuario);
 
   // Acceso a sus preguntas (spec.md).
   const mias = preguntasDelFan(fan);
@@ -3655,13 +3679,9 @@ function pantallaEditarPerfilFan() {
     }
 
     // REAL: si hay foto nueva, se sube; después se guarda el perfil en «fans».
-    let enlaceFoto = foto;
-    if (foto && foto.startsWith('data:')) {
-      const usuarioId = await idDeLaCuenta();
-      if (!usuarioId) return fallar('Tu sesión se cerró. Inicia sesión otra vez para guardar.');
-      try { enlaceFoto = await subirFotoPerfil(usuarioId, foto); }
-      catch (e) { return fallar('No pudimos subir tu foto. Inténtalo otra vez.'); }
-    }
+    let enlaceFoto;
+    try { enlaceFoto = await subirFotoSiEsNueva(fotoEditable.foto()); }
+    catch (e) { return fallar(e.message); }
     const { error } = await baseDatos.from('fans').update({
       nombre_perfil: textoNombre,
       nombre_usuario: textoUsuario,
@@ -3691,6 +3711,217 @@ function pantallaEditarPerfilFan() {
     }
     location.replace('perfil-fan.html?aviso=guardado');
   });
+}
+
+// ---------- P04 · Perfil del artista (propio) ----------
+function pantallaPerfilPropioArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  if (new URLSearchParams(location.search).get('aviso') === 'guardado') mostrarAviso('Perfil actualizado.');
+  const nombre = escapar(artista.nombreArtistico);
+  const generos = obtenerDatos('generos');
+  const roles = obtenerDatos('roles');
+  const nombreDe = (lista, id) => (lista.find(x => x.id === id) || { nombre: id }).nombre;
+  const etiquetas = [
+    ...(artista.generos || []).map(id => `<span class="etiqueta etiqueta--borde">${escapar(nombreDe(generos, id))}</span>`),
+    ...(artista.roles || []).map(id => `<span class="etiqueta">${escapar(nombreDe(roles, id))}</span>`)
+  ].join('');
+  const ultimo = obtenerDatos('lanzamientos').filter(l => l.artista === artista.id)
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion))[0];
+  const avatar = artista.foto
+    ? `<span class="avatar avatar--grande"><img src="${escapar(rutaRecurso(artista.foto))}" alt=""></span>`
+    : `<span class="avatar avatar--grande avatar--acento" aria-hidden="true">${escapar(iniciales(artista.nombreArtistico))}</span>`;
+
+  document.querySelector('[data-perfil-propio]').innerHTML = `
+    <div class="perfil-artista__cabecera">
+      ${avatar}
+      <div>
+        <h1 class="titulo titulo--pequeno">${nombre}</h1>
+        <p class="texto--pequeno texto--suave">@${escapar(artista.nombreUsuario)}${artista.ciudad ? ' · ' + escapar(artista.ciudad) : ''}</p>
+      </div>
+    </div>
+    ${artista.presentacion ? `<p class="texto texto--suave perfil-artista__estado">${escapar(artista.presentacion)}</p>` : ''}
+    ${etiquetas ? `<div class="etiquetas perfil-artista__etiquetas">${etiquetas}</div>` : ''}
+    <p class="rotulo rotulo--pequeno texto--suave perfil-artista__estado">${artista.seguidores.toLocaleString('es-CO')} seguidores</p>
+    <div class="pregunta__acciones"><a class="boton" href="editar-perfil-artista.html">Completar mi perfil</a></div>
+    ${ultimo ? `
+    <section class="perfil-artista__seccion" aria-labelledby="titulo-ultimo">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-ultimo">Tu último lanzamiento</h2></div>
+      <article class="tarjeta">
+        <div class="tarjeta__cabecera">
+          ${htmlPortada(ultimo, 'portada--mediana')}
+          <div>
+            <h3 class="tarjeta__titulo">${escapar(ultimo.nombreLanzamiento)}</h3>
+            <p class="tarjeta__texto">${nombre}</p>
+            ${horasRestantesVentana(ultimo) > 0 ? '<div class="etiquetas perfil-artista__etiquetas-musica"><span class="etiqueta etiqueta--borde">Nuevo lanzamiento</span></div>' : ''}
+          </div>
+        </div>
+        <div class="tarjeta__acciones"><a class="boton boton--secundario" href="lanzamiento-artista.html?id=${encodeURIComponent(ultimo.id)}">Ver lanzamiento</a></div>
+      </article>
+    </section>` : ''}
+    <div class="pregunta__acciones"><a class="boton boton--secundario" href="configuracion.html">Configuración</a></div>`;
+}
+
+// ---------- P02 / P03 · Editar perfil del artista ----------
+function pantallaEditarPerfilArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const formulario = document.getElementById('formulario-perfil');
+  const nombre = document.getElementById('nombre');
+  const usuario = document.getElementById('usuario');
+  const presentacion = document.getElementById('presentacion');
+  const ciudad = document.getElementById('ciudad');
+  const generos = document.querySelector('[data-lista-generos]');
+  const roles = document.querySelector('[data-lista-roles]');
+  const boton = document.querySelector('[data-boton-paso]');
+  const volver = document.querySelector('[data-volver]');
+  const pasos = [...document.querySelectorAll('[data-paso]')];
+
+  // Todo empieza con lo que ya tiene; lo del paso 1 se recuerda al pasar al 2.
+  nombre.value = artista.nombreArtistico || '';
+  usuario.value = '@' + (artista.nombreUsuario || '');
+  presentacion.value = artista.presentacion || '';
+  ciudad.value = artista.ciudad || '';
+  dibujarCasillas(generos, obtenerDatos('generos'), 'generos', artista.generos || []);
+  dibujarCasillas(roles, obtenerDatos('roles'), 'roles', artista.roles || []);
+  activarContador(presentacion, document.querySelector('[data-contador]'));
+  const fotoEditable = activarFotoEditable({
+    fotoInicial: artista.foto,
+    entradaFoto: document.querySelector('[data-foto-entrada]'),
+    avatar: document.querySelector('[data-foto-avatar]'),
+    textoFoto: document.querySelector('[data-foto-texto]'),
+    cajaQuitar: document.querySelector('[data-quitar-foto]'),
+    nombre
+  });
+  nombre.addEventListener('input', () => mostrarError('nombre', ''));
+  presentacion.addEventListener('input', () => mostrarError('presentacion', ''));
+  activarCampoUsuario(usuario);
+
+  let paso = 1;
+  function mostrarPaso(numero) {
+    paso = numero;
+    pasos.forEach(seccion => { seccion.hidden = Number(seccion.dataset.paso) !== numero; });
+    boton.textContent = numero === 1 ? 'Continuar' : 'Guardar cambios';
+    volver.setAttribute('aria-label', numero === 1 ? 'Volver a tu perfil' : 'Volver a tu identidad');
+    window.scrollTo(0, 0);
+    document.getElementById(`titulo-paso-${numero}`).focus({ preventScroll: true });
+  }
+  // «Atrás» en el paso 2 vuelve al paso 1 (sin perder lo escrito).
+  volver.addEventListener('click', evento => {
+    if (paso === 2) {
+      evento.preventDefault();
+      mostrarPaso(1);
+    }
+  });
+  document.querySelectorAll('[id^="titulo-paso-"]').forEach(titulo => titulo.setAttribute('tabindex', '-1'));
+
+  formulario.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (boton.disabled) return;
+    const textoNombre = nombre.value.trim();
+    const textoUsuario = limpiarUsuario(usuario.value);
+
+    if (paso === 1) {
+      if (!textoNombre) mostrarError('nombre', 'Escribe tu nombre artístico.');
+      if (!textoUsuario) mostrarError('usuario', 'Elige un nombre de usuario.');
+      const conError = formulario.querySelector('[aria-invalid="true"]');
+      if (conError) {
+        conError.focus();
+        return;
+      }
+      if (textoUsuario !== artista.nombreUsuario) {
+        boton.disabled = true;
+        const ocupado = await usuarioOcupado(textoUsuario, artista.id);
+        boton.disabled = false;
+        if (ocupado) {
+          mostrarError('usuario', 'Este nombre de usuario ya está tomado. Prueba con otro.');
+          usuario.focus();
+          return;
+        }
+      }
+      mostrarPaso(2);
+      return;
+    }
+
+    // Paso 2: guardar todo.
+    const textoPresentacion = presentacion.value.trim();
+    if (!textoPresentacion) {
+      mostrarError('presentacion', 'Escribe una presentación breve.');
+      presentacion.focus();
+      return;
+    }
+    boton.disabled = true;
+    boton.textContent = 'Guardando…';
+    const fallar = mensaje => {
+      boton.disabled = false;
+      boton.textContent = 'Guardar cambios';
+      mostrarAviso(mensaje);
+    };
+
+    // REAL: si hay foto nueva, se sube; después se guarda el perfil en «artistas».
+    let enlaceFoto;
+    try { enlaceFoto = await subirFotoSiEsNueva(fotoEditable.foto()); }
+    catch (e) { return fallar(e.message); }
+    const cambios = {
+      nombre_artistico: textoNombre,
+      nombre_usuario: textoUsuario,
+      foto: enlaceFoto,
+      presentacion: textoPresentacion,
+      ciudad: ciudad.value.trim() || null,
+      generos: casillasMarcadas(generos),
+      roles: casillasMarcadas(roles)
+    };
+    const { error } = await baseDatos.from('artistas').update(cambios).eq('id', artista.id);
+    if (error) {
+      if (enlaceFoto !== artista.foto) borrarArchivoSubido(enlaceFoto).catch(() => {});
+      if (error.code === '23505') {
+        mostrarPaso(1);
+        boton.disabled = false;
+        mostrarError('usuario', 'Este nombre de usuario ya está tomado. Prueba con otro.');
+        usuario.focus();
+        return;
+      }
+      return fallar('No pudimos guardar los cambios. Revisa tu conexión e inténtalo otra vez.');
+    }
+    // La foto vieja ya no se usa: se borra de Storage (si era nuestra).
+    if (artista.foto && artista.foto !== enlaceFoto) borrarArchivoSubido(artista.foto).catch(() => {});
+    // PROVISIONAL: también la copia de este navegador.
+    const copia = perfilGuardado();
+    if (copia && copia.id === artista.id) {
+      Object.assign(copia, perfilDesdeFila('artista', Object.assign({ id: artista.id, seguidores: artista.seguidores, emergente: artista.emergente }, cambios), copia.correo));
+      try { localStorage.setItem('looped-perfil', JSON.stringify(copia)); } catch (e) { /* sin almacenamiento */ }
+    }
+    location.replace('perfil-propio-artista.html?aviso=guardado');
+  });
+}
+
+// ---------- Conexión activa ----------
+// Artistas con el cupo abierto (para preguntar o votar) y los que volverán a abrir.
+function pantallaConexionActivaFan() {
+  if (!fanActual()) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const cupos = obtenerDatos('cupos');
+  const abierto = artista => {
+    const cupo = cupos.find(c => c.artista === artista.id);
+    return cupo && cupo.estado === 'abierto';
+  };
+  const artistas = obtenerDatos('artistas').slice()
+    .sort((a, b) => a.nombreArtistico.localeCompare(b.nombreArtistico, 'es'));
+  const conCupo = artistas.filter(abierto);
+  const sinCupo = artistas.filter(a => !abierto(a));
+  document.querySelector('[data-cupo-abierto]').innerHTML = conCupo.length
+    ? conCupo.map(htmlTarjetaArtista).join('')
+    : '<div class="tarjeta"><p class="tarjeta__texto">Ningún artista tiene un cupo abierto ahora.</p></div>';
+  if (sinCupo.length) document.querySelector('[data-cupo-cerrado]').innerHTML = sinCupo.map(htmlTarjetaArtista).join('');
+  else document.querySelector('[data-seccion-volveran]').remove();
 }
 
 // ---------- F08a · Conocer el Fan Club ----------
@@ -4930,7 +5161,10 @@ const PANTALLAS = {
   'configuracion': pantallaConfiguracion,
   'apariencia': pantallaApariencia,
   'notificaciones': pantallaNotificaciones,
-  'accesibilidad': pantallaAccesibilidad
+  'accesibilidad': pantallaAccesibilidad,
+  'perfil-propio-artista': pantallaPerfilPropioArtista,
+  'editar-perfil-artista': pantallaEditarPerfilArtista,
+  'conexion-activa-fan': pantallaConexionActivaFan
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
