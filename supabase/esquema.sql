@@ -536,3 +536,23 @@ begin
 end $$;
 grant execute on function responder_pregunta(text, text, text, text, integer) to authenticated;
 revoke insert, update, delete on respuestas from authenticated;
+
+
+-- ----------------------------------------------------------
+-- 10. Fan Club: al entrar o salir, las preguntas ya hechas cambian de prioridad
+-- ----------------------------------------------------------
+create function marcar_preguntas_fan_club() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    update preguntas set autor_es_fan_club = true
+      where autor = new.fan and artista = new.artista;
+  else
+    update preguntas set autor_es_fan_club = false
+      where autor = old.fan and artista = old.artista;
+  end if;
+  return null;
+end $$;
+
+create trigger miembros_marcar_preguntas after insert or delete on miembros_fan_club
+  for each row execute function marcar_preguntas_fan_club();

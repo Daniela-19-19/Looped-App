@@ -3410,6 +3410,140 @@ function pantallaNuevaPublicacionArtista() {
   });
 }
 
+// ---------- F08a · Conocer el Fan Club ----------
+function pantallaFanClubFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const id = new URLSearchParams(location.search).get('id');
+  const artista = obtenerDatos('artistas').find(a => a.id === id);
+  if (!artista) return; // queda el mensaje del HTML
+  const enlace = encodeURIComponent(id);
+  // Si ya es miembro, directo al contenido.
+  if (fan.fanClubs.includes(id)) {
+    location.replace(`contenido-fan-club-fan.html?id=${enlace}`);
+    return;
+  }
+  const alPerfil = `perfil-artista-fan.html?id=${enlace}`;
+  document.querySelector('[data-volver]').href = alPerfil;
+  const nombre = escapar(artista.nombreArtistico);
+  const caja = document.querySelector('[data-fan-club]');
+  caja.innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">Un poco más cerca.</h1>
+      <p class="encabezado-pagina__bajada">Conoce el Fan Club de ${nombre}.</p>
+    </div>
+    <div class="rejilla-tarjetas rejilla-tarjetas--dos">
+      <section class="tarjeta"><h2 class="tarjeta__titulo">Contenido exclusivo</h2><p class="tarjeta__texto">Acércate al proceso del artista y a lo que comparte con su club.</p></section>
+      <section class="tarjeta"><h2 class="tarjeta__titulo">Prioridad en preguntas</h2><p class="tarjeta__texto">Participa con prioridad dentro de su cupo. El artista sigue eligiendo qué responde.</p></section>
+    </div>
+    <div class="pregunta__acciones">
+      <button type="button" class="boton" data-entrar-fan-club>Entrar al Fan Club</button>
+      <a class="boton boton--terciario" href="${alPerfil}">Continuar normalmente</a>
+    </div>
+    <p class="texto--pequeno texto--suave pregunta__bloque">Entrar es gratis.</p>`;
+
+  // REAL: guarda la membresía en «miembros_fan_club» (gratis en el MVP).
+  const entrar = caja.querySelector('[data-entrar-fan-club]');
+  entrar.addEventListener('click', async () => {
+    if (entrar.disabled) return;
+    entrar.disabled = true;
+    const { error } = await baseDatos.from('miembros_fan_club').insert({ fan: fan.id, artista: id });
+    // Si ya era miembro (fila repetida), igual sigue al contenido.
+    if (error && error.code !== '23505') {
+      entrar.disabled = false;
+      mostrarAviso('No pudimos guardar tu membresía. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    location.replace(`contenido-fan-club-fan.html?id=${enlace}&nuevo=1`);
+  });
+}
+
+// ---------- F08b · Contenido del Fan Club ----------
+// Son las publicaciones que el artista marcó «Solo para el Fan Club».
+function pantallaContenidoFanClubFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const parametros = new URLSearchParams(location.search);
+  const id = parametros.get('id');
+  const artista = obtenerDatos('artistas').find(a => a.id === id);
+  if (!artista) return; // queda el mensaje del HTML
+  const enlace = encodeURIComponent(id);
+  // Solo para miembros: si no lo es, primero conoce el Fan Club.
+  if (!fan.fanClubs.includes(id)) {
+    location.replace(`fan-club-fan.html?id=${enlace}`);
+    return;
+  }
+  const alPerfil = `perfil-artista-fan.html?id=${enlace}`;
+  document.querySelector('[data-volver]').href = alPerfil;
+  document.querySelector('.barra-superior__titulo').textContent = `Fan Club de ${artista.nombreArtistico}`;
+  document.title = `Looped · Fan Club de ${artista.nombreArtistico}`;
+  if (parametros.get('nuevo')) mostrarAviso(`Ahora eres parte del Fan Club de ${artista.nombreArtistico}.`);
+
+  const nombre = escapar(artista.nombreArtistico);
+  const exclusivas = obtenerDatos('publicaciones')
+    .filter(p => p.artista === id && p.soloFanClub)
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  const caja = document.querySelector('[data-contenido-fan-club]');
+  caja.innerHTML = `
+    <div class="etiquetas"><span class="etiqueta etiqueta--reconocimiento">Miembro</span></div>
+    <div class="encabezado-pagina pregunta__bloque">
+      <h1 class="titulo titulo--medio">Detrás de la canción.</h1>
+      <p class="encabezado-pagina__bajada">Contenido exclusivo de ${nombre}.</p>
+    </div>
+    ${exclusivas.length ? `<div class="rejilla-tarjetas rejilla-tarjetas--dos">${exclusivas.map(publicacion => `
+      <article class="tarjeta">
+        <div class="tarjeta__cabecera">
+          ${htmlAvatarArtista(artista)}
+          <span><b class="texto--pequeno">${nombre}</b><span class="tarjeta__meta">${escapar(haceCuanto(publicacion.fecha))}</span></span>
+        </div>
+        <p class="tarjeta__texto tarjeta__texto--principal">${escapar(publicacion.texto)}</p>
+        ${htmlEscucharPublicacion(publicacion)}
+      </article>`).join('')}</div>`
+      : `<section class="tarjeta"><h2 class="tarjeta__titulo">Notas del proceso</h2><p class="tarjeta__texto">Cuando ${nombre} comparta algo solo para su Fan Club, aparecerá aquí.</p></section>`}
+    <div class="pregunta__acciones">
+      <a class="boton" href="conectar-fan.html?id=${enlace}">Conectar con ${nombre}</a>
+      <button type="button" class="boton boton--terciario" data-salir-fan-club>Salir del Fan Club</button>
+    </div>`;
+  activarBotonesReproducir(caja);
+
+  // Salir: primero se confirma en el diálogo.
+  const botonSalir = caja.querySelector('[data-salir-fan-club]');
+  const velo = document.querySelector('[data-velo-salir]');
+  const botonConfirmar = document.querySelector('[data-confirmar-salir]');
+  const botonCancelar = document.querySelector('[data-cancelar-salir]');
+  function cerrarDialogo() {
+    velo.hidden = true;
+    botonSalir.focus();
+  }
+  botonSalir.addEventListener('click', () => {
+    velo.hidden = false;
+    botonCancelar.focus(); // el foco empieza en la opción segura
+  });
+  botonCancelar.addEventListener('click', cerrarDialogo);
+  velo.addEventListener('click', evento => { if (evento.target === velo) cerrarDialogo(); });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && !velo.hidden) cerrarDialogo();
+  });
+  // REAL: borra la membresía de «miembros_fan_club».
+  botonConfirmar.addEventListener('click', async () => {
+    botonConfirmar.disabled = true;
+    const { error } = await baseDatos.from('miembros_fan_club').delete().match({ fan: fan.id, artista: id });
+    if (error) {
+      botonConfirmar.disabled = false;
+      cerrarDialogo();
+      mostrarAviso('No pudimos sacarte del Fan Club. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    location.replace(alPerfil);
+  });
+}
+
 // ---------- R08 · Cupos ----------
 // Una fila de dato y valor dentro de una tarjeta («Respuestas: 5»).
 function htmlDato(nombre, valor) {
@@ -4268,7 +4402,9 @@ const PANTALLAS = {
   'configurar-cupo-artista': pantallaConfigurarCupoArtista,
   'comunidad-fan': pantallaComunidadFan,
   'comunidad-artista': pantallaComunidadArtista,
-  'nueva-publicacion-artista': pantallaNuevaPublicacionArtista
+  'nueva-publicacion-artista': pantallaNuevaPublicacionArtista,
+  'fan-club-fan': pantallaFanClubFan,
+  'contenido-fan-club-fan': pantallaContenidoFanClubFan
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
