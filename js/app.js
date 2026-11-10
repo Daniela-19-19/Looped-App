@@ -974,8 +974,10 @@ function nivelPorMinutos(minutos) {
   }
 }
 
+// Decisión del equipo (09-11-2026): el nivel 1 sí es requisito (15 min de
+// escucha); solo un cupo de nivel 0 deja participar a cualquiera.
 function textoNivelMinimo(nivel) {
-  return !nivel || nivel <= 1 ? 'Sin requisito de nivel' : `Nivel ${nivel} o superior`;
+  return !nivel || nivel <= 0 ? 'Sin requisito de nivel' : `Nivel ${nivel} o superior`;
 }
 
 // Preguntas nuevas de un artista, solo de fans con el nivel mínimo del cupo.
