@@ -9,7 +9,10 @@
 // navegador); el día que conectemos Supabase, solo cambia esta función.
 function obtenerDatos(tipo) {
   const deEjemplo = typeof DATOS === 'undefined' ? [] : (DATOS[tipo] || []);
-  if (tipo === 'lanzamientos') return deEjemplo.concat(leerLanzamientosPropios());
+  if (tipo === 'lanzamientos') {
+    const eliminados = leerEliminados();
+    return deEjemplo.concat(leerLanzamientosPropios()).filter(l => !eliminados.includes(l.id));
+  }
   return deEjemplo;
 }
 
@@ -26,6 +29,28 @@ function guardarLanzamientoPropio(lanzamiento) {
   localStorage.setItem('looped-lanzamientos', JSON.stringify(lista)); // puede fallar si no hay espacio
 }
 
+// Eliminar un lanzamiento. Si lo publicaron en este navegador, se borra de
+// verdad (datos y audio). Los de ejemplo de data.js no se pueden borrar del
+// archivo: se anotan en una lista de «eliminados» y obtenerDatos los oculta.
+// Con Supabase, aquí se borrará la fila de la base de datos.
+function leerEliminados() {
+  try { return JSON.parse(localStorage.getItem('looped-lanzamientos-eliminados')) || []; } catch (e) { return []; }
+}
+async function eliminarLanzamiento(id) {
+  const propios = leerLanzamientosPropios();
+  const propio = propios.find(l => l.id === id);
+  if (propio) {
+    localStorage.setItem('looped-lanzamientos', JSON.stringify(propios.filter(l => l.id !== id)));
+    if (propio.audio && propio.audio.startsWith('local:')) {
+      try { await borrarArchivo(propio.audio.slice('local:'.length)); } catch (e) { /* si falla, el audio solo queda huérfano */ }
+    }
+  } else {
+    const eliminados = leerEliminados();
+    if (!eliminados.includes(id)) eliminados.push(id);
+    localStorage.setItem('looped-lanzamientos-eliminados', JSON.stringify(eliminados));
+  }
+}
+
 function abrirAlmacenArchivos() {
   return new Promise((resolver, rechazar) => {
     const pedido = indexedDB.open('looped-archivos', 1);
@@ -39,6 +64,15 @@ async function guardarArchivo(clave, archivo) {
   return new Promise((resolver, rechazar) => {
     const transaccion = almacen.transaction('archivos', 'readwrite');
     transaccion.objectStore('archivos').put(archivo, clave);
+    transaccion.oncomplete = () => resolver();
+    transaccion.onerror = () => rechazar(transaccion.error);
+  });
+}
+async function borrarArchivo(clave) {
+  const almacen = await abrirAlmacenArchivos();
+  return new Promise((resolver, rechazar) => {
+    const transaccion = almacen.transaction('archivos', 'readwrite');
+    transaccion.objectStore('archivos').delete(clave);
     transaccion.oncomplete = () => resolver();
     transaccion.onerror = () => rechazar(transaccion.error);
   });
@@ -934,7 +968,10 @@ function actualizarBotonesReproducir() {
   document.querySelectorAll('[data-reproducir]').forEach(boton => {
     const sonando = reproduccion.id === boton.dataset.reproducir && reproduccion.audio && !reproduccion.audio.paused;
     boton.querySelector('use').setAttribute('href', sonando ? '#icono-pausa' : '#icono-reproducir');
-    boton.setAttribute('aria-label', `${sonando ? 'Pausar' : 'Reproducir'} ${boton.dataset.titulo}`);
+    // Botones con texto (p. ej. «Escuchar lanzamiento»): el texto cambia a «Pausar».
+    const texto = boton.querySelector('[data-texto-reproducir]');
+    if (texto) texto.textContent = sonando ? 'Pausar' : texto.dataset.textoReproducir;
+    else boton.setAttribute('aria-label', `${sonando ? 'Pausar' : 'Reproducir'} ${boton.dataset.titulo}`);
   });
 }
 
@@ -945,7 +982,10 @@ async function alternarReproduccion(lanzamiento) {
   } else {
     if (reproduccion.audio) reproduccion.audio.pause();
     const url = await urlDeAudio(lanzamiento.audio);
-    if (!url) return; // el audio no está en este navegador
+    if (!url) { // el audio no está en este navegador
+      mostrarAviso('Este audio no está disponible en este navegador.');
+      return;
+    }
     reproduccion.audio = new Audio(url);
     reproduccion.id = lanzamiento.id;
     ['play', 'pause', 'ended'].forEach(evento => reproduccion.audio.addEventListener(evento, actualizarBotonesReproducir));
@@ -1202,6 +1242,12 @@ function pantallaMusicaArtista() {
     .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
   const lista = document.querySelector('[data-lista-lanzamientos]');
 
+  // Si venimos de eliminar un lanzamiento, lo confirmamos y limpiamos la dirección.
+  if (new URLSearchParams(location.search).has('eliminado')) {
+    mostrarAviso('Lanzamiento eliminado.');
+    history.replaceState(null, '', location.pathname);
+  }
+
   if (!lanzamientos.length) {
     lista.innerHTML = `
       <div class="tarjeta">
@@ -1230,6 +1276,85 @@ function pantallaMusicaArtista() {
         </div>
       </article>`;
   }).join('');
+}
+
+// ---------- R03b · Lanzamiento ----------
+function pantallaLanzamientoArtista() {
+  // Sin sesión de artista, a iniciar sesión.
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+
+  const parametros = new URLSearchParams(location.search);
+  const id = parametros.get('id');
+  const recienPublicado = parametros.get('nuevo') === '1';
+  // Solo el artista dueño ve su lanzamiento aquí. Si no existe, queda el mensaje del HTML.
+  const lanzamiento = obtenerDatos('lanzamientos').find(l => l.id === id && l.artista === artista.id);
+  if (!lanzamiento) return;
+
+  const horas = horasRestantesVentana(lanzamiento);
+  const enVentana = horas > 0;
+  document.title = `Looped · ${lanzamiento.nombreLanzamiento}`;
+
+  document.querySelector('[data-lanzamiento]').innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">${recienPublicado ? 'Tu música ya tiene espacio.' : escapar(lanzamiento.nombreLanzamiento)}</h1>
+      <p class="encabezado-pagina__bajada">${enVentana
+        ? 'El lanzamiento está en la ventana justa de 48 horas.'
+        : 'Ya pasó su ventana inicial y sigue en el descubrimiento habitual.'}</p>
+    </div>
+    <div class="etiquetas">
+      <span class="etiqueta ${enVentana ? 'etiqueta--acento' : 'etiqueta--borde'}">${enVentana
+        ? `Ventana activa · quedan ${horas} h`
+        : `Publicado ${escapar(haceCuanto(lanzamiento.fechaPublicacion).toLowerCase())}`}</span>
+    </div>
+    <article class="tarjeta lanzamiento__tarjeta">
+      ${htmlPortada(lanzamiento)}
+      <h2 class="titulo titulo--pequeno lanzamiento__nombre">${escapar(lanzamiento.nombreLanzamiento)}</h2>
+      <p class="texto--pequeno texto--suave">${escapar(lanzamiento.nombreCancion)}</p>
+      <p class="tarjeta__texto">La misma oportunidad de ser descubierto.</p>
+      <div class="tarjeta__acciones">
+        <button type="button" class="boton boton--bloque" data-reproducir="${escapar(lanzamiento.id)}" data-titulo="${escapar(lanzamiento.nombreCancion)}">
+          <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+          <span data-texto-reproducir="Escuchar lanzamiento">Escuchar lanzamiento</span>
+        </button>
+        <a class="boton boton--secundario boton--rellenar boton--bloque"
+          href="nueva-publicacion-artista.html?lanzamiento=${encodeURIComponent(lanzamiento.id)}">Compartir en tu comunidad</a>
+      </div>
+    </article>
+    <div class="lanzamiento__eliminar">
+      <button type="button" class="boton boton--terciario" data-eliminar>Eliminar lanzamiento</button>
+    </div>`;
+
+  activarBotonesReproducir(document.querySelector('[data-lanzamiento]'));
+
+  // Eliminar: primero se confirma en el diálogo.
+  const velo = document.querySelector('[data-velo-eliminar]');
+  const botonEliminar = document.querySelector('[data-eliminar]');
+  const botonConfirmar = document.querySelector('[data-confirmar-eliminar]');
+  const botonCancelar = document.querySelector('[data-cancelar-eliminar]');
+
+  function cerrarDialogo() {
+    velo.hidden = true;
+    botonEliminar.focus();
+  }
+  botonEliminar.addEventListener('click', () => {
+    velo.hidden = false;
+    botonCancelar.focus(); // el foco empieza en la opción segura
+  });
+  botonCancelar.addEventListener('click', cerrarDialogo);
+  velo.addEventListener('click', evento => { if (evento.target === velo) cerrarDialogo(); });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && !velo.hidden) cerrarDialogo();
+  });
+  botonConfirmar.addEventListener('click', async () => {
+    botonConfirmar.disabled = true;
+    if (reproduccion.id === lanzamiento.id && reproduccion.audio) reproduccion.audio.pause();
+    await eliminarLanzamiento(lanzamiento.id);
+    location.replace('musica-artista.html?eliminado=1');
+  });
 }
 
 // ---------- R03 · Publicar lanzamiento ----------
@@ -1556,7 +1681,8 @@ const PANTALLAS = {
   'inicio-fan': pantallaInicioFan,
   'explorar-fan': pantallaExplorarFan,
   'musica-artista': pantallaMusicaArtista,
-  'publicar-lanzamiento-artista': pantallaPublicarLanzamiento
+  'publicar-lanzamiento-artista': pantallaPublicarLanzamiento,
+  'lanzamiento-artista': pantallaLanzamientoArtista
 };
 
 document.addEventListener('DOMContentLoaded', () => {

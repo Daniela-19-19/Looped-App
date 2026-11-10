@@ -63,7 +63,7 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 |---|---|---|---|---|---|
 | R02 | Música | `pages/musica-artista.html` | ✅ | ✅ | |
 | R03 | Publicar lanzamiento | `pages/publicar-lanzamiento-artista.html` | ✅ | ✅ | |
-| R03b | Lanzamiento | `pages/lanzamiento-artista.html` | | | |
+| R03b | Lanzamiento | `pages/lanzamiento-artista.html` | ✅ | ✅ | |
 | F01c | Nuevos lanzamientos | `pages/nuevos-lanzamientos-fan.html` | | | |
 | F02 | Perfil del artista (visto por el fan) | `pages/perfil-artista-fan.html` | | | |
 | — | Reproductor (minirreproductor y vista ampliada) | capa sobre las pantallas del fan | | | |

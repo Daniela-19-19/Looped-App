@@ -195,3 +195,11 @@
 .publicar__archivo { margin-top: var(--espacio-4); }
 .publicar__enviar { margin-top: var(--espacio-6); }
 .publicar__archivo [hidden] { display: none; }
+
+/* ---------- R03b · Lanzamiento ---------- */
+/* Una sola tarjeta: la columna queda angosta y centrada en pantallas grandes. */
+.lanzamiento { max-width: var(--ancho-pantalla); margin-inline: auto; }
+.lanzamiento .etiquetas { margin-top: var(--espacio-4); }
+.lanzamiento__tarjeta { margin-top: var(--espacio-3); }
+.lanzamiento__nombre { margin-top: var(--espacio-4); }
+.lanzamiento__eliminar { display: flex; justify-content: center; margin-top: var(--espacio-2); }
