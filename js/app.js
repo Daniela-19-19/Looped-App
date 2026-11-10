@@ -19,7 +19,7 @@ function obtenerDatos(tipo) {
 // Lanza un error si no hay conexión.
 async function cargarDatos() {
   const tablas = ['generos', 'roles', 'intereses', 'artistas', 'fans', 'seguimientos', 'visitas',
-    'miembros_fan_club', 'lanzamientos', 'cupos', 'preguntas', 'votos', 'respuestas'];
+    'miembros_fan_club', 'lanzamientos', 'cupos', 'preguntas', 'votos', 'respuestas', 'publicaciones'];
   const respuestas = await Promise.all(tablas.map(tabla => baseDatos.from(tabla).select('*')));
   const filas = {};
   respuestas.forEach((respuesta, i) => {
@@ -68,6 +68,15 @@ async function cargarDatos() {
       fecha: fila.fecha
     })),
     votos: filas.votos, // { fan, pregunta }
+    // Las de «Solo para el Fan Club» solo llegan a sus miembros y al artista (regla de la base de datos).
+    publicaciones: filas.publicaciones.map(fila => ({
+      id: fila.id,
+      artista: fila.artista,
+      texto: fila.texto,
+      lanzamiento: fila.lanzamiento,
+      soloFanClub: fila.solo_fan_club,
+      fecha: fila.fecha
+    })),
     respuestas: filas.respuestas.map(fila => ({
       id: fila.id,
       pregunta: fila.pregunta,
@@ -3143,6 +3152,264 @@ function pantallaTuConexionFan() {
   if (respuesta && respuesta.tipo === 'voz') activarNotaDeVoz(caja, rutaRecurso(respuesta.audio), respuesta.duracionAudio);
 }
 
+// ---------- Comunidad: piezas compartidas ----------
+// Foto pequeña del artista (o sus iniciales).
+function htmlAvatarArtista(artista) {
+  return artista.foto
+    ? `<span class="avatar avatar--pequeno"><img src="${escapar(rutaRecurso(artista.foto))}" alt=""></span>`
+    : `<span class="avatar avatar--pequeno avatar--acento" aria-hidden="true">${escapar(iniciales(artista.nombreArtistico))}</span>`;
+}
+
+// Botón «Escuchar lanzamiento» de una publicación (si incluye uno que existe).
+function htmlEscucharPublicacion(publicacion) {
+  const lanzamiento = publicacion.lanzamiento && obtenerDatos('lanzamientos').find(l => l.id === publicacion.lanzamiento);
+  if (!lanzamiento) return '';
+  return `
+    <div class="tarjeta__acciones">
+      <button type="button" class="boton boton--secundario" data-reproducir="${escapar(lanzamiento.id)}" data-titulo="${escapar(lanzamiento.nombreCancion)}">
+        <svg class="icono" aria-hidden="true"><use href="#icono-reproducir"></use></svg>
+        <span data-texto-reproducir="Escuchar lanzamiento">Escuchar lanzamiento</span>
+      </button>
+    </div>`;
+}
+
+// Fecha de la respuesta de una pregunta (para ordenar las conversaciones).
+function fechaDeRespuesta(pregunta) {
+  const respuesta = obtenerDatos('respuestas').find(r => r.pregunta === pregunta.id);
+  return respuesta ? respuesta.fecha : pregunta.fecha;
+}
+
+// ---------- F04 · Comunidad (fan) ----------
+// Con ?id= muestra la comunidad de un artista; sin él, la de todos
+// (primero los artistas que el fan sigue). Las publicaciones «Solo para
+// el Fan Club» no salen aquí: son el contenido del Fan Club.
+function pantallaComunidadFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const id = new URLSearchParams(location.search).get('id');
+  const artistas = obtenerDatos('artistas');
+  const delArtista = id ? artistas.find(a => a.id === id) : null;
+  const caja = document.querySelector('[data-comunidad]');
+  if (id && !delArtista) return; // queda el mensaje del HTML
+  if (delArtista) {
+    document.querySelector('[data-volver]').href = `perfil-artista-fan.html?id=${encodeURIComponent(id)}`;
+    document.title = `Looped · Comunidad de ${delArtista.nombreArtistico}`;
+  }
+
+  const sigue = artistaId => fan.artistasQueSigue.includes(artistaId);
+  const publicaciones = obtenerDatos('publicaciones')
+    .filter(p => !p.soloFanClub && (!id || p.artista === id))
+    .sort((a, b) => (id ? 0 : sigue(b.artista) - sigue(a.artista)) || (new Date(b.fecha) - new Date(a.fecha)));
+  const conversaciones = obtenerDatos('preguntas')
+    .filter(p => p.estado === 'respondida' && (!id || p.artista === id))
+    .sort((a, b) => new Date(fechaDeRespuesta(b)) - new Date(fechaDeRespuesta(a)))
+    .slice(0, 6);
+  // «Preguntar a…»: el artista de esta comunidad o, en la general, uno que
+  // siga con el cupo abierto (si no, cualquiera con el cupo abierto).
+  const cupoAbierto = artistaId => {
+    const cupo = obtenerDatos('cupos').find(c => c.artista === artistaId);
+    return cupo && cupo.estado === 'abierto';
+  };
+  const destino = delArtista
+    || artistas.find(a => sigue(a.id) && cupoAbierto(a.id))
+    || artistas.find(a => cupoAbierto(a.id));
+  const fans = obtenerDatos('fans');
+  const respuestas = obtenerDatos('respuestas');
+
+  const tarjetaPublicacion = publicacion => {
+    const artista = artistas.find(a => a.id === publicacion.artista);
+    if (!artista) return '';
+    return `
+      <article class="tarjeta">
+        <a class="tarjeta__cabecera comunidad__autor" href="perfil-artista-fan.html?id=${encodeURIComponent(artista.id)}" aria-label="Ver perfil de ${escapar(artista.nombreArtistico)}">
+          ${htmlAvatarArtista(artista)}
+          <span><b class="texto--pequeno">${escapar(artista.nombreArtistico)}</b><span class="tarjeta__meta">${escapar(haceCuanto(publicacion.fecha))}</span></span>
+        </a>
+        <p class="tarjeta__texto tarjeta__texto--principal">${escapar(publicacion.texto)}</p>
+        ${htmlEscucharPublicacion(publicacion)}
+      </article>`;
+  };
+  const tarjetaConversacion = pregunta => {
+    const artista = artistas.find(a => a.id === pregunta.artista);
+    const autor = fans.find(f => f.id === pregunta.autor);
+    const respuesta = respuestas.find(r => r.pregunta === pregunta.id);
+    const quien = pregunta.autor === fan.id ? 'Tú' : (autor ? autor.nombrePerfil : 'Fan');
+    return `
+      <article class="tarjeta">
+        <div class="tarjeta__encabezado">
+          <span class="tarjeta__meta">${escapar(quien)} → ${escapar(artista ? artista.nombreArtistico : '')}</span>
+          ${respuesta && respuesta.tipo === 'voz' ? '<span class="etiqueta etiqueta--borde">Nota de voz</span>' : ''}
+        </div>
+        <p class="tarjeta__texto tarjeta__texto--principal">${escapar(pregunta.texto)}</p>
+        <p class="tarjeta__texto">La respuesta está disponible.</p>
+        <div class="tarjeta__acciones"><a class="boton boton--secundario" href="tu-conexion-fan.html?id=${encodeURIComponent(pregunta.id)}">Ver respuesta</a></div>
+      </article>`;
+  };
+
+  caja.innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">${delArtista ? `Comunidad de ${escapar(delArtista.nombreArtistico)}` : 'Comunidad'}</h1>
+      <p class="encabezado-pagina__bajada">Publicaciones de artistas y respuestas que comparten con sus fans.</p>
+    </div>
+    ${publicaciones.length
+      ? `<div class="rejilla-tarjetas rejilla-tarjetas--dos">${publicaciones.map(tarjetaPublicacion).join('')}</div>`
+      : '<div class="tarjeta"><p class="tarjeta__texto">Todavía no hay publicaciones.</p></div>'}
+    <section class="comunidad__seccion" aria-labelledby="titulo-conversaciones">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-conversaciones">Conversaciones</h2></div>
+      ${conversaciones.length
+        ? `<div class="rejilla-tarjetas rejilla-tarjetas--dos">${conversaciones.map(tarjetaConversacion).join('')}</div>`
+        : '<div class="tarjeta"><p class="tarjeta__texto">Cuando un artista responda, la conversación aparecerá aquí.</p></div>'}
+    </section>
+    ${destino ? `<div class="pregunta__acciones"><a class="boton" href="conectar-fan.html?id=${encodeURIComponent(destino.id)}">Preguntar a ${escapar(destino.nombreArtistico)}</a></div>` : ''}`;
+  activarBotonesReproducir(caja);
+}
+
+// ---------- R07 · Comunidad del artista ----------
+function pantallaComunidadArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const caja = document.querySelector('[data-publicaciones]');
+  if (new URLSearchParams(location.search).get('aviso') === 'publicada') mostrarAviso('Publicación compartida.');
+  const respondidas = obtenerDatos('preguntas').filter(p => p.artista === artista.id && p.estado === 'respondida').length;
+  document.querySelector('[data-resumen-comunidad]').textContent =
+    `${artista.seguidores.toLocaleString('es-CO')} seguidores · ${respondidas} ${respondidas === 1 ? 'respuesta compartida' : 'respuestas compartidas'}`;
+
+  function pintar() {
+    const publicaciones = obtenerDatos('publicaciones')
+      .filter(p => p.artista === artista.id)
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    const lanzamientos = obtenerDatos('lanzamientos');
+    caja.innerHTML = publicaciones.length ? publicaciones.map(publicacion => {
+      const lanzamiento = publicacion.lanzamiento && lanzamientos.find(l => l.id === publicacion.lanzamiento);
+      const etiquetas = [
+        publicacion.soloFanClub ? '<span class="etiqueta etiqueta--acento">Fan Club</span>' : '',
+        lanzamiento ? `<span class="etiqueta etiqueta--borde">Incluye ${escapar(lanzamiento.nombreLanzamiento)}</span>` : ''
+      ].join('');
+      return `
+        <article class="tarjeta">
+          <div class="tarjeta__encabezado">
+            <div class="tarjeta__cabecera">
+              ${htmlAvatarArtista(artista)}
+              <span><b class="texto--pequeno">${escapar(artista.nombreArtistico)}</b><span class="tarjeta__meta">${escapar(haceCuanto(publicacion.fecha))}</span></span>
+            </div>
+            <button type="button" class="boton-icono boton-icono--pequeno" data-eliminar-publicacion="${escapar(publicacion.id)}" aria-label="Eliminar publicación">
+              <svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-eliminar"></use></svg>
+            </button>
+          </div>
+          <p class="tarjeta__texto tarjeta__texto--principal">${escapar(publicacion.texto)}</p>
+          ${etiquetas ? `<div class="etiquetas">${etiquetas}</div>` : ''}
+        </article>`;
+    }).join('') : '<div class="tarjeta"><p class="tarjeta__texto">Todavía no has publicado. Cuéntales a tus fans en qué estás trabajando.</p></div>';
+  }
+
+  // Eliminar: primero se confirma en el diálogo.
+  const velo = document.querySelector('[data-velo-eliminar]');
+  const botonConfirmar = document.querySelector('[data-confirmar-eliminar]');
+  const botonCancelar = document.querySelector('[data-cancelar-eliminar]');
+  let porEliminar = null; // id de la publicación elegida
+  function cerrarDialogo() {
+    velo.hidden = true;
+    const boton = porEliminar && caja.querySelector(`[data-eliminar-publicacion="${CSS.escape(porEliminar)}"]`);
+    if (boton) boton.focus();
+  }
+  caja.addEventListener('click', evento => {
+    const boton = evento.target.closest('[data-eliminar-publicacion]');
+    if (!boton) return;
+    porEliminar = boton.dataset.eliminarPublicacion;
+    velo.hidden = false;
+    botonCancelar.focus(); // el foco empieza en la opción segura
+  });
+  botonCancelar.addEventListener('click', cerrarDialogo);
+  velo.addEventListener('click', evento => { if (evento.target === velo) cerrarDialogo(); });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && !velo.hidden) cerrarDialogo();
+  });
+  // REAL: borra la publicación de Supabase.
+  botonConfirmar.addEventListener('click', async () => {
+    botonConfirmar.disabled = true;
+    const { data, error } = await baseDatos.from('publicaciones').delete().eq('id', porEliminar).select('id');
+    botonConfirmar.disabled = false;
+    velo.hidden = true;
+    if (error || !data || !data.length) {
+      mostrarAviso('No pudimos eliminar la publicación. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    datosCargados.publicaciones = obtenerDatos('publicaciones').filter(p => p.id !== porEliminar);
+    porEliminar = null;
+    pintar();
+    mostrarAviso('Publicación eliminada.');
+    document.querySelector('[data-nueva-publicacion]').focus();
+  });
+
+  pintar();
+}
+
+// ---------- Nueva publicación ----------
+function pantallaNuevaPublicacionArtista() {
+  const artista = artistaActual();
+  if (!artista) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  // Lanzamiento relacionado: el que viene de «Compartir en tu comunidad»
+  // (marcado) o, si no, el último del artista (sin marcar), como en el diseño.
+  const pedido = new URLSearchParams(location.search).get('lanzamiento');
+  const propios = obtenerDatos('lanzamientos').filter(l => l.artista === artista.id)
+    .sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+  const lanzamiento = propios.find(l => l.id === pedido) || propios[0] || null;
+  const casillaLanzamiento = document.querySelector('[data-casilla-lanzamiento]');
+  if (!lanzamiento) {
+    casillaLanzamiento.remove(); // sin lanzamientos no hay nada que incluir
+  } else {
+    document.querySelector('[data-nombre-lanzamiento]').textContent = `Incluir ${lanzamiento.nombreLanzamiento}`;
+    document.getElementById('incluir-lanzamiento').checked = Boolean(pedido && lanzamiento.id === pedido);
+  }
+  if (pedido && lanzamiento && lanzamiento.id === pedido) {
+    document.querySelector('[data-volver]').href = `lanzamiento-artista.html?id=${encodeURIComponent(pedido)}`;
+  }
+
+  const formulario = document.getElementById('formulario-publicacion');
+  const texto = document.getElementById('publicacion');
+  const boton = document.querySelector('button[form="formulario-publicacion"]');
+  activarContador(texto, document.querySelector('[data-contador]'));
+  texto.addEventListener('input', () => mostrarError('publicacion', ''));
+
+  formulario.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (boton.disabled) return;
+    const contenido = texto.value.trim();
+    if (!contenido) {
+      mostrarError('publicacion', 'Escribe tu publicación.');
+      texto.focus();
+      return;
+    }
+    // REAL: se guarda en «publicaciones». Con «Solo para el Fan Club», solo
+    // la ven los miembros del Fan Club (regla de la base de datos).
+    boton.disabled = true;
+    boton.textContent = 'Publicando…';
+    const incluir = lanzamiento && document.getElementById('incluir-lanzamiento').checked;
+    const { error } = await baseDatos.from('publicaciones').insert({
+      artista: artista.id,
+      texto: contenido,
+      lanzamiento: incluir ? lanzamiento.id : null,
+      solo_fan_club: document.getElementById('solo-fan-club').checked
+    });
+    if (error) {
+      boton.disabled = false;
+      boton.textContent = 'Publicar';
+      mostrarAviso('No pudimos publicar. Revisa tu conexión e inténtalo otra vez.');
+      return;
+    }
+    location.replace('comunidad-artista.html?aviso=publicada');
+  });
+}
+
 // ---------- R08 · Cupos ----------
 // Una fila de dato y valor dentro de una tarjeta («Respuestas: 5»).
 function htmlDato(nombre, valor) {
@@ -3998,7 +4265,10 @@ const PANTALLAS = {
   'respuesta-artista': pantallaRespuestaArtista,
   'tu-conexion-fan': pantallaTuConexionFan,
   'cupos-artista': pantallaCuposArtista,
-  'configurar-cupo-artista': pantallaConfigurarCupoArtista
+  'configurar-cupo-artista': pantallaConfigurarCupoArtista,
+  'comunidad-fan': pantallaComunidadFan,
+  'comunidad-artista': pantallaComunidadArtista,
+  'nueva-publicacion-artista': pantallaNuevaPublicacionArtista
 };
 
 document.addEventListener('DOMContentLoaded', async () => {

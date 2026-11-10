@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es" data-rol="artista">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Nueva publicación</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="nueva-publicacion-artista">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.2 4.2L19 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- Nueva publicación (con ?lanzamiento= cuando viene de «Compartir en tu comunidad») -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="comunidad-artista.html" aria-label="Volver" data-volver>
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span class="barra-superior__titulo">Nueva publicación</span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">Acerca tu proceso.</h1>
+      <p class="encabezado-pagina__bajada">Comparte una actualización con tu comunidad.</p>
+    </div>
+
+    <form id="formulario-publicacion" novalidate>
+      <div class="campo" data-campo="publicacion">
+        <label class="campo__etiqueta" for="publicacion">Tu publicación</label>
+        <textarea class="area-texto" id="publicacion" name="publicacion" maxlength="280"
+          placeholder="Qué quieres compartir" aria-describedby="contador-publicacion error-publicacion"></textarea>
+        <span class="campo__contador" id="contador-publicacion" data-contador>0/280</span>
+        <p class="campo__mensaje-error" id="error-publicacion" role="alert"></p>
+      </div>
+
+      <fieldset class="casillas" aria-label="Opciones de la publicación">
+        <!-- Lanzamiento relacionado: js/app.js la quita si el artista no tiene ninguno -->
+        <label class="casilla" data-casilla-lanzamiento>
+          <input type="checkbox" id="incluir-lanzamiento" name="incluir-lanzamiento">
+          <span class="casilla__caja"><svg class="icono" aria-hidden="true"><use href="#icono-check"></use></svg></span>
+          <span data-nombre-lanzamiento>Incluir lanzamiento</span>
+        </label>
+        <!-- Nuevo, no está en el diseño (spec.md): contenido exclusivo del Fan Club -->
+        <label class="casilla">
+          <input type="checkbox" id="solo-fan-club" name="solo-fan-club">
+          <span class="casilla__caja"><svg class="icono" aria-hidden="true"><use href="#icono-check"></use></svg></span>
+          Solo para el Fan Club
+        </label>
+      </fieldset>
+    </form>
+
+    <p class="texto--pequeno texto--suave pantalla__nota">Con «Solo para el Fan Club», la publicación solo la ven los miembros de tu Fan Club.</p>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="submit" class="boton boton--bloque" form="formulario-publicacion">Publicar</button>
+  </footer>
+
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

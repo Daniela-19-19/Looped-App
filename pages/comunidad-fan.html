@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es" data-rol="fan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Comunidad</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="comunidad-fan">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-reproducir" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.6v12.8c0 .9 1 1.4 1.7.9l9.5-6.4c.6-.4.6-1.4 0-1.8L9.7 4.7C9 4.2 8 4.7 8 5.6z"/></symbol>
+    <symbol id="icono-perfil" viewBox="0 0 24 24"><circle cx="12" cy="7.8" r="4" fill="currentColor"/><path fill="currentColor" d="M4.6 19c0-3.5 3.3-6 7.4-6s7.4 2.5 7.4 6c0 1-.8 1.8-1.8 1.8H6.4c-1 0-1.8-.8-1.8-1.8z"/></symbol>
+    <symbol id="icono-inicio" viewBox="0 0 24 24"><path fill="currentColor" d="M10.6 3.5a2.2 2.2 0 0 1 2.8 0l6.4 5.4c.5.4.8 1 .8 1.7v8.2c0 1.2-1 2.2-2.2 2.2h-3.2a1 1 0 0 1-1-1v-4.4a1 1 0 0 0-1-1h-2.4a1 1 0 0 0-1 1V20a1 1 0 0 1-1 1H5.6c-1.2 0-2.2-1-2.2-2.2v-8.2c0-.7.3-1.3.8-1.7z"/></symbol>
+    <symbol id="icono-explorar" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm3.6 5.4-5 2.2-2.2 5 5-2.2z"/></symbol>
+    <symbol id="icono-comunidad" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" fill="currentColor"/><circle cx="16.6" cy="9" r="2.6" fill="currentColor"/><path fill="currentColor" d="M2.8 18.6c0-3 2.8-5.2 6.2-5.2s6.2 2.2 6.2 5.2c0 .8-.6 1.4-1.4 1.4H4.2c-.8 0-1.4-.6-1.4-1.4zM16.4 13.6c2.7.1 4.8 1.9 4.8 4.4 0 .7-.6 1.2-1.2 1.2h-3c.2-.4.3-.8.3-1.3 0-1.7-.7-3.2-1.9-4.3z"/></symbol>
+    <symbol id="icono-pausa" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/></symbol>
+    <symbol id="icono-cancion-anterior" viewBox="0 0 24 24"><rect x="5" y="5" width="2.6" height="14" rx="1.3" fill="currentColor"/><path fill="currentColor" d="M19 6.4v11.2c0 .9-1 1.4-1.7.9l-8.3-5.6c-.6-.4-.6-1.4 0-1.8l8.3-5.6c.7-.5 1.7 0 1.7.9z"/></symbol>
+    <symbol id="icono-cancion-siguiente" viewBox="0 0 24 24"><rect x="16.4" y="5" width="2.6" height="14" rx="1.3" fill="currentColor"/><path fill="currentColor" d="M5 6.4v11.2c0 .9 1 1.4 1.7.9l8.3-5.6c.6-.4.6-1.4 0-1.8L6.7 5.5C6 5 5 5.5 5 6.4z"/></symbol>
+    <symbol id="icono-aleatorio" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h3c3.5 0 5.5 10 9 10h4M4 17h3c1.4 0 2.5-1.5 3.4-3.4M13.6 10.4C14.5 8.5 15.6 7 17 7h3M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5"/></symbol>
+    <symbol id="icono-bucle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 3.5l3 3-3 3M4 11.5V10a3.5 3.5 0 0 1 3.5-3.5H20M7 20.5l-3-3 3-3M20 12.5V14a3.5 3.5 0 0 1-3.5 3.5H4"/></symbol>
+    <symbol id="icono-bucle-una" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 3.5l3 3-3 3M4 11.5V10a3.5 3.5 0 0 1 3.5-3.5H20M7 20.5l-3-3 3-3M20 12.5V14a3.5 3.5 0 0 1-3.5 3.5H4M11 10.6l1.4-.8v4.6"/></symbol>
+    <symbol id="icono-cola" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 6.5h16M4 12h16M4 17.5h8"/><path fill="currentColor" d="M15 14.9v5.2c0 .6.7 1 1.2.6l3.6-2.6c.4-.3.4-.9 0-1.2l-3.6-2.6c-.5-.4-1.2 0-1.2.6z"/></symbol>
+    <symbol id="icono-bajar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 9l7 7 7-7"/></symbol>
+  </defs>
+</svg>
+
+<!-- F04 · Comunidad (fan). Con ?id= es la de un artista; sin él, la de todos. El contenido lo pone js/app.js. -->
+<div class="pantalla pantalla--con-navegacion">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <div class="pantalla__contenido">
+    <header class="barra-superior">
+      <a class="boton-icono" href="inicio-fan.html" aria-label="Volver" data-volver>
+        <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+      </a>
+      <span class="barra-superior__titulo">Comunidad</span>
+      <span></span>
+    </header>
+
+    <main class="comunidad" data-comunidad>
+      <!-- Se ve solo si el artista no existe. -->
+      <div class="encabezado-pagina">
+        <h1 class="titulo titulo--medio">Este artista no está disponible.</h1>
+        <p class="encabezado-pagina__bajada"><a class="enlace" href="explorar-fan.html">Explorar artistas</a></p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Avisos flotantes -->
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+
+  <nav class="navegacion navegacion--adaptable pantalla__navegacion" aria-label="Navegación principal">
+    <a class="navegacion__marca" href="inicio-fan.html" aria-label="Looped, ir al inicio">
+      <img class="logo logo--blanco" src="../assets/logo-firma-blanco.svg" alt="">
+      <img class="logo logo--negro" src="../assets/logo-firma-negro.svg" alt="">
+    </a>
+    <a class="navegacion__pestana" href="inicio-fan.html"><svg class="icono" aria-hidden="true"><use href="#icono-inicio"></use></svg><span>Inicio</span></a>
+    <a class="navegacion__pestana" href="explorar-fan.html"><svg class="icono" aria-hidden="true"><use href="#icono-explorar"></use></svg><span>Explorar</span></a>
+    <a class="navegacion__pestana" href="comunidad-fan.html" aria-current="page"><svg class="icono" aria-hidden="true"><use href="#icono-comunidad"></use></svg><span>Comunidad</span></a>
+    <a class="navegacion__pestana" href="perfil-fan.html"><svg class="icono" aria-hidden="true"><use href="#icono-perfil"></use></svg><span>Perfil</span></a>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>
