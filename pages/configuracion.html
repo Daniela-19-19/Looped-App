@@ -22,6 +22,7 @@
     <symbol id="icono-tema" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.6M12 19.4V21M3 12h1.6M19.4 12H21M5.6 5.6l1.2 1.2M17.2 17.2l1.2 1.2M5.6 18.4l1.2-1.2M17.2 6.8l1.2-1.2"/></symbol>
     <symbol id="icono-notificaciones" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
     <symbol id="icono-ver" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5.5c-4.6 0-8 3.4-9.4 5.6a1.7 1.7 0 0 0 0 1.8C4 15.1 7.4 18.5 12 18.5s8-3.4 9.4-5.6a1.7 1.7 0 0 0 0-1.8C20 8.9 16.6 5.5 12 5.5zm0 10a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></symbol>
+    <symbol id="icono-ocultar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c4.4 0 7.4 3.2 8.6 5.2.3.5.3 1.1 0 1.6-.5.8-1.2 1.8-2.2 2.7M6.3 7.6c-1.6 1.1-2.7 2.5-3.3 3.6-.3.5-.3 1.1 0 1.6C4.2 14.8 7.4 18 12 18c1.6 0 3-.4 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
     <symbol id="icono-siguiente" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></symbol>
   </defs>
 </svg>
@@ -92,8 +93,14 @@
       <form id="formulario-eliminar" novalidate>
         <div class="campo" data-campo="contrasena-eliminar">
           <label class="campo__etiqueta" for="contrasena-eliminar">Contraseña<span data-correo-eliminar></span></label>
-          <input class="campo__control" id="contrasena-eliminar" name="contrasena-eliminar" type="password"
-            autocomplete="current-password" aria-describedby="error-contrasena-eliminar">
+          <!-- «new-password»: así el navegador no la rellena solo con una contraseña guardada. -->
+          <div class="campo__grupo">
+            <input class="campo__control" id="contrasena-eliminar" name="contrasena-eliminar" type="password"
+              autocomplete="new-password" aria-describedby="error-contrasena-eliminar">
+            <button type="button" class="boton-icono boton-icono--relleno campo__boton" aria-label="Mostrar contraseña" data-mostrar-contrasena>
+              <svg class="icono" aria-hidden="true"><use href="#icono-ver"></use></svg>
+            </button>
+          </div>
           <p class="campo__mensaje-error" id="error-contrasena-eliminar" role="alert"></p>
         </div>
       </form>

@@ -643,7 +643,10 @@ function activarEliminarCuenta(sesion) {
     const guardada = leerCuentas().find(c => c.id === sesion.id);
     return { usuario: data.user, coincide: !guardada || guardada.usuarioId === data.user.id };
   }
+  activarOjosDeContrasena();
   botonEliminar.addEventListener('click', async () => {
+    claveEliminar.value = ''; // por si el navegador la rellenó solo
+    mostrarError('contrasena-eliminar', '');
     velo.hidden = false;
     claveEliminar.focus();
     // Muestra de qué correo se pide la contraseña.
@@ -686,7 +689,7 @@ function activarEliminarCuenta(sesion) {
     catch (e) { revision = { error: { code: 'sin_conexion' } }; }
     if (revision.error) {
       return fallar(revision.error.code === 'invalid_credentials'
-        ? 'La contraseña no es correcta.'
+        ? 'La contraseña no es correcta. Toca el ojo para revisar lo que escribiste.'
         : 'No pudimos revisarla. Revisa tu conexión e inténtalo otra vez.');
     }
     try {
