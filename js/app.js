@@ -175,12 +175,6 @@ function perfilDesdeFila(rol, fila, correo) {
   });
 }
 
-// PROVISIONAL: copia del perfil en este navegador, para las pantallas
-// que aún no leen de Supabase. null si no hay ninguna.
-function perfilGuardado() {
-  try { return JSON.parse(localStorage.getItem('looped-perfil')); } catch (e) { return null; }
-}
-
 // Guarda quién entró, en este navegador. Si el navegador no deja
 // guardar (modo privado), la app sigue funcionando igual.
 function guardarSesion(sesion) {
@@ -317,8 +311,6 @@ function pantallaIniciarSesion() {
       return;
     }
 
-    // PROVISIONAL: copia en este navegador para las pantallas que aún no leen de Supabase.
-    try { localStorage.setItem('looped-perfil', JSON.stringify(sesion.perfil)); } catch (e) { /* sin almacenamiento */ }
     guardarSesion({ rol: sesion.rol, id: sesion.perfil.id });
     await traerAjustesDeLaCuenta(sesion.usuarioId, sesion.rol === 'fan' ? sesion.perfil.id : null);
     // Cada rol abre su lado: el fan su inicio y el artista su panel.
@@ -820,10 +812,7 @@ async function guardarPerfil(registro) {
     throw new Error('No pudimos guardar tu perfil. Revisa tu conexión e inténtalo otra vez.');
   }
 
-  // PROVISIONAL: copia en este navegador para las pantallas que aún no
-  // leen de Supabase (inicio del fan, panel del artista…).
   const perfil = Object.assign(perfilDelRegistro(registro), { id: data.id, correo: user.email, foto });
-  try { localStorage.setItem('looped-perfil', JSON.stringify(perfil)); } catch (e) { /* sin almacenamiento */ }
   guardarSesion({ rol: registro.rol, id: data.id });
   try { sessionStorage.removeItem('looped-registro'); } catch (e) { /* sin almacenamiento */ }
   return perfil;
@@ -948,10 +937,7 @@ function leerSesion() {
 function artistaActual() {
   const sesion = leerSesion();
   if (!sesion || sesion.rol !== 'artista') return null;
-  const deEjemplo = obtenerDatos('artistas').find(a => a.id === sesion.id);
-  if (deEjemplo) return deEjemplo;
-  const propia = perfilGuardado();
-  return propia && propia.id === sesion.id ? propia : null;
+  return obtenerDatos('artistas').find(a => a.id === sesion.id) || null;
 }
 
 // Hace cuánto: «Hace 5 h», «Ayer», «Hace 9 días».
@@ -1221,12 +1207,11 @@ function pantallaPanelArtista() {
 }
 
 // ---------- Fan de la sesión y su nivel ----------
-// El fan de la sesión (de Supabase, o la copia del navegador). null si no hay.
+// El fan de la sesión, leído de Supabase. null si no hay.
 function fanActual() {
   const sesion = leerSesion();
   if (!sesion || sesion.rol !== 'fan') return null;
-  const propia = perfilGuardado();
-  const fan = obtenerDatos('fans').find(f => f.id === sesion.id) || (propia && propia.id === sesion.id ? propia : null);
+  const fan = obtenerDatos('fans').find(f => f.id === sesion.id);
   if (!fan) return null;
   return { artistasQueSigue: [], fanClubs: [], fanFundadorDe: [], artistasVisitados: [], ...fan };
 }
@@ -3702,13 +3687,6 @@ function pantallaEditarPerfilFan() {
     }
     // La foto vieja ya no se usa: se borra de Storage (si era nuestra).
     if (fan.foto && fan.foto !== enlaceFoto) borrarArchivoSubido(fan.foto).catch(() => {});
-    // PROVISIONAL: también la copia de este navegador.
-    const copia = perfilGuardado();
-    if (copia && copia.id === fan.id) {
-      Object.assign(copia, { nombrePerfil: textoNombre, nombreUsuario: textoUsuario, foto: enlaceFoto,
-        gustosMusicales: casillasMarcadas(gustos), intereses: casillasMarcadas(intereses) });
-      try { localStorage.setItem('looped-perfil', JSON.stringify(copia)); } catch (e) { /* sin almacenamiento */ }
-    }
     location.replace('perfil-fan.html?aviso=guardado');
   });
 }
@@ -3891,12 +3869,6 @@ function pantallaEditarPerfilArtista() {
     }
     // La foto vieja ya no se usa: se borra de Storage (si era nuestra).
     if (artista.foto && artista.foto !== enlaceFoto) borrarArchivoSubido(artista.foto).catch(() => {});
-    // PROVISIONAL: también la copia de este navegador.
-    const copia = perfilGuardado();
-    if (copia && copia.id === artista.id) {
-      Object.assign(copia, perfilDesdeFila('artista', Object.assign({ id: artista.id, seguidores: artista.seguidores, emergente: artista.emergente }, cambios), copia.correo));
-      try { localStorage.setItem('looped-perfil', JSON.stringify(copia)); } catch (e) { /* sin almacenamiento */ }
-    }
     location.replace('perfil-propio-artista.html?aviso=guardado');
   });
 }
@@ -4125,6 +4097,8 @@ async function pushActivo() {
 // ---------- Cerrar sesión ----------
 // REAL: deja de recibir avisos aquí, detiene la música, cierra la sesión
 // en Supabase y borra las copias de este navegador. Vuelve a la bienvenida.
+// No borra la cuenta: todo sigue en Supabase al volver a entrar.
+// («looped-perfil» es una copia vieja que ya no se usa: se borra si quedó.)
 async function cerrarSesion({ borrarTodo = false } = {}) {
   await desactivarPush();
   detenerMusica();
@@ -5167,6 +5141,12 @@ const PANTALLAS = {
   'conexion-activa-fan': pantallaConexionActivaFan
 };
 
+// Pantallas que funcionan sin los datos de Supabase: la entrada, el
+// registro y las de Configuración. Las demás necesitan saber quién eres.
+const PANTALLAS_SIN_DATOS = ['index', 'iniciar-sesion', 'elegir-experiencia', 'crear-cuenta',
+  'identidad-artista', 'presentacion-artista', 'estilo-musical-artista', 'proyecto-musical-artista', 'perfil-listo-artista',
+  'perfil-basico-fan', 'gustos-fan', 'intereses-fan', 'perfil-listo-fan', ...PANTALLAS_COMPARTIDAS];
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Primero se traen los datos de Supabase (en las páginas que cargan la conexión).
   if (typeof baseDatos !== 'undefined') {
@@ -5182,6 +5162,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         aviso.innerHTML = '<p>No pudimos cargar los datos. Revisa tu conexión y recarga la página.</p>';
         contenido.prepend(aviso);
       }
+      // Sin datos no sabemos quién eres: se queda el aviso, en vez de
+      // mandarte a iniciar sesión cuando tu sesión sigue abierta.
+      if (!PANTALLAS_SIN_DATOS.includes(document.body.dataset.pantalla)) return;
     }
   }
   const pantalla = PANTALLAS[document.body.dataset.pantalla];
