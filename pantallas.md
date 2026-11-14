@@ -118,3 +118,9 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 | F10 / R10 | Apariencia | `pages/apariencia.html` | ✅ | — | |
 | F11 / R11 | Notificaciones | `pages/notificaciones.html` | ✅ | ✅ | |
 | F12 / R12 | Accesibilidad | `pages/accesibilidad.html` | ✅ | — | |
+
+### 10 · Varias cuentas
+
+| Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
+|---|---|---|---|---|---|
+| — | Cambiar de cuenta (diálogo, decisión 12) | capa sobre Perfil del fan, Perfil propio del artista y Configuración (`js/app.js`) | | | |

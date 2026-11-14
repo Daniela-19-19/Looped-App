@@ -28,6 +28,14 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
     - Entrar es gratis en el MVP. El cobro (suscripción) queda para Después.
     - El contenido exclusivo lo crea el artista desde «Nueva publicación», marcando la casilla «Solo para el Fan Club». No hace falta una pantalla nueva.
 
+12. **Varias cuentas en el mismo dispositivo** (decisión del equipo del 14-11-2026): una persona puede entrar con varias cuentas en el mismo celular o computador y cambiar entre ellas sin escribir la contraseña cada vez.
+    - Se cambia desde el perfil (Perfil del fan y Perfil propio del artista) y desde Configuración.
+    - Las cuentas pueden ser de los dos roles: un artista puede tener también una cuenta de fan. Al cambiar, la app toma el color y la navegación del rol de esa cuenta.
+    - «Cerrar sesión» saca solo la cuenta actual y solo en este dispositivo: si queda otra cuenta guardada, entra a esa; si no, vuelve a la bienvenida. Nunca borra la cuenta de Supabase.
+    - «Borrar datos de este dispositivo» saca todas las cuentas.
+    - No se guardan contraseñas: el navegador guarda la sesión de cada cuenta. Si la sesión de una cuenta vence, al elegirla se pide la contraseña otra vez.
+    - Las notificaciones al celular (push) llegan solo para la cuenta activa; las demás ven sus avisos al volver a entrar.
+
 ## Orden de construcción
 
 Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así lo que hace uno se puede probar desde el otro. Dentro de cada bloque se sigue el flujo. El orden de los bloques es una propuesta.
@@ -53,6 +61,7 @@ Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así
    - Fan: perfil, tu recorrido, editar perfil.
 8. **Fan Club:** conocer y contenido.
 9. **Compartidas:** configuración, apariencia, notificaciones, accesibilidad.
+10. **Varias cuentas** (decisión 12): cambiar de cuenta y agregar otra cuenta.
 
 ## Flujo
 
@@ -90,7 +99,9 @@ splash → bienvenida → ¿ya tienes cuenta?
 - panel → perfil propio → editar perfil · configuración.
 
 **Compartidas por los dos perfiles**
-configuración → apariencia · notificaciones · accesibilidad · cerrar sesión (detiene la música y vuelve a bienvenida).
+configuración → apariencia · notificaciones · accesibilidad · cuentas · cerrar sesión (detiene la música; si hay otra cuenta guardada entra a esa, si no vuelve a bienvenida).
+
+perfil o configuración → cambiar de cuenta → elegir una cuenta guardada (abre el inicio de su rol) o agregar otra cuenta (iniciar sesión o crear cuenta, sin cerrar la actual).
 
 **Nivel del fan** (en segundo plano): los minutos de escucha suben el nivel (15 minutos el primero, y cada nivel pide 1,5 veces más que el anterior) → nuevos beneficios → invitación al Fan Club.
 
@@ -193,6 +204,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Qué funciona de verdad:**
   - Iniciar sesión: Real. La app reconoce si la cuenta es de fan o de artista: el fan llega a su inicio y el artista a su panel.
   - Mostrar u ocultar la contraseña: Real.
+  - Agregar otra cuenta (decisión 12): si se llega desde «Agregar otra cuenta», la cuenta actual queda guardada y la nueva pasa a ser la activa. Un botón «Volver» regresa a la cuenta actual sin cambiar nada.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Con un correo mal escrito, sin contraseña o con datos incorrectos, aparece el error debajo del campo, en rojo de error.
@@ -564,6 +576,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   4. «Explorar Fan Club».
   5. «Completar mi perfil».
   6. «Configuración».
+  7. «Cambiar de cuenta» (decisión 12): abre el diálogo «Cambiar de cuenta».
 - **Qué funciona de verdad:**
   - Datos, nivel y reconocimientos: Real.
   - Botones: Real (navegan).
@@ -845,6 +858,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   2. «Completar mi perfil».
   3. «Ver lanzamiento».
   4. «Configuración».
+  5. «Cambiar de cuenta» (decisión 12): abre el diálogo «Cambiar de cuenta».
 - **Qué funciona de verdad:**
   - Datos del perfil: Real.
   - Botones: Real (navegan).
@@ -873,14 +887,16 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Contenido:**
   1. «A tu manera.»
   2. Apariencia, notificaciones y accesibilidad.
-  3. «Cerrar sesión».
-  4. «Borrar datos de este dispositivo», con confirmación (decisión 10).
+  3. «Cuentas» (decisión 12): las cuentas guardadas en este dispositivo, la activa marcada, y «Agregar otra cuenta».
+  4. «Cerrar sesión».
+  5. «Borrar datos de este dispositivo», con confirmación (decisión 10).
 - **Qué funciona de verdad:**
-  - Cerrar sesión: Real.
-  - Borrar datos de este dispositivo: Real (cierra la sesión y limpia el navegador; no toca Supabase).
+  - Cuentas: Real (cambiar y agregar cuentas).
+  - Cerrar sesión: Real. Saca solo la cuenta actual, solo en este dispositivo.
+  - Borrar datos de este dispositivo: Real (cierra todas las cuentas y limpia el navegador; no toca Supabase).
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
-  - Cerrar sesión detiene la música y vuelve a la bienvenida.
+  - Cerrar sesión detiene la música; si queda otra cuenta guardada entra a esa, si no vuelve a la bienvenida.
   - Borrar datos pide confirmación.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
@@ -914,4 +930,22 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   - «Reducir movimiento» acorta las animaciones.
   - «Reducir transparencia» vuelve opaca la barra flotante.
   - La elección se guarda (Real).
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
+
+### Cambiar de cuenta (diálogo nuevo, sin diseño todavía)
+- **Archivo:** no es una página: es un diálogo (`.velo` + `.dialogo`) que se abre desde Perfil del fan, Perfil propio del artista y Configuración. Lo pone `js/app.js`.
+- **Objetivo:** Este diálogo existe para que una persona con varias cuentas pueda pasar de una a otra sin escribir la contraseña (decisión 12). Sabemos que funciona si cambia de cuenta y llega al inicio del rol de esa cuenta.
+- **Contenido:**
+  1. Título «Cambiar de cuenta».
+  2. Una fila (`.fila-lista`) por cada cuenta guardada: foto (`.avatar`), nombre y «Fan» o «Artista». La activa va marcada.
+  3. «Agregar otra cuenta»: abre Iniciar sesión sin cerrar la cuenta actual (desde ahí también se puede crear una cuenta).
+  4. Botón para cerrar el diálogo.
+- **Qué funciona de verdad:**
+  - Lista de cuentas y cambio de cuenta: Real (sesiones de Supabase guardadas en el navegador; no se guardan contraseñas).
+  - Agregar otra cuenta: Real.
+- **Está lista cuando:**
+  - Al elegir otra cuenta, se detiene la música y se abre el inicio del fan o el panel del artista, con el color de ese rol.
+  - Si la sesión de esa cuenta venció, lleva a Iniciar sesión con el correo ya escrito.
+  - Con una sola cuenta guardada, el diálogo muestra esa cuenta y «Agregar otra cuenta».
+  - Se cierra con Escape, con el botón y tocando fuera; el foco vuelve al botón que lo abrió.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
