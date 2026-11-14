@@ -18,8 +18,10 @@
 -- borrar la cuenta de la sesión (auth.uid()), nunca la de otra persona.
 -- Con solo_revisar = true no borra nada: la app la llama así primero, para
 -- confirmar que la función existe antes de borrar los archivos.
--- Por si se corrió una versión anterior de este cambio (sin «solo_revisar»).
+-- Por si este cambio ya se corrió antes (con o sin «solo_revisar»):
+-- así se puede volver a correr sin error.
 drop function if exists eliminar_mi_cuenta();
+drop function if exists eliminar_mi_cuenta(boolean);
 
 create function eliminar_mi_cuenta(solo_revisar boolean default false) returns void
 language plpgsql security definer set search_path = public as $$
