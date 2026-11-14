@@ -45,6 +45,12 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
     - La música de Spotify suena en el reproductor de Spotify, no en el de Looped: no suma minutos de escucha ni entra a la cola. Si la persona no tiene sesión de Spotify abierta en ese navegador, Spotify puede poner solo una muestra de cada canción.
     - Solo se aceptan links de open.spotify.com (o `spotify:artist:…` / `spotify:playlist:…`). Se guarda solo el código de 22 caracteres del perfil o de la lista.
 
+14. **Cuenta y acceso** (decisión del 14-11-2026; pantallas sin diseño en el prototipo, hechas con el kit): con cuentas reales, quien olvida su contraseña no puede quedar por fuera.
+    - Recuperar la contraseña con un link que llega al correo (Supabase Auth). Por seguridad, la app nunca dice si un correo tiene cuenta o no.
+    - Pantalla «Cuenta» en Configuración: cambiar el correo (se confirma con un link en el correo nuevo) y la contraseña (pide la actual).
+    - Página «No encontrada» para links rotos o viejos.
+    - En el panel de Supabase hace falta: (1) agregar la dirección de Vercel en Authentication → URL Configuration, para que los links del correo vuelvan a la app; (2) para que los correos lleguen a cualquier persona, un servicio de correo propio (SMTP), porque el que trae Supabase solo envía a los miembros del equipo del proyecto y pocos por hora.
+
 ## Orden de construcción
 
 Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así lo que hace uno se puede probar desde el otro. Dentro de cada bloque se sigue el flujo. El orden de los bloques es una propuesta.
@@ -72,12 +78,14 @@ Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así
 9. **Compartidas:** configuración, apariencia, notificaciones, accesibilidad.
 10. **Varias cuentas** (decisión 12): cambiar de cuenta y agregar otra cuenta.
 11. **Spotify** (decisión 13): links en editar perfil y reproductor de Spotify en los perfiles.
+12. **Cuenta y acceso** (decisión 14): recuperar contraseña, nueva contraseña, cuenta y página no encontrada.
 
 ## Flujo
 
 **Entrada (común)**
 splash → bienvenida → ¿ya tienes cuenta?
 - **Sí:** iniciar sesión → el inicio de su rol: el fan va a su inicio y el artista a su panel.
+  - ¿Olvidó su contraseña? → recuperar contraseña → link en el correo → nueva contraseña → el inicio de su rol.
 - **No:** elegir experiencia → crear cuenta → perfil básico → perfil listo.
   - **Fan:** nombre y usuario → gustos musicales → intereses → perfil listo → inicio del fan.
   - **Artista:** identidad → presentación → estilo musical → proyecto musical → perfil listo → panel del artista.
@@ -109,7 +117,7 @@ splash → bienvenida → ¿ya tienes cuenta?
 - panel → perfil propio → editar perfil · configuración.
 
 **Compartidas por los dos perfiles**
-configuración → apariencia · notificaciones · accesibilidad · cuentas · cerrar sesión (detiene la música; si hay otra cuenta guardada entra a esa, si no vuelve a bienvenida).
+configuración → cuenta (correo y contraseña) · apariencia · notificaciones · accesibilidad · cuentas · cerrar sesión (detiene la música; si hay otra cuenta guardada entra a esa, si no vuelve a bienvenida).
 
 perfil o configuración → cambiar de cuenta → elegir una cuenta guardada (abre el inicio de su rol) o agregar otra cuenta (iniciar sesión o crear cuenta, sin cerrar la actual).
 
@@ -211,6 +219,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   2. Campos de correo y contraseña (con botón para mostrarla).
   3. Botón «Iniciar sesión».
   4. Enlace «Crear una cuenta».
+  5. Enlace «¿Olvidaste tu contraseña?» (decisión 14): lleva a «Recuperar contraseña» con el correo ya escrito.
 - **Qué funciona de verdad:**
   - Iniciar sesión: Real. La app reconoce si la cuenta es de fan o de artista: el fan llega a su inicio y el artista a su panel.
   - Mostrar u ocultar la contraseña: Real.
@@ -904,7 +913,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que cualquier persona pueda ajustar la app a su manera o salir. Sabemos que funciona si entra a un ajuste o cierra sesión.
 - **Contenido:**
   1. «A tu manera.»
-  2. Apariencia, notificaciones y accesibilidad.
+  2. Cuenta (decisión 14), apariencia, notificaciones y accesibilidad.
   3. «Cuentas» (decisión 12): las cuentas guardadas en este dispositivo, la activa marcada, y «Agregar otra cuenta».
   4. «Cerrar sesión».
   5. «Borrar datos de este dispositivo», con confirmación (decisión 10).
@@ -968,4 +977,63 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   - Si la sesión de esa cuenta venció, lleva a Iniciar sesión con el correo ya escrito.
   - Con una sola cuenta guardada, el diálogo muestra esa cuenta y «Agregar otra cuenta».
   - Se cierra con Escape, con el botón y tocando fuera; el foco vuelve al botón que lo abrió.
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
+
+### A02b · Recuperar contraseña (pantalla nueva, decisión 14)
+- **Archivo:** `pages/recuperar-contrasena.html`. Sin diseño en el prototipo: formulario del kit, como Iniciar sesión.
+- **Objetivo:** Esta pantalla existe para que alguien que olvidó su contraseña pueda pedir un link para crear una nueva. Sabemos que funciona si pide el link y le llega al correo.
+- **Contenido:**
+  1. «¿Olvidaste tu contraseña?» y la bajada.
+  2. Campo de correo (con el que escribió en Iniciar sesión, si lo escribió).
+  3. Botón «Enviar link» y enlace «Volver a iniciar sesión».
+  4. Después de enviar: «Revisa tu correo.», con la nota de buscar también en spam, y «Volver a iniciar sesión».
+- **Qué funciona de verdad:**
+  - Enviar el link: Real (Supabase Auth).
+- **Está lista cuando:**
+  - Un correo mal escrito muestra el error debajo del campo.
+  - Con cualquier correo bien escrito muestra «Revisa tu correo.»: nunca dice si el correo tiene cuenta.
+  - Si se pide muchas veces seguidas, explica que hay que esperar unos minutos.
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
+
+### A02c · Nueva contraseña (pantalla nueva, decisión 14)
+- **Archivo:** `pages/nueva-contrasena.html`. Es a donde lleva el link del correo.
+- **Objetivo:** Esta pantalla existe para que la persona cree su contraseña nueva y vuelva a entrar. Sabemos que funciona si la guarda y llega al inicio de su rol.
+- **Contenido:**
+  1. «Crea tu nueva contraseña.»
+  2. Campos «Contraseña nueva» y «Repite la contraseña» (con botón para mostrarlas).
+  3. Botón «Guardar contraseña».
+  4. Si el link venció o ya se usó: «Este link ya no sirve.» y «Pedir otro link».
+- **Qué funciona de verdad:**
+  - Guardar la contraseña: Real. Al guardarla, entra a la cuenta y abre su inicio o su panel.
+- **Está lista cuando:**
+  - Pide al menos 6 caracteres y que las dos contraseñas sean iguales, con el error debajo del campo.
+  - Con un link vencido muestra el estado de error y deja pedir otro.
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
+
+### F13 / R13 · Cuenta (pantalla nueva, decisión 14)
+- **Archivo:** `pages/cuenta.html`. La misma para fan y artista (toma el color del rol), como las demás de Configuración.
+- **Objetivo:** Esta pantalla existe para que la persona pueda cambiar su correo y su contraseña. Sabemos que funciona si cambia uno de los dos y puede entrar con el dato nuevo.
+- **Contenido:**
+  1. «Tu cuenta.» y la bajada.
+  2. «Correo»: el correo actual, campo «Correo nuevo» y «Cambiar correo».
+  3. «Contraseña»: campos «Contraseña actual» y «Contraseña nueva», y «Cambiar contraseña».
+- **Qué funciona de verdad:**
+  - Cambiar el correo: Real. Llega un link al correo nuevo; el cambio se aplica al abrirlo.
+  - Cambiar la contraseña: Real. Primero revisa la contraseña actual.
+- **Está lista cuando:**
+  - Un correo mal escrito, igual al actual o que ya tiene cuenta muestra el error debajo del campo.
+  - Una contraseña actual incorrecta muestra el error y no cambia nada.
+  - Al terminar aparece un aviso flotante de confirmación.
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
+
+### 404 · Página no encontrada (pantalla nueva, decisión 14)
+- **Archivo:** `404.html`, en la raíz. Vercel la muestra sola cuando un link no existe.
+- **Objetivo:** Esta pantalla existe para que quien abre un link roto no se pierda. Sabemos que funciona si vuelve a Looped desde aquí.
+- **Contenido:**
+  1. Logo.
+  2. «No encontramos esta página.» y la bajada.
+  3. Botón «Ir a Looped».
+- **Está lista cuando:**
+  - Un link que no existe en Vercel muestra esta página con los estilos de Looped (claro u oscuro, según la preferencia guardada).
+  - «Ir a Looped» abre la app.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).

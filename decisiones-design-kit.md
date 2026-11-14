@@ -107,3 +107,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-10 | Accesibilidad desde la app: `data-movimiento="reducido"` y `data-transparencia="reducida"`, con sus selectores en componentes.html | Construcción de accesibilidad (F12 / R12): «Reducir movimiento» y «Reducir transparencia» |
 | 2026-11-14 | Mantener presionado (`.presion-larga`). La pestaña «Perfil» conserva su ícono: la foto ya sale arriba | Pedido del equipo: cambiar de cuenta como en Instagram (decisión 12) |
 | 2026-11-14 | Reproductor de Spotify insertado (`.spotify`, `.spotify--compacto`) | Spotify con links en los perfiles (decisión 13) |
+| 2026-11-14 | Ícono `candado` | Pantalla «Cuenta» en Configuración (decisión 14) |

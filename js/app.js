@@ -131,8 +131,12 @@ async function iniciarSesion(correo, contrasena) {
   if (respuesta.error) {
     throw new Error(respuesta.error.code === 'invalid_credentials' ? 'datos-incorrectos' : 'sin-conexion');
   }
-  const usuario = respuesta.data.user;
+  return perfilDeUsuario(respuesta.data.user);
+}
 
+// Busca el perfil (fan o artista) de una cuenta de Supabase Auth.
+// Devuelve { rol, perfil, usuarioId } (perfil es null si no terminó el registro).
+async function perfilDeUsuario(usuario) {
   // El rol se guardó con la cuenta al crearla. Si faltara, se busca en las dos tablas.
   const rolGuardado = (usuario.user_metadata || {}).rol;
   const tablas = rolGuardado === 'artista' ? ['artistas']
@@ -328,18 +332,292 @@ function pantallaIniciarSesion() {
       return;
     }
 
-    // Registro sin terminar: vuelve al primer paso del perfil de su rol.
-    if (!sesion.perfil) {
-      guardarRegistro({ rol: sesion.rol, correo: textoCorreo });
-      location.href = sesion.rol === 'artista' ? 'identidad-artista.html' : 'perfil-basico-fan.html';
+    await entrarALaCuenta(sesion, textoCorreo);
+  });
+
+  // «¿Olvidaste tu contraseña?» lleva el correo que ya escribió.
+  document.querySelector('[data-olvide]').addEventListener('click', evento => {
+    const texto = correo.value.trim();
+    if (correoValido(texto)) evento.currentTarget.href = `recuperar-contrasena.html?correo=${encodeURIComponent(texto)}`;
+  });
+}
+
+// Después de entrar (iniciar sesión o nueva contraseña): deja la sesión en
+// este navegador, trae sus ajustes y abre su lado. Si no terminó el registro,
+// vuelve al primer paso del perfil de su rol.
+async function entrarALaCuenta(sesion, correo) {
+  if (!sesion.perfil) {
+    guardarRegistro({ rol: sesion.rol, correo });
+    location.href = sesion.rol === 'artista' ? 'identidad-artista.html' : 'perfil-basico-fan.html';
+    return;
+  }
+  guardarSesion({ rol: sesion.rol, id: sesion.perfil.id });
+  try { await recordarCuentaEnUso(sesion.rol, sesion.perfil.id); } catch (e) { /* sin almacenamiento */ }
+  await traerAjustesDeLaCuenta(sesion.usuarioId, sesion.rol === 'fan' ? sesion.perfil.id : null);
+  // Cada rol abre su lado: el fan su inicio y el artista su panel.
+  location.href = sesion.rol === 'artista' ? 'panel-artista.html' : 'inicio-fan.html';
+}
+
+// ---------- Cuenta y acceso (decisión 14) ----------
+// Los links que llegan al correo vuelven a estas pantallas. Sirve igual en
+// Vercel y al probar en el computador.
+function direccionDe(pagina) {
+  return new URL(pagina, location.href).href;
+}
+
+// Todos los botones del ojo de una pantalla, cada uno con su campo.
+function activarOjosDeContrasena() {
+  document.querySelectorAll('[data-mostrar-contrasena]').forEach(boton => {
+    activarMostrarContrasena(boton.closest('.campo__grupo').querySelector('input'), boton);
+  });
+}
+
+// ---------- A02b · Recuperar contraseña ----------
+// REAL: Supabase envía un link al correo. Por seguridad, la pantalla dice
+// lo mismo exista o no una cuenta con ese correo.
+function pantallaRecuperarContrasena() {
+  const formulario = document.getElementById('formulario-recuperar');
+  const correo = document.getElementById('correo');
+  const boton = document.querySelector('[data-boton-enviar]');
+  correo.value = new URLSearchParams(location.search).get('correo') || '';
+  correo.addEventListener('input', () => mostrarError('correo', ''));
+
+  formulario.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (boton.disabled) return;
+    const texto = correo.value.trim();
+    if (!correoValido(texto)) {
+      mostrarError('correo', 'Escribe un correo válido.');
+      correo.focus();
       return;
     }
+    boton.disabled = true;
+    boton.textContent = 'Enviando…';
+    let error;
+    try {
+      ({ error } = await baseDatos.auth.resetPasswordForEmail(texto, {
+        redirectTo: direccionDe('nueva-contrasena.html?desde=correo')
+      }));
+    } catch (e) {
+      error = { code: 'sin_conexion' };
+    }
+    boton.disabled = false;
+    boton.textContent = 'Enviar link';
+    if (error) {
+      mostrarError('correo', error.code === 'over_email_send_rate_limit' || error.status === 429
+        ? 'Pediste varios links seguidos. Espera unos minutos y vuelve a intentarlo.'
+        : 'No pudimos enviar el link. Revisa tu conexión e inténtalo otra vez.');
+      correo.focus();
+      return;
+    }
+    document.querySelector('[data-correo-enviado]').textContent = texto;
+    document.querySelector('[data-paso-pedir]').hidden = true;
+    document.querySelector('[data-paso-enviado]').hidden = false;
+    boton.hidden = true;
+    document.getElementById('titulo-enviado').focus();
+  });
+}
 
-    guardarSesion({ rol: sesion.rol, id: sesion.perfil.id });
-    try { await recordarCuentaEnUso(sesion.rol, sesion.perfil.id); } catch (e) { /* sin almacenamiento */ }
-    await traerAjustesDeLaCuenta(sesion.usuarioId, sesion.rol === 'fan' ? sesion.perfil.id : null);
-    // Cada rol abre su lado: el fan su inicio y el artista su panel.
-    location.href = sesion.rol === 'artista' ? 'panel-artista.html' : 'inicio-fan.html';
+// ---------- A02c · Nueva contraseña ----------
+// REAL: el link del correo abre esta pantalla con una sesión de Supabase
+// (la crea supabase-js al leer la dirección). Con ella se guarda la
+// contraseña nueva y se entra a la cuenta.
+async function pantallaNuevaContrasena() {
+  const cargando = document.querySelector('[data-estado-cargando]');
+  const cajaFormulario = document.querySelector('[data-estado-formulario]');
+  const cajaVencido = document.querySelector('[data-estado-vencido]');
+  const botonGuardar = document.querySelector('[data-boton-guardar]');
+
+  // Solo se llega aquí desde el link del correo.
+  if (new URLSearchParams(location.search).get('desde') !== 'correo') {
+    location.replace('recuperar-contrasena.html');
+    return;
+  }
+  // El link sirve si Supabase no dio error y la cuenta pidió recuperar hace poco
+  // (así no se usa una sesión que ya estaba abierta en este navegador).
+  let usuario = null;
+  try {
+    const { error } = await baseDatos.auth.initialize();
+    const { data } = await baseDatos.auth.getUser();
+    const pedido = data.user && data.user.recovery_sent_at;
+    if (!error && pedido && Date.now() - new Date(pedido) < 24 * 3600000) usuario = data.user;
+  } catch (e) { /* sin conexión: se trata como link que no sirve */ }
+  cargando.hidden = true;
+  if (!usuario) {
+    cajaVencido.hidden = false;
+    document.querySelector('[data-pedir-otro]').hidden = false;
+    document.getElementById('titulo-vencido').focus();
+    return;
+  }
+
+  // La sesión de Supabase ahora es de esta cuenta: si en este navegador había
+  // otra en uso, deja de estarlo (queda en «Cuentas» y pedirá su contraseña).
+  const anterior = leerSesion();
+  const guardada = anterior && leerCuentas().find(c => c.id === anterior.id);
+  if (anterior && (!guardada || guardada.usuarioId !== usuario.id)) {
+    try { localStorage.removeItem('looped-sesion'); } catch (e) { /* sin almacenamiento */ }
+    if (guardada) recordarCuenta({ usuarioId: guardada.usuarioId, sesion: null });
+  }
+
+  cajaFormulario.hidden = false;
+  botonGuardar.hidden = false;
+  document.getElementById('titulo-formulario').focus();
+  activarOjosDeContrasena();
+  const contrasena = document.getElementById('contrasena');
+  const repetir = document.getElementById('repetir');
+  contrasena.addEventListener('input', () => mostrarError('contrasena', ''));
+  repetir.addEventListener('input', () => mostrarError('repetir', ''));
+
+  document.getElementById('formulario-nueva').addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (botonGuardar.disabled) return;
+    if (contrasena.value.length < 6) mostrarError('contrasena', 'La contraseña necesita al menos 6 caracteres.');
+    else if (repetir.value !== contrasena.value) mostrarError('repetir', 'Las dos contraseñas no son iguales.');
+    const conError = cajaFormulario.querySelector('[aria-invalid="true"]');
+    if (conError) {
+      conError.focus();
+      return;
+    }
+    botonGuardar.disabled = true;
+    botonGuardar.textContent = 'Guardando…';
+    let error;
+    try { ({ error } = await baseDatos.auth.updateUser({ password: contrasena.value })); }
+    catch (e) { error = { code: 'sin_conexion' }; }
+    if (error) {
+      botonGuardar.disabled = false;
+      botonGuardar.textContent = 'Guardar contraseña';
+      const mensajes = {
+        same_password: 'Esa es tu contraseña anterior. Elige una distinta.',
+        weak_password: 'Esta contraseña es muy fácil de adivinar. Prueba con otra.'
+      };
+      mostrarError('contrasena', mensajes[error.code] || 'No pudimos guardarla. Revisa tu conexión e inténtalo otra vez.');
+      contrasena.focus();
+      return;
+    }
+    // Lista: entra a su lado, como al iniciar sesión.
+    try {
+      await entrarALaCuenta(await perfilDeUsuario(usuario), usuario.email);
+    } catch (e) {
+      location.href = 'iniciar-sesion.html';
+    }
+  });
+}
+
+// ---------- F13 / R13 · Cuenta ----------
+// REAL: cambia el correo (Supabase envía un link para confirmarlo) y la
+// contraseña (primero revisa la actual).
+async function pantallaCuenta() {
+  const sesion = sesionParaAjustes();
+  if (!sesion) return;
+  const ayudaCorreo = document.querySelector('[data-correo-actual]');
+  let usuario = null;
+  try { usuario = (await baseDatos.auth.getUser()).data.user; } catch (e) { /* sin conexión */ }
+  if (!usuario) {
+    ayudaCorreo.textContent = 'No pudimos cargar tu cuenta. Revisa tu conexión y recarga la página.';
+    return;
+  }
+  function pintarCorreo() {
+    ayudaCorreo.textContent = `Ahora entras con ${usuario.email}.`
+      + (usuario.new_email ? ` Falta confirmar ${usuario.new_email}: abre el link que te enviamos (si también llegó uno a tu correo actual, ábrelo).` : '');
+  }
+  pintarCorreo();
+  if (new URLSearchParams(location.search).get('aviso') === 'correo') {
+    mostrarAviso(usuario.new_email ? 'Falta abrir el link que llegó a tu otro correo.' : 'Tu correo quedó actualizado.');
+  }
+  activarOjosDeContrasena();
+
+  // Correo
+  const formularioCorreo = document.getElementById('formulario-correo');
+  const correoNuevo = document.getElementById('correo-nuevo');
+  const botonCorreo = formularioCorreo.querySelector('[type="submit"]');
+  correoNuevo.addEventListener('input', () => mostrarError('correo-nuevo', ''));
+  formularioCorreo.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (botonCorreo.disabled) return;
+    const texto = correoNuevo.value.trim();
+    if (!correoValido(texto)) mostrarError('correo-nuevo', 'Escribe un correo válido.');
+    else if (texto.toLowerCase() === usuario.email.toLowerCase()) mostrarError('correo-nuevo', 'Ese ya es tu correo.');
+    if (correoNuevo.getAttribute('aria-invalid') === 'true') {
+      correoNuevo.focus();
+      return;
+    }
+    botonCorreo.disabled = true;
+    botonCorreo.textContent = 'Enviando…';
+    let respuesta;
+    try {
+      respuesta = await baseDatos.auth.updateUser({ email: texto }, { emailRedirectTo: direccionDe('cuenta.html?aviso=correo') });
+    } catch (e) {
+      respuesta = { error: { code: 'sin_conexion' } };
+    }
+    botonCorreo.disabled = false;
+    botonCorreo.textContent = 'Cambiar correo';
+    if (respuesta.error) {
+      const mensajes = {
+        email_exists: 'Este correo ya tiene una cuenta.',
+        email_address_invalid: 'Escribe un correo válido.',
+        over_email_send_rate_limit: 'Pediste varios cambios seguidos. Espera unos minutos.'
+      };
+      mostrarError('correo-nuevo', mensajes[respuesta.error.code] || 'No pudimos cambiarlo. Revisa tu conexión e inténtalo otra vez.');
+      correoNuevo.focus();
+      return;
+    }
+    if (respuesta.data && respuesta.data.user) usuario = respuesta.data.user;
+    if (!usuario.new_email && usuario.email.toLowerCase() !== texto.toLowerCase()) usuario.new_email = texto;
+    correoNuevo.value = '';
+    pintarCorreo();
+    mostrarAviso(`Te enviamos un link a ${texto}. El cambio se aplica cuando lo abras.`);
+  });
+
+  // Contraseña
+  const formularioClave = document.getElementById('formulario-contrasena');
+  const actual = document.getElementById('contrasena-actual');
+  const nueva = document.getElementById('contrasena-nueva');
+  const botonClave = formularioClave.querySelector('[type="submit"]');
+  actual.addEventListener('input', () => mostrarError('contrasena-actual', ''));
+  nueva.addEventListener('input', () => mostrarError('contrasena-nueva', ''));
+  formularioClave.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (botonClave.disabled) return;
+    if (!actual.value) mostrarError('contrasena-actual', 'Escribe tu contraseña actual.');
+    if (nueva.value.length < 6) mostrarError('contrasena-nueva', 'La contraseña necesita al menos 6 caracteres.');
+    else if (nueva.value === actual.value) mostrarError('contrasena-nueva', 'La contraseña nueva debe ser distinta a la actual.');
+    const conError = formularioClave.querySelector('[aria-invalid="true"]');
+    if (conError) {
+      conError.focus();
+      return;
+    }
+    botonClave.disabled = true;
+    botonClave.textContent = 'Cambiando…';
+    const terminar = () => {
+      botonClave.disabled = false;
+      botonClave.textContent = 'Cambiar contraseña';
+    };
+    // Primero se revisa la actual (entrando otra vez con ella).
+    let revision;
+    try { revision = await baseDatos.auth.signInWithPassword({ email: usuario.email, password: actual.value }); }
+    catch (e) { revision = { error: { code: 'sin_conexion' } }; }
+    if (revision.error) {
+      terminar();
+      mostrarError('contrasena-actual', revision.error.code === 'invalid_credentials'
+        ? 'La contraseña actual no es correcta.'
+        : 'No pudimos revisarla. Revisa tu conexión e inténtalo otra vez.');
+      actual.focus();
+      return;
+    }
+    let error;
+    try { ({ error } = await baseDatos.auth.updateUser({ password: nueva.value })); }
+    catch (e) { error = { code: 'sin_conexion' }; }
+    terminar();
+    if (error) {
+      mostrarError('contrasena-nueva', error.code === 'weak_password'
+        ? 'Esta contraseña es muy fácil de adivinar. Prueba con otra.'
+        : 'No pudimos cambiarla. Revisa tu conexión e inténtalo otra vez.');
+      nueva.focus();
+      return;
+    }
+    actual.value = '';
+    nueva.value = '';
+    mostrarAviso('Tu contraseña quedó cambiada.');
   });
 }
 
@@ -4493,7 +4771,7 @@ async function cerrarSesion({ borrarTodo = false } = {}) {
 
 // ---------- Pantallas compartidas (Configuración) ----------
 // Las usan fan y artista: toman el color del rol de la sesión.
-const PANTALLAS_COMPARTIDAS = ['configuracion', 'apariencia', 'notificaciones', 'accesibilidad'];
+const PANTALLAS_COMPARTIDAS = ['configuracion', 'apariencia', 'notificaciones', 'accesibilidad', 'cuenta'];
 function sesionParaAjustes() {
   const sesion = leerSesion();
   if (!sesion) {
@@ -5473,6 +5751,9 @@ if (PANTALLAS_COMPARTIDAS.includes(document.body.dataset.pantalla)) {
 const PANTALLAS = {
   'index': pantallaIndex,
   'iniciar-sesion': pantallaIniciarSesion,
+  'recuperar-contrasena': pantallaRecuperarContrasena,
+  'nueva-contrasena': pantallaNuevaContrasena,
+  'cuenta': pantallaCuenta,
   'elegir-experiencia': pantallaElegirExperiencia,
   'crear-cuenta': pantallaCrearCuenta,
   'identidad-artista': pantallaIdentidadArtista,
@@ -5522,7 +5803,7 @@ const PANTALLAS = {
 
 // Pantallas que funcionan sin los datos de Supabase: la entrada, el
 // registro y las de Configuración. Las demás necesitan saber quién eres.
-const PANTALLAS_SIN_DATOS = ['index', 'iniciar-sesion', 'elegir-experiencia', 'crear-cuenta',
+const PANTALLAS_SIN_DATOS = ['index', 'iniciar-sesion', 'recuperar-contrasena', 'nueva-contrasena', 'elegir-experiencia', 'crear-cuenta',
   'identidad-artista', 'presentacion-artista', 'estilo-musical-artista', 'proyecto-musical-artista', 'perfil-listo-artista',
   'perfil-basico-fan', 'gustos-fan', 'intereses-fan', 'perfil-listo-fan', ...PANTALLAS_COMPARTIDAS];
 

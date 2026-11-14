@@ -130,3 +130,12 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
 | — | Spotify con links (decisión 13) | en P01, P02 / P03, F02, F07a y P04 (`js/app.js`) | ✅ | ✅ | ✅ |
+
+### 12 · Cuenta y acceso
+
+| Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
+|---|---|---|---|---|---|
+| A02b | Recuperar contraseña (decisión 14) | `pages/recuperar-contrasena.html` | ✅ | — | |
+| A02c | Nueva contraseña (decisión 14) | `pages/nueva-contrasena.html` | ✅ | — | |
+| F13 / R13 | Cuenta: correo y contraseña (decisión 14) | `pages/cuenta.html` | ✅ | — | |
+| 404 | Página no encontrada (decisión 14) | `404.html` | ✅ | — | |

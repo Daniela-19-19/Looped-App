@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Recuperar contraseña</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="recuperar-contrasena">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+  </defs>
+</svg>
+
+<!-- A02b · Recuperar contraseña (decisión 14 de spec.md) -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="iniciar-sesion.html" aria-label="Volver a iniciar sesión">
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span></span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <!-- Paso 1: pedir el link -->
+    <div data-paso-pedir>
+      <div class="encabezado-pagina">
+        <h1 class="titulo">¿Olvidaste tu contraseña?</h1>
+        <p class="encabezado-pagina__bajada">Escribe el correo de tu cuenta y te enviaremos un link para crear una nueva.</p>
+      </div>
+      <form id="formulario-recuperar" novalidate>
+        <div class="campo" data-campo="correo">
+          <label class="campo__etiqueta" for="correo">Correo electrónico</label>
+          <input class="campo__control" id="correo" name="correo" type="email" placeholder="Escribe tu correo"
+            autocomplete="email" inputmode="email" autocapitalize="off" aria-describedby="error-correo">
+          <p class="campo__mensaje-error" id="error-correo" role="alert"></p>
+        </div>
+      </form>
+    </div>
+    <!-- Paso 2: link enviado. Nunca dice si el correo tiene cuenta. -->
+    <div data-paso-enviado hidden>
+      <div class="encabezado-pagina">
+        <h1 class="titulo" id="titulo-enviado" tabindex="-1">Revisa tu correo.</h1>
+        <p class="encabezado-pagina__bajada">Si hay una cuenta con <b data-correo-enviado></b>, te llegará un link para crear una contraseña nueva. Puede tardar unos minutos; busca también en la carpeta de spam.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="pantalla__pie">
+    <button type="submit" class="boton boton--bloque" form="formulario-recuperar" data-boton-enviar>Enviar link</button>
+    <a class="boton boton--terciario boton--bloque" href="iniciar-sesion.html">Volver a iniciar sesión</a>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

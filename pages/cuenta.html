@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es" data-rol="fan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Looped · Cuenta</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-pantalla="cuenta">
+
+<!-- Íconos de esta pantalla (copiados del sprite de componentes.html) -->
+<svg width="0" height="0" aria-hidden="true" hidden>
+  <defs>
+    <symbol id="icono-atras" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="icono-ver" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5.5c-4.6 0-8 3.4-9.4 5.6a1.7 1.7 0 0 0 0 1.8C4 15.1 7.4 18.5 12 18.5s8-3.4 9.4-5.6a1.7 1.7 0 0 0 0-1.8C20 8.9 16.6 5.5 12 5.5zm0 10a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></symbol>
+    <symbol id="icono-ocultar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c4.4 0 7.4 3.2 8.6 5.2.3.5.3 1.1 0 1.6-.5.8-1.2 1.8-2.2 2.7M6.3 7.6c-1.6 1.1-2.7 2.5-3.3 3.6-.3.5-.3 1.1 0 1.6C4.2 14.8 7.4 18 12 18c1.6 0 3-.4 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+  </defs>
+</svg>
+
+<!-- F13 / R13 · Cuenta (decisión 14). La misma para fan y artista; js/app.js pone el rol. -->
+<div class="pantalla">
+  <div class="atmosfera atmosfera--lateral" aria-hidden="true"></div>
+
+  <header class="barra-superior">
+    <a class="boton-icono" href="configuracion.html" aria-label="Volver a configuración">
+      <svg class="icono" aria-hidden="true"><use href="#icono-atras"></use></svg>
+    </a>
+    <span class="barra-superior__titulo">Cuenta</span>
+    <span></span>
+  </header>
+
+  <main class="pantalla__contenido">
+    <div class="encabezado-pagina">
+      <h1 class="titulo">Tu cuenta.</h1>
+      <p class="encabezado-pagina__bajada">El correo y la contraseña con los que entras a Looped.</p>
+    </div>
+
+    <section class="ajustes__seccion" aria-labelledby="titulo-correo">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-correo">Correo</h2></div>
+      <form id="formulario-correo" novalidate>
+        <div class="campo" data-campo="correo-nuevo">
+          <label class="campo__etiqueta" for="correo-nuevo">Correo nuevo</label>
+          <input class="campo__control" id="correo-nuevo" name="correo-nuevo" type="email" placeholder="Escribe tu correo nuevo"
+            autocomplete="email" inputmode="email" autocapitalize="off" aria-describedby="ayuda-correo-nuevo error-correo-nuevo">
+          <p class="campo__ayuda" id="ayuda-correo-nuevo" data-correo-actual>Cargando tu correo…</p>
+          <p class="campo__mensaje-error" id="error-correo-nuevo" role="alert"></p>
+        </div>
+        <div class="pregunta__acciones">
+          <button type="submit" class="boton boton--secundario">Cambiar correo</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="ajustes__seccion" aria-labelledby="titulo-contrasena">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-contrasena">Contraseña</h2></div>
+      <form id="formulario-contrasena" novalidate>
+      <div class="campo" data-campo="contrasena-actual">
+        <label class="campo__etiqueta" for="contrasena-actual">Contraseña actual</label>
+        <div class="campo__grupo">
+          <input class="campo__control" id="contrasena-actual" name="contrasena-actual" type="password" placeholder="Escribe tu contraseña actual"
+            autocomplete="current-password" aria-describedby="error-contrasena-actual">
+          <button type="button" class="boton-icono boton-icono--relleno campo__boton" aria-label="Mostrar contraseña" data-mostrar-contrasena>
+            <svg class="icono" aria-hidden="true"><use href="#icono-ver"></use></svg>
+          </button>
+        </div>
+        <p class="campo__mensaje-error" id="error-contrasena-actual" role="alert"></p>
+      </div>
+      <div class="campo" data-campo="contrasena-nueva">
+        <label class="campo__etiqueta" for="contrasena-nueva">Contraseña nueva</label>
+        <div class="campo__grupo">
+          <input class="campo__control" id="contrasena-nueva" name="contrasena-nueva" type="password" placeholder="Crea tu contraseña nueva"
+            autocomplete="new-password" aria-describedby="ayuda-contrasena-nueva error-contrasena-nueva">
+          <button type="button" class="boton-icono boton-icono--relleno campo__boton" aria-label="Mostrar contraseña" data-mostrar-contrasena>
+            <svg class="icono" aria-hidden="true"><use href="#icono-ver"></use></svg>
+          </button>
+        </div>
+        <p class="campo__ayuda" id="ayuda-contrasena-nueva">Usa al menos 6 caracteres.</p>
+        <p class="campo__mensaje-error" id="error-contrasena-nueva" role="alert"></p>
+      </div>
+        <div class="pregunta__acciones">
+          <button type="submit" class="boton boton--secundario">Cambiar contraseña</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Avisos flotantes -->
+  <div class="pantalla__avisos" aria-live="polite" data-avisos></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>
