@@ -3824,7 +3824,7 @@ function pantallaPerfilFan() {
       <div class="rejilla-tarjetas rejilla-tarjetas--dos">${reconocimientos}</div>
     </section>` : ''}
     <!-- Jerarquía como en el diseño: terciarios (ir a contenido), principal +
-         secundario (lo más importante) y, al final, terciario pequeño. -->
+         secundario (lo más importante) y, al final, «Cambiar de cuenta» solo. -->
     <div class="pregunta__acciones perfil-fan__acciones">
       <a class="boton boton--terciario" href="siguiendo-fan.html">Artistas que sigues · ${fan.artistasQueSigue.length}</a>
       ${paraExplorar ? `<a class="boton boton--terciario" href="fan-club-fan.html?id=${encodeURIComponent(paraExplorar.id)}">Explorar Fan Club</a>` : ''}
@@ -3834,7 +3834,7 @@ function pantallaPerfilFan() {
       <a class="boton boton--secundario" href="configuracion.html">Configuración</a>
     </div>
     <div class="pregunta__acciones perfil-fan__acciones">
-      <button type="button" class="boton boton--terciario boton--pequeno" data-cambiar-cuenta>Cambiar de cuenta</button>
+      <button type="button" class="boton boton--terciario" data-cambiar-cuenta>Cambiar de cuenta</button>
     </div>`;
   activarCambiarCuenta();
 }
