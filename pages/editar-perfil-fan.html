@@ -74,6 +74,27 @@
 
       <h2 class="encabezado-seccion__titulo editar__titulo" id="titulo-intereses">Intereses</h2>
       <fieldset class="casillas" aria-labelledby="titulo-intereses" data-lista-intereses></fieldset>
+      <!-- Decisión 13: hasta 3 listas de Spotify -->
+      <h2 class="encabezado-seccion__titulo editar__titulo" id="titulo-spotify">Tus listas de Spotify</h2>
+      <div class="campo" data-campo="spotify-1">
+        <label class="campo__etiqueta" for="spotify-1">Lista 1, opcional</label>
+        <input class="campo__control" id="spotify-1" type="url" inputmode="url" autocapitalize="off" spellcheck="false"
+          placeholder="https://open.spotify.com/playlist/…" aria-describedby="ayuda-spotify error-spotify-1" data-lista-spotify>
+        <span class="campo__ayuda" id="ayuda-spotify">Listas públicas. Suenan con Spotify y no suman minutos a tu nivel.</span>
+        <p class="campo__mensaje-error" id="error-spotify-1" role="alert"></p>
+      </div>
+      <div class="campo" data-campo="spotify-2">
+        <label class="campo__etiqueta" for="spotify-2">Lista 2, opcional</label>
+        <input class="campo__control" id="spotify-2" type="url" inputmode="url" autocapitalize="off" spellcheck="false"
+          placeholder="https://open.spotify.com/playlist/…" aria-describedby="error-spotify-2" data-lista-spotify>
+        <p class="campo__mensaje-error" id="error-spotify-2" role="alert"></p>
+      </div>
+      <div class="campo" data-campo="spotify-3">
+        <label class="campo__etiqueta" for="spotify-3">Lista 3, opcional</label>
+        <input class="campo__control" id="spotify-3" type="url" inputmode="url" autocapitalize="off" spellcheck="false"
+          placeholder="https://open.spotify.com/playlist/…" aria-describedby="error-spotify-3" data-lista-spotify>
+        <p class="campo__mensaje-error" id="error-spotify-3" role="alert"></p>
+      </div>
     </form>
 
     <!-- Acceso a sus preguntas (spec.md) -->

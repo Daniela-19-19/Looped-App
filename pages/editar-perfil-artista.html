@@ -92,6 +92,15 @@
             placeholder="Tu ciudad" autocomplete="address-level2">
         </div>
 
+        <!-- Decisión 13: Spotify con links -->
+        <div class="campo" data-campo="spotify">
+          <label class="campo__etiqueta" for="spotify">Tu perfil de Spotify, opcional</label>
+          <input class="campo__control" id="spotify" name="spotify" type="url" inputmode="url" autocapitalize="off"
+            spellcheck="false" placeholder="https://open.spotify.com/artist/…" aria-describedby="ayuda-spotify error-spotify">
+          <span class="campo__ayuda" id="ayuda-spotify">En Spotify: tu perfil de artista → Compartir → Copiar link. Tus fans lo verán en tu perfil.</span>
+          <p class="campo__mensaje-error" id="error-spotify" role="alert"></p>
+        </div>
+
         <h2 class="encabezado-seccion__titulo editar__titulo" id="titulo-generos">Géneros</h2>
         <!-- Las casillas las dibuja js/app.js con obtenerDatos("generos") y obtenerDatos("roles") -->
         <fieldset class="casillas casillas--dos-columnas" aria-labelledby="titulo-generos" data-lista-generos></fieldset>

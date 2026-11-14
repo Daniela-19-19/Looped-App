@@ -38,6 +38,13 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
     - No se guardan contraseñas: el navegador guarda la sesión de cada cuenta. Si la sesión de una cuenta vence, al elegirla se pide la contraseña otra vez.
     - Las notificaciones al celular (push) llegan solo para la cuenta activa; las demás ven sus avisos al volver a entrar.
 
+13. **Spotify, con links** (decisión del equipo del 14-11-2026): la música de Spotify se muestra en Looped con el reproductor que Spotify deja insertar en una página, a partir de links que pega cada persona. No hay inicio de sesión con Spotify.
+    - Por qué así: Spotify no entrega los archivos de audio ni deja copiarlos, y conectar la cuenta de Spotify (su API) solo lo permite a unas pocas cuentas agregadas a mano mientras Spotify no apruebe la app.
+    - Artista: pega el link de su perfil de artista en Spotify; su perfil en Looped muestra «También en Spotify».
+    - Fan: pega hasta 3 links de listas públicas de Spotify; su perfil muestra «Tus listas de Spotify».
+    - La música de Spotify suena en el reproductor de Spotify, no en el de Looped: no suma minutos de escucha ni entra a la cola. Si la persona no tiene sesión de Spotify abierta en ese navegador, Spotify puede poner solo una muestra de cada canción.
+    - Solo se aceptan links de open.spotify.com (o `spotify:artist:…` / `spotify:playlist:…`). Se guarda solo el código de 22 caracteres del perfil o de la lista.
+
 ## Orden de construcción
 
 Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así lo que hace uno se puede probar desde el otro. Dentro de cada bloque se sigue el flujo. El orden de los bloques es una propuesta.
@@ -64,6 +71,7 @@ Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así
 8. **Fan Club:** conocer y contenido.
 9. **Compartidas:** configuración, apariencia, notificaciones, accesibilidad.
 10. **Varias cuentas** (decisión 12): cambiar de cuenta y agregar otra cuenta.
+11. **Spotify** (decisión 13): links en editar perfil y reproductor de Spotify en los perfiles.
 
 ## Flujo
 
@@ -111,9 +119,9 @@ perfil o configuración → cambiar de cuenta → elegir una cuenta guardada (ab
 
 Lo que la app muestra o guarda, tal como aparece en los diseños. Todo se guarda en Supabase.
 
-**fans**: nombre de perfil, nombre de usuario, correo, contraseña, foto, gustos musicales (géneros), intereses, minutos de escucha acumulados (definen el nivel), artistas que sigue, Fan Clubs a los que pertenece, artistas de los que es fan fundador, fecha de registro.
+**fans**: nombre de perfil, nombre de usuario, correo, contraseña, foto, gustos musicales (géneros), intereses, minutos de escucha acumulados (definen el nivel), artistas que sigue, Fan Clubs a los que pertenece, artistas de los que es fan fundador, fecha de registro, listas de Spotify (hasta 3, opcional, decisión 13).
 
-**artistas**: nombre artístico, nombre de usuario, correo, contraseña, foto, presentación, ciudad (opcional), géneros, roles (solista, compositor, productor, integrante de banda…), número de seguidores, si es emergente.
+**artistas**: nombre artístico, nombre de usuario, correo, contraseña, foto, presentación, ciudad (opcional), géneros, roles (solista, compositor, productor, integrante de banda…), número de seguidores, si es emergente, perfil de Spotify (opcional, decisión 13).
 
 **cupos** (uno activo por artista): estado (abierto, completo, cerrado), total de preguntas (1 a 100), preguntas usadas, nivel mínimo para participar, fecha de apertura.
 
@@ -440,8 +448,10 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   4. «Conoce a …» (presentación).
   5. «Ver comunidad».
   6. Reconocimiento «Fan fundador» cuando aplica.
+  7. «También en Spotify» (decisión 13), solo si el artista pegó su link: el reproductor de Spotify con su perfil.
 - **Qué funciona de verdad:**
   - Escuchar: Real.
+  - También en Spotify: Real (reproductor de Spotify; no suma minutos).
   - Conectar: Real.
   - Ver comunidad: Real.
   - Seguir al artista: Real.
@@ -579,8 +589,10 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   5. «Completar mi perfil».
   6. «Configuración».
   7. «Cambiar de cuenta» (decisión 12): abre el diálogo «Cambiar de cuenta».
+  8. «Tus listas de Spotify» (decisión 13), solo si pegó alguna: el reproductor de Spotify con cada lista.
 - **Qué funciona de verdad:**
   - Datos, nivel y reconocimientos: Real.
+  - Tus listas de Spotify: Real (reproductor de Spotify; no suma minutos).
   - Botones: Real (navegan).
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
@@ -641,14 +653,16 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   2. Nombre de perfil y nombre de usuario.
   3. Gustos musicales.
   4. Intereses.
-  5. «Guardar cambios».
-  6. Acceso a sus preguntas («Ver respuesta», «Revisar pregunta»).
+  5. «Tus listas de Spotify» (decisión 13): hasta 3 links de listas, opcionales.
+  6. «Guardar cambios».
+  7. Acceso a sus preguntas («Ver respuesta», «Revisar pregunta»).
 - **Qué funciona de verdad:**
   - Guardar cambios: Real.
   - Cambiar o quitar la foto: Real.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los cambios aparecen en el perfil al volver y siguen ahí al volver a iniciar sesión.
+  - Un link que no es de una lista de Spotify muestra el error debajo de su campo y no se guarda.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### R01 · Panel del artista
@@ -777,7 +791,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que el artista confirme que su respuesta llegó y que se avisó al fan. Sabemos que funciona si vuelve a la bandeja o ve la respuesta.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
-  - Muestra «La conversación continúa.», «Ver respuesta» y «Volver a preguntas».
+  - Muestra «La conexión continúa.» (como en el diseño; decisión del 14-11-2026), «Ver respuesta» y «Volver a preguntas».
   - El fan recibe la notificación en la app y en el celular.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
@@ -861,6 +875,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   3. «Ver lanzamiento».
   4. «Configuración».
   5. «Cambiar de cuenta» (decisión 12): abre el diálogo «Cambiar de cuenta».
+  6. «Tu música en Spotify» (decisión 13), solo si pegó su link: así lo ven los fans.
 - **Qué funciona de verdad:**
   - Datos del perfil: Real.
   - Botones: Real (navegan).
@@ -873,7 +888,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Objetivo:** Esta pantalla existe para que el artista pueda cambiar su identidad, su presentación, sus géneros y sus roles. Sabemos que funciona si guarda un cambio y lo ve en su perfil.
 - **Contenido:**
   1. Identidad: foto, nombre artístico y usuario.
-  2. Presentación y ciudad.
+  2. Presentación, ciudad y perfil de Spotify (opcional, decisión 13).
   3. Géneros.
   4. Roles.
 - **Qué funciona de verdad:**
@@ -881,6 +896,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Los cambios aparecen en el perfil y los ven los fans.
+  - Un link que no es de un perfil de artista de Spotify muestra el error debajo del campo y no se guarda.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F09 / R09 · Configuración

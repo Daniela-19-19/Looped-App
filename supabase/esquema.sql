@@ -50,7 +50,11 @@ create table fans (
   intereses text[] not null default '{}',         -- ids de intereses
   minutos_escucha integer not null default 0,     -- definen el nivel
   segundos_escucha integer not null default 0,    -- de aquí salen los minutos (sumar_escucha)
-  fecha_registro date not null default current_date
+  fecha_registro date not null default current_date,
+  -- Hasta 3 listas de Spotify (decisión 13): solo el código de 22 caracteres.
+  spotify_listas text[] not null default '{}'
+    check (cardinality(spotify_listas) <= 3
+      and array_to_string(spotify_listas, ',') ~ '^([A-Za-z0-9]{22}(,[A-Za-z0-9]{22})*)?$')
 );
 
 create table artistas (
@@ -65,7 +69,9 @@ create table artistas (
   roles text[] not null default '{}',             -- ids de roles
   seguidores integer not null default 0,
   emergente boolean not null default true,
-  fecha_registro date not null default current_date
+  fecha_registro date not null default current_date,
+  -- Perfil de artista en Spotify (decisión 13): solo el código de 22 caracteres.
+  spotify text check (spotify ~ '^[A-Za-z0-9]{22}$')
 );
 
 -- Qué artistas sigue cada fan.
@@ -351,12 +357,12 @@ grant insert, update, delete on all tables in schema public to authenticated;
 -- Contadores protegidos: minutos, seguidores y votos solo los cambia la
 -- base de datos (funciones y triggers), nunca el navegador.
 revoke insert, update on fans from authenticated;
-grant insert (usuario_id, nombre_perfil, nombre_usuario, foto, gustos_musicales, intereses),
-      update (usuario_id, nombre_perfil, nombre_usuario, foto, gustos_musicales, intereses)
+grant insert (usuario_id, nombre_perfil, nombre_usuario, foto, gustos_musicales, intereses, spotify_listas),
+      update (usuario_id, nombre_perfil, nombre_usuario, foto, gustos_musicales, intereses, spotify_listas)
   on fans to authenticated;
 revoke insert, update on artistas from authenticated;
-grant insert (usuario_id, nombre_artistico, nombre_usuario, foto, presentacion, ciudad, generos, roles),
-      update (usuario_id, nombre_artistico, nombre_usuario, foto, presentacion, ciudad, generos, roles)
+grant insert (usuario_id, nombre_artistico, nombre_usuario, foto, presentacion, ciudad, generos, roles, spotify),
+      update (usuario_id, nombre_artistico, nombre_usuario, foto, presentacion, ciudad, generos, roles, spotify)
   on artistas to authenticated;
 revoke insert, update on preguntas from authenticated;
 grant insert (artista, autor, autor_es_fan_club, primer_contacto, texto),

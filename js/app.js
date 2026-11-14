@@ -160,11 +160,13 @@ function perfilDesdeFila(rol, fila, correo) {
       generos: fila.generos || [],
       roles: fila.roles || [],
       seguidores: fila.seguidores,
-      emergente: fila.emergente
+      emergente: fila.emergente,
+      spotify: fila.spotify || ''
     });
   }
   return Object.assign(comun, {
     nombrePerfil: fila.nombre_perfil,
+    spotifyListas: fila.spotify_listas || [],
     gustosMusicales: fila.gustos_musicales || [],
     intereses: fila.intereses || [],
     minutosEscucha: fila.minutos_escucha,
@@ -2175,6 +2177,13 @@ function pantallaPerfilArtistaFan() {
         ${musica}
       </section>
 
+      ${artista.spotify ? `
+      <section class="perfil-artista__seccion" aria-labelledby="titulo-spotify">
+        <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-spotify">También en Spotify</h2></div>
+        ${htmlSpotify('artist', artista.spotify, `${artista.nombreArtistico} en Spotify`)}
+        <p class="texto--pequeno texto--suave perfil-artista__estado">Suena con Spotify: no suma minutos a tu nivel.</p>
+      </section>` : ''}
+
       <section class="perfil-artista__seccion" aria-labelledby="titulo-conoce">
         <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-conoce">Conoce a ${nombre}</h2></div>
         <div class="rejilla-tarjetas rejilla-tarjetas--dos">
@@ -3098,7 +3107,7 @@ function pantallaRespuestaEnviadaArtista() {
     : `Te quedan ${quedan} ${quedan === 1 ? 'respuesta' : 'respuestas'} en este cupo.`;
   document.querySelector('[data-respuesta-enviada]').innerHTML = `
     <div class="encabezado-pagina">
-      <h1 class="titulo titulo--medio">La conversación continúa.</h1>
+      <h1 class="titulo titulo--medio">La conexión continúa.</h1>
       <p class="encabezado-pagina__bajada">Tu respuesta llegó al fan y su pregunta quedó respondida.</p>
     </div>
     ${htmlPreguntaArtista(pregunta, { etiqueta: '<span class="etiqueta etiqueta--reconocimiento">Respondida</span>' })}
@@ -3526,6 +3535,11 @@ function pantallaPerfilFan() {
         ? `<div class="rejilla-tarjetas rejilla-tarjetas--dos">${mias.map(htmlPreguntaDelFan).join('')}</div>`
         : '<div class="tarjeta"><p class="tarjeta__texto">Cuando envíes una pregunta, podrás seguir su estado aquí.</p></div>'}
     </section>
+    ${(fan.spotifyListas || []).length ? `
+    <section class="perfil-fan__seccion" aria-labelledby="titulo-spotify">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-spotify">Tus listas de Spotify</h2></div>
+      <div class="rejilla-tarjetas rejilla-tarjetas--dos">${fan.spotifyListas.map((codigo, i) => htmlSpotify('playlist', codigo, `Tu lista de Spotify ${i + 1}`, true)).join('')}</div>
+    </section>` : ''}
     ${reconocimientos ? `
     <section class="perfil-fan__seccion" aria-labelledby="titulo-reconocimientos">
       <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-reconocimientos">Reconocimientos</h2></div>
@@ -3653,6 +3667,12 @@ function pantallaEditarPerfilFan() {
   dibujarCasillas(intereses, obtenerDatos('intereses'), 'intereses', fan.intereses || []);
   const fotoEditable = activarFotoEditable({ fotoInicial: fan.foto, entradaFoto, avatar, textoFoto, cajaQuitar, nombre });
   nombre.addEventListener('input', () => mostrarError('nombre', ''));
+  // Listas de Spotify (decisión 13): cada campo con su link guardado.
+  const camposSpotify = [...document.querySelectorAll('[data-lista-spotify]')];
+  camposSpotify.forEach((campo, i) => {
+    campo.value = linkDeSpotify('playlist', (fan.spotifyListas || [])[i]);
+    campo.addEventListener('input', () => mostrarError(`spotify-${i + 1}`, ''));
+  });
   activarCampoUsuario(usuario);
 
   // Acceso a sus preguntas (spec.md).
@@ -3671,6 +3691,12 @@ function pantallaEditarPerfilFan() {
     const textoUsuario = limpiarUsuario(usuario.value);
     if (!textoNombre) mostrarError('nombre', 'Escribe cómo quieres que te vean.');
     if (!textoUsuario) mostrarError('usuario', 'Elige un nombre de usuario.');
+    const listasSpotify = [];
+    camposSpotify.forEach((campo, i) => {
+      const codigo = codigoDeSpotify(campo.value, 'playlist');
+      if (codigo === null) mostrarError(`spotify-${i + 1}`, errorDeSpotify(campo.value, 'playlist'));
+      else if (codigo && !listasSpotify.includes(codigo)) listasSpotify.push(codigo);
+    });
     const conError = formulario.querySelector('[aria-invalid="true"]');
     if (conError) {
       conError.focus();
@@ -3696,13 +3722,16 @@ function pantallaEditarPerfilFan() {
     let enlaceFoto;
     try { enlaceFoto = await subirFotoSiEsNueva(fotoEditable.foto()); }
     catch (e) { return fallar(e.message); }
-    const { error } = await baseDatos.from('fans').update({
+    const cambios = {
       nombre_perfil: textoNombre,
       nombre_usuario: textoUsuario,
       foto: enlaceFoto,
       gustos_musicales: casillasMarcadas(gustos),
       intereses: casillasMarcadas(intereses)
-    }).eq('id', fan.id);
+    };
+    // Solo se envían si cambiaron (así guardar funciona aunque falte el cambio 07 en Supabase).
+    if (listasSpotify.join() !== (fan.spotifyListas || []).join()) cambios.spotify_listas = listasSpotify;
+    const { error } = await baseDatos.from('fans').update(cambios).eq('id', fan.id);
     if (error) {
       if (enlaceFoto !== fan.foto) borrarArchivoSubido(enlaceFoto).catch(() => {});
       if (error.code === '23505') {
@@ -3769,6 +3798,12 @@ function pantallaPerfilPropioArtista() {
         <div class="tarjeta__acciones"><a class="boton boton--secundario" href="lanzamiento-artista.html?id=${encodeURIComponent(ultimo.id)}">Ver lanzamiento</a></div>
       </article>
     </section>` : ''}
+    ${artista.spotify ? `
+    <section class="perfil-artista__seccion" aria-labelledby="titulo-spotify">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-spotify">Tu música en Spotify</h2></div>
+      ${htmlSpotify('artist', artista.spotify, `${artista.nombreArtistico} en Spotify`)}
+      <p class="texto--pequeno texto--suave perfil-artista__estado">Así lo ven tus fans en tu perfil.</p>
+    </section>` : ''}
     <div class="pregunta__acciones">
       <a class="boton boton--secundario" href="configuracion.html">Configuración</a>
       <button type="button" class="boton boton--terciario" data-cambiar-cuenta>Cambiar de cuenta</button>
@@ -3805,6 +3840,9 @@ function pantallaEditarPerfilArtista() {
   usuario.value = '@' + (artista.nombreUsuario || '');
   presentacion.value = artista.presentacion || '';
   ciudad.value = artista.ciudad || '';
+  const spotify = document.getElementById('spotify');
+  spotify.value = linkDeSpotify('artist', artista.spotify);
+  spotify.addEventListener('input', () => mostrarError('spotify', ''));
   dibujarCasillas(generos, obtenerDatos('generos'), 'generos', artista.generos || []);
   dibujarCasillas(roles, obtenerDatos('roles'), 'roles', artista.roles || []);
   activarContador(presentacion, document.querySelector('[data-contador]'));
@@ -3873,6 +3911,12 @@ function pantallaEditarPerfilArtista() {
       presentacion.focus();
       return;
     }
+    const codigoSpotify = codigoDeSpotify(spotify.value, 'artist');
+    if (codigoSpotify === null) {
+      mostrarError('spotify', errorDeSpotify(spotify.value, 'artist'));
+      spotify.focus();
+      return;
+    }
     boton.disabled = true;
     boton.textContent = 'Guardando…';
     const fallar = mensaje => {
@@ -3894,6 +3938,8 @@ function pantallaEditarPerfilArtista() {
       generos: casillasMarcadas(generos),
       roles: casillasMarcadas(roles)
     };
+    // Solo se envía si cambió (así guardar funciona aunque falte el cambio 07 en Supabase).
+    if (codigoSpotify !== (artista.spotify || '')) cambios.spotify = codigoSpotify || null;
     const { error } = await baseDatos.from('artistas').update(cambios).eq('id', artista.id);
     if (error) {
       if (enlaceFoto !== artista.foto) borrarArchivoSubido(enlaceFoto).catch(() => {});
@@ -3966,9 +4012,20 @@ function pantallaFanClubFan() {
     </div>
     <div class="pregunta__acciones">
       <button type="button" class="boton" data-entrar-fan-club>Entrar al Fan Club</button>
-      <a class="boton boton--terciario" href="${alPerfil}">Continuar normalmente</a>
+      <a class="boton boton--terciario" href="${alPerfil}" data-continuar>Continuar normalmente</a>
     </div>
     <p class="texto--pequeno texto--suave pregunta__bloque">Entrar es gratis.</p>`;
+
+  // «Continuar normalmente» y la flecha vuelven a la pantalla de donde vino
+  // (su perfil o el del artista). Si llegó de otro lado, al perfil del artista.
+  const vinoDeLooped = document.referrer && new URL(document.referrer).origin === location.origin;
+  [caja.querySelector('[data-continuar]'), document.querySelector('[data-volver]')].forEach(enlace => {
+    enlace.addEventListener('click', evento => {
+      if (!vinoDeLooped || history.length < 2) return;
+      evento.preventDefault();
+      history.back();
+    });
+  });
 
   // REAL: guarda la membresía en «miembros_fan_club» (gratis en el MVP).
   const entrar = caja.querySelector('[data-entrar-fan-club]');
@@ -4131,6 +4188,42 @@ async function pushActivo() {
   if (!pushDisponible() || Notification.permission !== 'granted') return false;
   const registro = await navigator.serviceWorker.getRegistration(`${RAIZ}sw.js`);
   return Boolean(registro && await registro.pushManager.getSubscription());
+}
+
+// ---------- Spotify con links (decisión 13) ----------
+// REAL: cada persona pega links de Spotify; se guarda solo el código de 22
+// caracteres y la música suena con el reproductor de Spotify (no suma
+// minutos ni entra a la cola de Looped). Sin inicio de sesión con Spotify.
+const CODIGO_SPOTIFY = /^[A-Za-z0-9]{22}$/;
+
+// Código de un link de Spotify del tipo pedido ('artist' o 'playlist').
+// '' si el campo está vacío; null si no es un link de ese tipo.
+function codigoDeSpotify(texto, tipo) {
+  const limpio = texto.trim();
+  if (!limpio) return '';
+  const partes = limpio.match(/^spotify:(artist|playlist):([A-Za-z0-9]{22})$/)
+    || limpio.match(/^(?:https?:\/\/)?open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(artist|playlist)\/([A-Za-z0-9]{22})(?:[/?#].*)?$/i);
+  return partes && partes[1].toLowerCase() === tipo ? partes[2] : null;
+}
+
+// Qué decir cuando un link de Spotify no sirve.
+function errorDeSpotify(texto, tipo) {
+  if (/spotify\.(app\.)?link/i.test(texto)) return 'Ese es un link corto. Ábrelo y copia el que empieza con open.spotify.com.';
+  return tipo === 'artist'
+    ? 'Pega el link de tu perfil de artista en Spotify (open.spotify.com/artist/…).'
+    : 'Pega el link de una lista de Spotify (open.spotify.com/playlist/…).';
+}
+
+// El link completo, para mostrarlo en el campo al editar.
+function linkDeSpotify(tipo, codigo) {
+  return codigo ? `https://open.spotify.com/${tipo}/${codigo}` : '';
+}
+
+// El reproductor de Spotify (.spotify del kit) para un perfil o una lista.
+function htmlSpotify(tipo, codigo, titulo, compacto) {
+  if (!CODIGO_SPOTIFY.test(codigo || '')) return '';
+  return `<iframe class="spotify${compacto ? ' spotify--compacto' : ''}" src="https://open.spotify.com/embed/${tipo}/${codigo}"
+    title="${escapar(titulo)}" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
 }
 
 // ---------- Varias cuentas en el mismo dispositivo (decisión 12) ----------

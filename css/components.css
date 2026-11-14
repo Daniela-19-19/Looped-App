@@ -903,6 +903,19 @@ button, input, textarea { font: inherit; color: inherit; }
 }
 .avatar--acento { background: var(--color-primario); color: var(--color-sobre-primario); box-shadow: none; }
 
+/* ---------- Reproductor de Spotify insertado (decisión 13) ----------
+   El <iframe> que entrega Spotify. Los altos (352 y 152 px) son los que
+   Spotify define para su reproductor: con otros, se corta. */
+.spotify {
+  display: block;
+  width: 100%;
+  height: 352px;
+  border: 0;
+  border-radius: var(--radio-md);
+  background: var(--color-superficie-alta);
+}
+.spotify--compacto { height: 152px; }
+
 /* ---------- Portada (foto de lanzamiento o artista) ---------- */
 .portada {
   width: 100%;
