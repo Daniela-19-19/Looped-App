@@ -3823,11 +3823,11 @@ function pantallaPerfilFan() {
       <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-reconocimientos">Reconocimientos</h2></div>
       <div class="rejilla-tarjetas rejilla-tarjetas--dos">${reconocimientos}</div>
     </section>` : ''}
-    <div class="pregunta__acciones">
+    <div class="pregunta__acciones perfil-fan__acciones">
       <a class="boton boton--secundario" href="siguiendo-fan.html">Artistas que sigues · ${fan.artistasQueSigue.length}</a>
       ${paraExplorar ? `<a class="boton boton--terciario" href="fan-club-fan.html?id=${encodeURIComponent(paraExplorar.id)}">Explorar Fan Club</a>` : ''}
     </div>
-    <div class="pregunta__acciones">
+    <div class="pregunta__acciones perfil-fan__acciones">
       <a class="boton" href="editar-perfil-fan.html">Completar mi perfil</a>
       <a class="boton boton--secundario" href="configuracion.html">Configuración</a>
       <button type="button" class="boton boton--terciario" data-cambiar-cuenta>Cambiar de cuenta</button>

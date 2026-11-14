@@ -315,6 +315,8 @@
 .perfil-fan__cabecera > div { min-width: 0; }
 .perfil-fan__seccion { margin-top: var(--espacio-8); }
 .perfil-fan .tarjeta--tocable { color: inherit; text-decoration: none; }
+/* Botones del final del perfil (debajo de «Reconocimientos»): centrados. */
+.perfil-fan__acciones { margin-inline: auto; justify-content: center; }
 
 /* P01 · Editar perfil del fan */
 .editar__titulo { margin-top: var(--espacio-6); margin-bottom: var(--espacio-3); }
