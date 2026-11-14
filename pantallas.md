@@ -4,7 +4,7 @@ Seguimiento de la construcción. Los tramos y las pantallas siguen el «Orden de
 
 **Columnas:**
 - **Con kit:** la página está construida con `css/tokens.css`, `css/components.css` y `css/styles.css`.
-- **Datos en data.js:** los datos que muestra salen de `js/data.js` (a través de `obtenerDatos()`). «—» si la pantalla no muestra datos.
+- **Datos en data.js:** los datos que muestra salen de Supabase (casi siempre a través de `obtenerDatos()`; `js/data.js` queda solo como referencia de los datos iniciales). «—» si la pantalla no muestra datos.
 - **Revisada vs spec:** la marca el equipo cuando aprueba la pantalla.
 
 ## Revisión responsive (para cada pantalla)
@@ -73,48 +73,48 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| R08 | Cupos | `pages/cupos-artista.html` | | | |
-| — | Configurar cupo | `pages/configurar-cupo-artista.html` | | | |
-| R04 | Bandeja de preguntas | `pages/bandeja-artista.html` | | | |
-| R05 | Revisar pregunta | `pages/revisar-pregunta-artista.html` | | | |
-| R06 | Responder (texto o nota de voz) | `pages/responder-artista.html` | | | |
-| R06f | Respuesta enviada | `pages/respuesta-enviada-artista.html` | | | |
-| R06 preview | Respuesta del artista | `pages/respuesta-artista.html` | | | |
-| — | Conexión activa | `pages/conexion-activa-fan.html` | | | |
-| F05 | Conectar con el artista | `pages/conectar-fan.html` | | | |
-| F05e | Escribir pregunta | `pages/escribir-pregunta-fan.html` | | | |
-| F06 | Tu conexión: estado y respuesta | `pages/tu-conexion-fan.html` | | | |
+| R08 | Cupos | `pages/cupos-artista.html` | ✅ | ✅ | |
+| — | Configurar cupo | `pages/configurar-cupo-artista.html` | ✅ | ✅ | |
+| R04 | Bandeja de preguntas | `pages/bandeja-artista.html` | ✅ | ✅ | |
+| R05 | Revisar pregunta | `pages/revisar-pregunta-artista.html` | ✅ | ✅ | |
+| R06 | Responder (texto o nota de voz) | `pages/responder-artista.html` | ✅ | ✅ | |
+| R06f | Respuesta enviada | `pages/respuesta-enviada-artista.html` | ✅ | ✅ | |
+| R06 preview | Respuesta del artista | `pages/respuesta-artista.html` | ✅ | ✅ | |
+| — | Conexión activa | `pages/conexion-activa-fan.html` | ✅ | ✅ | |
+| F05 | Conectar con el artista | `pages/conectar-fan.html` | ✅ | ✅ | |
+| F05e | Escribir pregunta | `pages/escribir-pregunta-fan.html` | ✅ | ✅ | |
+| F06 | Tu conexión: estado y respuesta | `pages/tu-conexion-fan.html` | ✅ | ✅ | |
 
 ### 6 · Comunidad
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| R07 | Comunidad del artista | `pages/comunidad-artista.html` | | | |
-| — | Nueva publicación | `pages/nueva-publicacion-artista.html` | | | |
-| F04 | Comunidad (vista por el fan) | `pages/comunidad-fan.html` | | | |
+| R07 | Comunidad del artista | `pages/comunidad-artista.html` | ✅ | ✅ | |
+| — | Nueva publicación | `pages/nueva-publicacion-artista.html` | ✅ | ✅ | |
+| F04 | Comunidad (vista por el fan) | `pages/comunidad-fan.html` | ✅ | ✅ | |
 
 ### 7 · Perfiles
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| P04 | Perfil del artista (propio) | `pages/perfil-propio-artista.html` | | | |
-| P02 / P03 | Editar perfil del artista | `pages/editar-perfil-artista.html` | | | |
-| F07a | Perfil del fan | `pages/perfil-fan.html` | | | |
-| F07b | Tu recorrido | `pages/recorrido-fan.html` | | | |
-| P01 | Editar perfil del fan | `pages/editar-perfil-fan.html` | | | |
+| P04 | Perfil del artista (propio) | `pages/perfil-propio-artista.html` | ✅ | ✅ | |
+| P02 / P03 | Editar perfil del artista | `pages/editar-perfil-artista.html` | ✅ | ✅ | |
+| F07a | Perfil del fan | `pages/perfil-fan.html` | ✅ | ✅ | |
+| F07b | Tu recorrido | `pages/recorrido-fan.html` | ✅ | ✅ | |
+| P01 | Editar perfil del fan | `pages/editar-perfil-fan.html` | ✅ | ✅ | |
 
 ### 8 · Fan Club
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| F08a | Conocer el Fan Club | `pages/fan-club-fan.html` | | | |
-| F08b | Contenido del Fan Club | `pages/contenido-fan-club-fan.html` | | | |
+| F08a | Conocer el Fan Club | `pages/fan-club-fan.html` | ✅ | ✅ | |
+| F08b | Contenido del Fan Club | `pages/contenido-fan-club-fan.html` | ✅ | ✅ | |
 
 ### 9 · Compartidas
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| F09 / R09 | Configuración | `pages/configuracion.html` | | | |
-| F10 / R10 | Apariencia | `pages/apariencia.html` | | | |
-| F11 / R11 | Notificaciones | `pages/notificaciones.html` | | | |
-| F12 / R12 | Accesibilidad | `pages/accesibilidad.html` | | | |
+| F09 / R09 | Configuración | `pages/configuracion.html` | ✅ | — | |
+| F10 / R10 | Apariencia | `pages/apariencia.html` | ✅ | — | |
+| F11 / R11 | Notificaciones | `pages/notificaciones.html` | ✅ | ✅ | |
+| F12 / R12 | Accesibilidad | `pages/accesibilidad.html` | ✅ | — | |
