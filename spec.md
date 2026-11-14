@@ -51,6 +51,8 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
     - Página «No encontrada» para links rotos o viejos.
     - En el panel de Supabase hace falta: (1) agregar la dirección de Vercel en Authentication → URL Configuration, para que los links del correo vuelvan a la app; (2) para que los correos lleguen a cualquier persona, un servicio de correo propio (SMTP), porque el que trae Supabase solo envía a los miembros del equipo del proyecto y pocos por hora.
 
+15. **Artistas que sigues** (decisión del 14-11-2026; pantalla sin diseño en el prototipo, hecha con el kit): el fan sigue artistas, pero no tenía dónde verlos juntos. Se llega desde su perfil.
+
 ## Orden de construcción
 
 Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así lo que hace uno se puede probar desde el otro. Dentro de cada bloque se sigue el flujo. El orden de los bloques es una propuesta.
@@ -79,6 +81,7 @@ Fan y artista avanzan a la par: cada bloque trae su parte de los dos lados, así
 10. **Varias cuentas** (decisión 12): cambiar de cuenta y agregar otra cuenta.
 11. **Spotify** (decisión 13): links en editar perfil y reproductor de Spotify en los perfiles.
 12. **Cuenta y acceso** (decisión 14): recuperar contraseña, nueva contraseña, cuenta y página no encontrada.
+13. **Artistas que sigues** (decisión 15).
 
 ## Flujo
 
@@ -105,7 +108,7 @@ splash → bienvenida → ¿ya tienes cuenta?
     - **Sí:** escribir pregunta (o votar una existente) → pregunta en cola → ¿fue seleccionada?
       - **No:** esperar en cola.
       - **Sí:** ¿el artista responde? → recibir respuesta (texto o nota de voz).
-- perfil del fan → tu recorrido (nivel) · Fan Club (conocer → contenido) · editar perfil · configuración.
+- perfil del fan → artistas que sigues · tu recorrido (nivel) · Fan Club (conocer → contenido) · editar perfil · configuración.
 
 **Flujo artista** (navegación inferior: Música · Preguntas · Comunidad · Cupo)
 - panel → música → publicar lanzamiento → lanzamiento publicado (entra a la ventana de 48 h).
@@ -599,6 +602,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   6. «Configuración».
   7. «Cambiar de cuenta» (decisión 12): abre el diálogo «Cambiar de cuenta».
   8. «Tus listas de Spotify» (decisión 13), solo si pegó alguna: el reproductor de Spotify con cada lista.
+  9. «Artistas que sigues · N» (decisión 15): lleva a la lista de artistas que sigue.
 - **Qué funciona de verdad:**
   - Datos, nivel y reconocimientos: Real.
   - Tus listas de Spotify: Real (reproductor de Spotify; no suma minutos).
@@ -1036,4 +1040,18 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Está lista cuando:**
   - Un link que no existe en Vercel muestra esta página con los estilos de Looped (claro u oscuro, según la preferencia guardada).
   - «Ir a Looped» abre la app.
+  - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
+
+### F07c · Artistas que sigues (pantalla nueva, decisión 15)
+- **Archivo:** `pages/siguiendo-fan.html`.
+- **Objetivo:** Esta pantalla existe para que el fan vea juntos a los artistas que sigue y vuelva a ellos. Sabemos que funciona si abre el perfil de uno desde aquí.
+- **Contenido:**
+  1. «Artistas que sigues.» y cuántos son.
+  2. Tarjetas de los artistas (foto, nombre y estado del cupo), ordenadas por nombre.
+  3. Si no sigue a nadie: «Todavía no sigues a nadie.» y «Explorar artistas».
+- **Qué funciona de verdad:**
+  - Lista de artistas que sigue: Real.
+- **Está lista cuando:**
+  - Cada tarjeta abre el perfil del artista; al dejar de seguirlo allí, ya no aparece aquí.
+  - La navegación inferior marca «Perfil».
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).

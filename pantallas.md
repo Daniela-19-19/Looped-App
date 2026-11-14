@@ -139,3 +139,9 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 | A02c | Nueva contraseña (decisión 14) | `pages/nueva-contrasena.html` | ✅ | — | |
 | F13 / R13 | Cuenta: correo y contraseña (decisión 14) | `pages/cuenta.html` | ✅ | — | |
 | 404 | Página no encontrada (decisión 14) | `404.html` | ✅ | — | |
+
+### 13 · Artistas que sigues
+
+| Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
+|---|---|---|---|---|---|
+| F07c | Artistas que sigues (decisión 15) | `pages/siguiendo-fan.html` | ✅ | ✅ | |

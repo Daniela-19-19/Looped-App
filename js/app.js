@@ -3824,6 +3824,7 @@ function pantallaPerfilFan() {
       <div class="rejilla-tarjetas rejilla-tarjetas--dos">${reconocimientos}</div>
     </section>` : ''}
     <div class="pregunta__acciones">
+      <a class="boton boton--secundario" href="siguiendo-fan.html">Artistas que sigues · ${fan.artistasQueSigue.length}</a>
       ${paraExplorar ? `<a class="boton boton--terciario" href="fan-club-fan.html?id=${encodeURIComponent(paraExplorar.id)}">Explorar Fan Club</a>` : ''}
     </div>
     <div class="pregunta__acciones">
@@ -3832,6 +3833,34 @@ function pantallaPerfilFan() {
       <button type="button" class="boton boton--terciario" data-cambiar-cuenta>Cambiar de cuenta</button>
     </div>`;
   activarCambiarCuenta();
+}
+
+// ---------- F07c · Artistas que sigues (decisión 15) ----------
+// REAL: los artistas de «seguimientos», por nombre. Cada tarjeta abre su
+// perfil (ahí se deja de seguir).
+function pantallaSiguiendoFan() {
+  const fan = fanActual();
+  if (!fan) {
+    location.replace('iniciar-sesion.html');
+    return;
+  }
+  const artistas = obtenerDatos('artistas')
+    .filter(a => fan.artistasQueSigue.includes(a.id))
+    .sort((a, b) => a.nombreArtistico.localeCompare(b.nombreArtistico, 'es'));
+  document.querySelector('[data-siguiendo-fan]').innerHTML = `
+    <div class="encabezado-pagina">
+      <h1 class="titulo titulo--medio">Artistas que sigues.</h1>
+      <p class="encabezado-pagina__bajada">${artistas.length
+        ? `Sigues a ${artistas.length === 1 ? '1 artista' : `${artistas.length} artistas`}. Toca uno para escucharlo o conectar.`
+        : 'Cuando sigas a un artista, lo encontrarás aquí.'}</p>
+    </div>
+    ${artistas.length
+      ? `<div class="rejilla-tarjetas">${artistas.map(htmlTarjetaArtista).join('')}</div>`
+      : `<div class="tarjeta">
+          <h2 class="tarjeta__titulo">Todavía no sigues a nadie.</h2>
+          <p class="tarjeta__texto">Descubre artistas y toca «Seguir» en su perfil.</p>
+          <div class="tarjeta__acciones"><a class="boton boton--secundario" href="explorar-fan.html">Explorar artistas</a></div>
+        </div>`}`;
 }
 
 // ---------- F07b · Tu recorrido ----------
@@ -5754,6 +5783,7 @@ const PANTALLAS = {
   'recuperar-contrasena': pantallaRecuperarContrasena,
   'nueva-contrasena': pantallaNuevaContrasena,
   'cuenta': pantallaCuenta,
+  'siguiendo-fan': pantallaSiguiendoFan,
   'elegir-experiencia': pantallaElegirExperiencia,
   'crear-cuenta': pantallaCrearCuenta,
   'identidad-artista': pantallaIdentidadArtista,
