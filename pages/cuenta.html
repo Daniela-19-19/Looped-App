@@ -88,34 +88,8 @@
       </form>
     </section>
 
-    <section class="ajustes__seccion" aria-labelledby="titulo-eliminar">
-      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-eliminar">Eliminar cuenta</h2></div>
-      <p class="texto texto--suave">Se borran para siempre tu perfil y todo lo que has hecho en Looped: música, preguntas, respuestas, publicaciones y tu recorrido. No se puede deshacer.</p>
-      <div class="pregunta__acciones">
-        <button type="button" class="boton boton--peligro" data-eliminar-cuenta>Eliminar mi cuenta</button>
-      </div>
-    </section>
   </main>
 
-  <!-- Confirmación: pide la contraseña antes de borrar. -->
-  <div class="velo" hidden data-velo-eliminar>
-    <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-eliminar-titulo" aria-describedby="dialogo-eliminar-texto">
-      <h2 class="dialogo__titulo" id="dialogo-eliminar-titulo">¿Eliminar tu cuenta?</h2>
-      <p class="dialogo__texto" id="dialogo-eliminar-texto">Se borra todo y no se puede deshacer. Escribe tu contraseña para confirmar.</p>
-      <form id="formulario-eliminar" novalidate>
-        <div class="campo" data-campo="contrasena-eliminar">
-          <label class="campo__etiqueta" for="contrasena-eliminar">Contraseña</label>
-          <input class="campo__control" id="contrasena-eliminar" name="contrasena-eliminar" type="password"
-            autocomplete="current-password" aria-describedby="error-contrasena-eliminar">
-          <p class="campo__mensaje-error" id="error-contrasena-eliminar" role="alert"></p>
-        </div>
-      </form>
-      <div class="dialogo__acciones">
-        <button type="submit" class="boton boton--peligro" form="formulario-eliminar" data-confirmar-eliminar>Eliminar para siempre</button>
-        <button type="button" class="boton boton--terciario" data-cancelar-eliminar>Cancelar</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Avisos flotantes -->
   <div class="pantalla__avisos" aria-live="polite" data-avisos></div>

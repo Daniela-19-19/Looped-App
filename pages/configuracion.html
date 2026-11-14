@@ -80,18 +80,26 @@
     </section>
     <div class="pregunta__acciones">
       <button type="button" class="boton boton--secundario" data-cerrar-sesion>Cerrar sesión</button>
-      <button type="button" class="boton boton--terciario" data-borrar-dispositivo>Borrar datos de este dispositivo</button>
+      <button type="button" class="boton boton--peligro" data-eliminar-cuenta>Eliminar cuenta</button>
     </div>
   </main>
 
-  <!-- Confirmación para borrar los datos de este dispositivo -->
-  <div class="velo" hidden data-velo-borrar>
-    <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-borrar-titulo" aria-describedby="dialogo-borrar-texto">
-      <h2 class="dialogo__titulo" id="dialogo-borrar-titulo">¿Borrar los datos de este dispositivo?</h2>
-      <p class="dialogo__texto" id="dialogo-borrar-texto">Se cerrarán todas las cuentas guardadas en este dispositivo y se borrarán tus preferencias y la música guardadas en este navegador. Tu cuenta y lo que hay en Looped no se borran.</p>
+  <!-- Eliminar cuenta (decisión 14): pide la contraseña antes de borrar. -->
+  <div class="velo" hidden data-velo-eliminar>
+    <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-eliminar-titulo" aria-describedby="dialogo-eliminar-texto">
+      <h2 class="dialogo__titulo" id="dialogo-eliminar-titulo">¿Eliminar tu cuenta?</h2>
+      <p class="dialogo__texto" id="dialogo-eliminar-texto">Se borran para siempre tu cuenta y todo lo que has hecho en Looped: perfil, música, preguntas, respuestas, publicaciones y tu recorrido. Ese correo ya no podrá entrar. Escribe tu contraseña para confirmar.</p>
+      <form id="formulario-eliminar" novalidate>
+        <div class="campo" data-campo="contrasena-eliminar">
+          <label class="campo__etiqueta" for="contrasena-eliminar">Contraseña</label>
+          <input class="campo__control" id="contrasena-eliminar" name="contrasena-eliminar" type="password"
+            autocomplete="current-password" aria-describedby="error-contrasena-eliminar">
+          <p class="campo__mensaje-error" id="error-contrasena-eliminar" role="alert"></p>
+        </div>
+      </form>
       <div class="dialogo__acciones">
-        <button type="button" class="boton boton--peligro" data-confirmar-borrar>Borrar datos</button>
-        <button type="button" class="boton boton--terciario" data-cancelar-borrar>Cancelar</button>
+        <button type="submit" class="boton boton--peligro" form="formulario-eliminar" data-confirmar-eliminar>Eliminar para siempre</button>
+        <button type="button" class="boton boton--terciario" data-cancelar-eliminar>Cancelar</button>
       </div>
     </div>
   </div>

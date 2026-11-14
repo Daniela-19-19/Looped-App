@@ -22,7 +22,7 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
 7. **Prioridad de las preguntas:** primero las más votadas, y solo de fans con el nivel suficiente para ese cupo.
 8. **Música:** subida de audio real y reproductor completo: anterior, reproducir o pausar, siguiente, aleatorio, bucle y cola de reproducción que el fan puede editar.
 9. **Notificaciones al celular (push):** entran en el MVP.
-10. **Datos de ejemplo** (Mara Sol, Río Lento, Nadia Cruz, Los Faroles y sus lanzamientos y preguntas): se mantienen por ahora como datos iniciales. Decisión del equipo del 10-11-2026: como los datos ahora son reales y compartidos en Supabase, la opción «Borrar datos de la demostración» pasa a ser «Borrar datos de este dispositivo»: cierra la sesión y borra solo lo guardado en el navegador (preferencias y música), sin tocar Supabase.
+10. **Datos de ejemplo** (Mara Sol, Río Lento, Nadia Cruz, Los Faroles y sus lanzamientos y preguntas): se mantienen por ahora como datos iniciales. Decisión del equipo del 10-11-2026: como los datos ahora son reales y compartidos en Supabase, la opción «Borrar datos de la demostración» pasa a ser «Borrar datos de este dispositivo»: cierra la sesión y borra solo lo guardado en el navegador (preferencias y música), sin tocar Supabase. **Reemplazada el 14-11-2026:** se confundía con borrar la cuenta. Configuración queda con dos opciones claras: «Cerrar sesión» (sale sin borrar nada) y «Eliminar cuenta» (borra la cuenta de verdad, decisión 14).
 
 11. **Fan Club, lo más sencillo posible:**
     - Entrar es gratis en el MVP. El cobro (suscripción) queda para Después.
@@ -35,7 +35,7 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
     - La pestaña «Perfil» conserva su ícono: la foto de la persona ya se ve en la barra de arriba.
     - Las cuentas pueden ser de los dos roles: un artista puede tener también una cuenta de fan. Al cambiar, la app toma el color y la navegación del rol de esa cuenta.
     - «Cerrar sesión» saca solo la cuenta actual y solo en este dispositivo: si queda otra cuenta guardada, entra a esa; si no, vuelve a la bienvenida. Nunca borra la cuenta de Supabase.
-    - «Borrar datos de este dispositivo» saca todas las cuentas.
+    - «Eliminar cuenta» saca y borra solo la cuenta en uso; las demás cuentas guardadas siguen.
     - No se guardan contraseñas: el navegador guarda la sesión de cada cuenta. Si la sesión de una cuenta vence, al elegirla se pide la contraseña otra vez.
     - Las notificaciones al celular (push) llegan solo para la cuenta activa; las demás ven sus avisos al volver a entrar.
 
@@ -49,7 +49,7 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
 14. **Cuenta y acceso** (decisión del 14-11-2026; pantallas sin diseño en el prototipo, hechas con el kit): con cuentas reales, quien olvida su contraseña no puede quedar por fuera.
     - Recuperar la contraseña con un link que llega al correo (Supabase Auth). Por seguridad, la app nunca dice si un correo tiene cuenta o no.
     - Pantalla «Cuenta» en Configuración: cambiar el correo (se confirma con un link en el correo nuevo) y la contraseña (pide la actual).
-    - «Eliminar mi cuenta» en la pantalla «Cuenta»: pide la contraseña y borra para siempre la cuenta, el perfil y todo lo suyo (base de datos y archivos). Si queda otra cuenta guardada en el dispositivo, entra a esa.
+    - «Eliminar cuenta» en Configuración, junto a «Cerrar sesión»: pide la contraseña y borra para siempre la cuenta, el perfil y todo lo suyo (base de datos y archivos). Si queda otra cuenta guardada en el dispositivo, entra a esa.
     - Página «No encontrada» para links rotos o viejos.
     - En el panel de Supabase hace falta: (1) agregar la dirección de Vercel en Authentication → URL Configuration, para que los links del correo vuelvan a la app; (2) para que los correos lleguen a cualquier persona, un servicio de correo propio (SMTP), porque el que trae Supabase solo envía a los miembros del equipo del proyecto y pocos por hora.
 
@@ -922,15 +922,15 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   2. Cuenta (decisión 14), apariencia, notificaciones y accesibilidad.
   3. «Cuentas» (decisión 12): las cuentas guardadas en este dispositivo, la activa marcada, y «Agregar otra cuenta».
   4. «Cerrar sesión».
-  5. «Borrar datos de este dispositivo», con confirmación (decisión 10).
+  5. «Eliminar cuenta» (`.boton--peligro`), con un diálogo que pide la contraseña (decisión 14; reemplaza a «Borrar datos de este dispositivo»).
 - **Qué funciona de verdad:**
   - Cuentas: Real (cambiar y agregar cuentas).
   - Cerrar sesión: Real. Saca solo la cuenta actual, solo en este dispositivo.
-  - Borrar datos de este dispositivo: Real (cierra todas las cuentas y limpia el navegador; no toca Supabase).
+  - Eliminar cuenta: Real (supabase/cambio-08-eliminar-cuenta.sql). Borra la cuenta, el perfil y todo lo suyo, y sus archivos; ese correo ya no puede entrar.
 - **Está lista cuando:**
   - Se ve igual al diseño aprobado.
   - Cerrar sesión detiene la música; si queda otra cuenta guardada entra a esa, si no vuelve a la bienvenida.
-  - Borrar datos pide confirmación.
+  - Eliminar cuenta pide la contraseña; con una incorrecta no borra nada.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
 ### F10 / R10 · Apariencia
@@ -1025,15 +1025,12 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   1. «Tu cuenta.» y la bajada.
   2. «Correo»: el correo actual, campo «Correo nuevo» y «Cambiar correo».
   3. «Contraseña»: campos «Contraseña actual» y «Contraseña nueva», y «Cambiar contraseña».
-  4. «Eliminar cuenta»: qué se borra y «Eliminar mi cuenta» (`.boton--peligro`), con un diálogo que pide la contraseña.
 - **Qué funciona de verdad:**
   - Cambiar el correo: Real. Llega un link al correo nuevo; el cambio se aplica al abrirlo.
   - Cambiar la contraseña: Real. Primero revisa la contraseña actual.
-  - Eliminar la cuenta: Real (supabase/cambio-08-eliminar-cuenta.sql). Borra la cuenta, el perfil y todo lo suyo, y sus archivos.
 - **Está lista cuando:**
   - Un correo mal escrito, igual al actual o que ya tiene cuenta muestra el error debajo del campo.
   - Una contraseña actual incorrecta muestra el error y no cambia nada.
-  - Eliminar pide la contraseña; con una incorrecta no borra nada. Al eliminar, la persona sale de la cuenta y ya no puede entrar con ese correo.
   - Al terminar aparece un aviso flotante de confirmación.
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 

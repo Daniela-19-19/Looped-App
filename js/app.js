@@ -620,7 +620,11 @@ async function pantallaCuenta() {
     mostrarAviso('Tu contraseña quedó cambiada.');
   });
 
-  // Eliminar la cuenta: diálogo que pide la contraseña.
+}
+
+// «Eliminar cuenta» (Configuración, decisión 14): diálogo que pide la
+// contraseña y borra la cuenta de verdad.
+function activarEliminarCuenta(sesion) {
   const botonEliminar = document.querySelector('[data-eliminar-cuenta]');
   const velo = document.querySelector('[data-velo-eliminar]');
   const claveEliminar = document.getElementById('contrasena-eliminar');
@@ -658,7 +662,11 @@ async function pantallaCuenta() {
       claveEliminar.focus();
     };
     let revision;
-    try { revision = await baseDatos.auth.signInWithPassword({ email: usuario.email, password: claveEliminar.value }); }
+    try {
+      const { data } = await baseDatos.auth.getUser();
+      if (!data.user) throw new Error('sin-sesion');
+      revision = await baseDatos.auth.signInWithPassword({ email: data.user.email, password: claveEliminar.value });
+    }
     catch (e) { revision = { error: { code: 'sin_conexion' } }; }
     if (revision.error) {
       return fallar(revision.error.code === 'invalid_credentials'
@@ -4868,10 +4876,10 @@ function iniciarAtajoCuentas() {
 // REAL: deja de recibir avisos aquí, detiene la música, cierra la sesión
 // de la cuenta en uso solo en este dispositivo y borra sus copias del
 // navegador. Si queda otra cuenta guardada, entra a esa (decisión 12); si
-// no, vuelve a la bienvenida. «Borrar datos de este dispositivo» saca todas.
+// no, vuelve a la bienvenida.
 // No borra la cuenta: todo sigue en Supabase al volver a entrar.
 // («looped-perfil» es una copia vieja que ya no se usa: se borra si quedó.)
-async function cerrarSesion({ borrarTodo = false } = {}) {
+async function cerrarSesion() {
   await desactivarPush();
   detenerMusica();
   const sesion = leerSesion();
@@ -4886,13 +4894,8 @@ async function cerrarSesion({ borrarTodo = false } = {}) {
   try {
     ['looped-sesion', 'looped-perfil', CLAVE_REPRODUCTOR].forEach(clave => localStorage.removeItem(clave));
     sessionStorage.removeItem('looped-registro');
-    if (borrarTodo) {
-      // «Borrar datos de este dispositivo»: también preferencias y lo viejo del navegador.
-      Object.keys(localStorage).filter(clave => clave.startsWith('looped-')).forEach(clave => localStorage.removeItem(clave));
-      sessionStorage.clear();
-    }
   } catch (e) { /* sin almacenamiento */ }
-  if (!borrarTodo && otras.length) {
+  if (otras.length) {
     cambiarACuenta(otras[0].usuarioId);
     return;
   }
@@ -4930,28 +4933,8 @@ function pantallaConfiguracion() {
     cerrarSesion();
   });
 
-  // Borrar datos de este dispositivo: primero se confirma (decisión del equipo del 10-11-2026).
-  const botonBorrar = document.querySelector('[data-borrar-dispositivo]');
-  const velo = document.querySelector('[data-velo-borrar]');
-  const botonConfirmar = document.querySelector('[data-confirmar-borrar]');
-  const botonCancelar = document.querySelector('[data-cancelar-borrar]');
-  function cerrarDialogo() {
-    velo.hidden = true;
-    botonBorrar.focus();
-  }
-  botonBorrar.addEventListener('click', () => {
-    velo.hidden = false;
-    botonCancelar.focus(); // el foco empieza en la opción segura
-  });
-  botonCancelar.addEventListener('click', cerrarDialogo);
-  velo.addEventListener('click', evento => { if (evento.target === velo) cerrarDialogo(); });
-  document.addEventListener('keydown', evento => {
-    if (evento.key === 'Escape' && !velo.hidden) cerrarDialogo();
-  });
-  botonConfirmar.addEventListener('click', () => {
-    botonConfirmar.disabled = true;
-    cerrarSesion({ borrarTodo: true });
-  });
+  // Eliminar cuenta: borra la cuenta de verdad (decisión 14).
+  activarEliminarCuenta(sesion);
 }
 
 // ---------- F10 / R10 · Apariencia ----------
