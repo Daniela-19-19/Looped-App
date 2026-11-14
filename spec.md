@@ -184,7 +184,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - Se ve bien en 320 px (celular pequeño), 375 px (celular), 768 px (tablet), 1024 px y 1280 px (computador), y al arrastrar el borde de la ventana entre esos anchos.
 - No aparece barra de desplazamiento horizontal.
 - Ningún texto se corta, se sale de su caja ni queda encima de otro elemento.
-- Los botones y enlaces miden al menos 48 px de alto y no quedan pegados entre sí.
+- Los botones y enlaces miden al menos 48 px de alto y no quedan pegados entre sí. Excepción (decisión del equipo del 14-11-2026): «Cambiar de cuenta» en el perfil del fan usa el botón pequeño (40 px), para que pese menos que los demás.
 - Con zoom al 200 % todo se sigue leyendo y usando.
 - En celular, al abrir el teclado, el campo que se escribe y el botón principal se pueden alcanzar.
 - Se adapta a cada tamaño (decisión del equipo del 07-11-2026: «barra lateral + rejillas»):
@@ -992,7 +992,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Contenido:**
   1. «¿Olvidaste tu contraseña?» y la bajada.
   2. Campo de correo (con el que escribió en Iniciar sesión, si lo escribió).
-  3. Botón «Enviar link» y enlace «Volver a iniciar sesión».
+  3. Botón «Enviar link» (con borde; se pinta del color del rol solo al pasar el mouse, enfocarlo o presionarlo, como en el panel del artista) y enlace «Volver a iniciar sesión».
   4. Después de enviar: «Revisa tu correo.», con la nota de buscar también en spam, y «Volver a iniciar sesión».
 - **Qué funciona de verdad:**
   - Enviar el link: Real (Supabase Auth).
@@ -1008,7 +1008,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 - **Contenido:**
   1. «Crea tu nueva contraseña.»
   2. Campos «Contraseña nueva» y «Repite la contraseña» (con botón para mostrarlas).
-  3. Botón «Guardar contraseña».
+  3. Botón «Guardar contraseña» (con borde; se pinta solo al pasar el mouse, enfocarlo o presionarlo).
   4. Si el link venció o ya se usó: «Este link ya no sirve.» y «Pedir otro link».
 - **Qué funciona de verdad:**
   - Guardar la contraseña: Real. Al guardarla, entra a la cuenta y abre su inicio o su panel.
