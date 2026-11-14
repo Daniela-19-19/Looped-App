@@ -23,6 +23,10 @@ button, input, textarea { font: inherit; color: inherit; }
   outline: var(--grosor-foco) solid var(--color-foco);
   outline-offset: var(--grosor-foco);
 }
+/* Títulos y bloques que reciben el foco solo desde js/app.js (tabindex="-1"),
+   para que el lector de pantalla los anuncie: no se tocan, así que no
+   llevan el recuadro de foco. */
+[tabindex="-1"]:focus { outline: none; }
 
 /* ---------- Texto ---------- */
 .titulo {
