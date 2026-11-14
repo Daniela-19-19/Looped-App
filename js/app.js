@@ -267,6 +267,26 @@ function pantallaIniciarSesion() {
   const botonEntrar = document.querySelector('button[form="formulario-sesion"]');
   const textoBoton = botonEntrar.textContent;
 
+  // Agregar otra cuenta (decisión 12): la cuenta en uso queda guardada y
+  // «Volver» regresa a ella. Con ?correo=, la sesión de esa cuenta venció.
+  const parametros = new URLSearchParams(location.search);
+  if (parametros.get('correo')) correo.value = parametros.get('correo');
+  if (parametros.get('agregar') === '1' && leerSesion()) {
+    const bajada = document.querySelector('.encabezado-pagina__bajada');
+    if (parametros.get('correo')) {
+      bajada.textContent = 'Escribe tu contraseña para volver a entrar a esta cuenta.';
+    } else {
+      document.querySelector('.encabezado-pagina .titulo').textContent = 'Agrega otra cuenta.';
+      bajada.textContent = 'Tu cuenta actual queda guardada en este dispositivo.';
+    }
+    const volver = document.querySelector('[data-volver]');
+    volver.setAttribute('aria-label', 'Volver a tu cuenta');
+    volver.addEventListener('click', evento => {
+      evento.preventDefault();
+      volverACuentaEnUso();
+    });
+  }
+
   formulario.addEventListener('submit', async evento => {
     evento.preventDefault();
     if (botonEntrar.disabled) return; // ya se está entrando
@@ -290,6 +310,8 @@ function pantallaIniciarSesion() {
     botonEntrar.textContent = 'Entrando…';
     let sesion;
     try {
+      // La cuenta en uso queda guardada para poder volver a ella.
+      try { await guardarCuentaEnUso(); } catch (e) { /* sin conexión: se entra igual */ }
       sesion = await iniciarSesion(textoCorreo, contrasena.value);
     } catch (e) {
       botonEntrar.disabled = false;
@@ -312,6 +334,7 @@ function pantallaIniciarSesion() {
     }
 
     guardarSesion({ rol: sesion.rol, id: sesion.perfil.id });
+    try { await recordarCuentaEnUso(sesion.rol, sesion.perfil.id); } catch (e) { /* sin almacenamiento */ }
     await traerAjustesDeLaCuenta(sesion.usuarioId, sesion.rol === 'fan' ? sesion.perfil.id : null);
     // Cada rol abre su lado: el fan su inicio y el artista su panel.
     location.href = sesion.rol === 'artista' ? 'panel-artista.html' : 'inicio-fan.html';
@@ -377,6 +400,8 @@ function pantallaCrearCuenta() {
     botonContinuar.textContent = 'Creando tu cuenta…';
     let respuesta;
     try {
+      // Si ya hay una cuenta en uso, queda guardada para poder volver a ella.
+      try { await guardarCuentaEnUso(); } catch (e) { /* sin conexión */ }
       respuesta = await baseDatos.auth.signUp({
         email: textoCorreo,
         password: contrasena.value,
@@ -814,6 +839,8 @@ async function guardarPerfil(registro) {
 
   const perfil = Object.assign(perfilDelRegistro(registro), { id: data.id, correo: user.email, foto });
   guardarSesion({ rol: registro.rol, id: data.id });
+  recordarCuenta({ usuarioId: user.id, correo: user.email, rol: registro.rol, id: data.id,
+    nombre: registro.rol === 'artista' ? perfil.nombreArtistico : perfil.nombrePerfil, usuario: perfil.nombreUsuario, foto, sesion: null });
   try { sessionStorage.removeItem('looped-registro'); } catch (e) { /* sin almacenamiento */ }
   return perfil;
 }
@@ -3510,7 +3537,9 @@ function pantallaPerfilFan() {
     <div class="pregunta__acciones">
       <a class="boton" href="editar-perfil-fan.html">Completar mi perfil</a>
       <a class="boton boton--secundario" href="configuracion.html">Configuración</a>
+      <button type="button" class="boton boton--terciario" data-cambiar-cuenta>Cambiar de cuenta</button>
     </div>`;
+  activarCambiarCuenta();
 }
 
 // ---------- F07b · Tu recorrido ----------
@@ -3740,7 +3769,17 @@ function pantallaPerfilPropioArtista() {
         <div class="tarjeta__acciones"><a class="boton boton--secundario" href="lanzamiento-artista.html?id=${encodeURIComponent(ultimo.id)}">Ver lanzamiento</a></div>
       </article>
     </section>` : ''}
-    <div class="pregunta__acciones"><a class="boton boton--secundario" href="configuracion.html">Configuración</a></div>`;
+    <div class="pregunta__acciones">
+      <a class="boton boton--secundario" href="configuracion.html">Configuración</a>
+      <button type="button" class="boton boton--terciario" data-cambiar-cuenta>Cambiar de cuenta</button>
+    </div>`;
+  activarCambiarCuenta();
+}
+
+// Botón «Cambiar de cuenta» de los perfiles: abre el diálogo (decisión 12).
+function activarCambiarCuenta() {
+  const boton = document.querySelector('[data-cambiar-cuenta]');
+  if (boton) boton.addEventListener('click', () => abrirCambiarCuenta(boton));
 }
 
 // ---------- P02 / P03 · Editar perfil del artista ----------
@@ -4094,15 +4133,255 @@ async function pushActivo() {
   return Boolean(registro && await registro.pushManager.getSubscription());
 }
 
+// ---------- Varias cuentas en el mismo dispositivo (decisión 12) ----------
+// REAL: las cuentas que entraron en este navegador, para cambiar entre
+// ellas sin escribir la contraseña. Cada una: { usuarioId, correo, rol, id,
+// nombre, usuario, foto, sesion }. «sesion» son las llaves de Supabase de una
+// cuenta que no está en uso; la cuenta en uso no las guarda aquí porque
+// Supabase las mantiene al día. Nunca se guardan contraseñas.
+const CLAVE_CUENTAS = 'looped-cuentas';
+function leerCuentas() {
+  try { return JSON.parse(localStorage.getItem(CLAVE_CUENTAS)) || []; } catch (e) { return []; }
+}
+function guardarCuentas(cuentas) {
+  try { localStorage.setItem(CLAVE_CUENTAS, JSON.stringify(cuentas)); } catch (e) { /* sin almacenamiento */ }
+}
+// Agrega una cuenta a la lista, o actualiza la que ya estaba.
+function recordarCuenta(cuenta) {
+  const cuentas = leerCuentas();
+  const guardada = cuentas.find(c => c.usuarioId === cuenta.usuarioId);
+  if (guardada) Object.assign(guardada, cuenta);
+  else cuentas.push(cuenta);
+  guardarCuentas(cuentas);
+}
+
+// Nombre, usuario y foto de una cuenta, al día con Supabase. null si no cargaron.
+function datosDeCuenta(rol, id) {
+  const perfil = obtenerDatos(rol === 'artista' ? 'artistas' : 'fans').find(p => p.id === id);
+  if (!perfil) return null;
+  return { nombre: rol === 'artista' ? perfil.nombreArtistico : perfil.nombrePerfil, usuario: perfil.nombreUsuario, foto: perfil.foto || null };
+}
+
+// La cuenta que acaba de entrar (al iniciar sesión, registrarse o cambiar)
+// queda en la lista como la cuenta en uso, sin llaves.
+async function recordarCuentaEnUso(rol, id) {
+  const { data } = await baseDatos.auth.getSession();
+  if (!data.session) return;
+  recordarCuenta(Object.assign({ usuarioId: data.session.user.id, correo: data.session.user.email, rol, id, sesion: null },
+    datosDeCuenta(rol, id) || {}));
+}
+
+// Si la cuenta en uso entró antes de que existiera esta función, la agrega a la lista.
+async function asegurarCuentaEnUso() {
+  const sesion = leerSesion();
+  if (!sesion || leerCuentas().some(c => c.id === sesion.id)) return;
+  await recordarCuentaEnUso(sesion.rol, sesion.id);
+}
+
+// Guarda las llaves de la cuenta en uso justo antes de que otra ocupe su
+// lugar (al cambiar, iniciar sesión o crear otra cuenta), para poder volver.
+async function guardarCuentaEnUso() {
+  const sesion = leerSesion();
+  if (!sesion || typeof baseDatos === 'undefined') return;
+  const { data } = await baseDatos.auth.getSession();
+  if (!data.session) return;
+  // Si la sesión de Supabase ya es de otra persona (p. ej. una cuenta a medio
+  // crear), no se mezclan: esas llaves no son de la cuenta de «looped-sesion».
+  const guardada = leerCuentas().find(c => c.id === sesion.id);
+  if (guardada && guardada.usuarioId !== data.session.user.id) return;
+  recordarCuenta(Object.assign({
+    usuarioId: data.session.user.id, correo: data.session.user.email, rol: sesion.rol, id: sesion.id,
+    sesion: { access_token: data.session.access_token, refresh_token: data.session.refresh_token }
+  }, datosDeCuenta(sesion.rol, sesion.id) || {}));
+}
+
+// REAL: cambia a otra cuenta guardada. Detiene la música, pasa los avisos
+// al celular a la nueva cuenta y abre el inicio de su rol. Si la sesión de
+// esa cuenta venció, lleva a iniciar sesión con su correo ya escrito.
+async function cambiarACuenta(usuarioId) {
+  const destino = leerCuentas().find(c => c.usuarioId === usuarioId);
+  if (!destino) return;
+  await guardarCuentaEnUso();
+  await desactivarPush(); // los avisos al celular son solo de la cuenta en uso
+  detenerMusica();
+  let error = destino.sesion ? null : 'sin-llaves';
+  if (!error) {
+    try { ({ error } = await baseDatos.auth.setSession(destino.sesion)); } catch (e) { error = e; }
+  }
+  if (error) {
+    recordarCuenta({ usuarioId, sesion: null });
+    location.href = `iniciar-sesion.html?agregar=1&correo=${encodeURIComponent(destino.correo)}`;
+    return;
+  }
+  guardarSesion({ rol: destino.rol, id: destino.id });
+  recordarCuenta({ usuarioId, sesion: null }); // ahora la cuenta en uso: Supabase tiene sus llaves
+  await traerAjustesDeLaCuenta(usuarioId, destino.rol === 'fan' ? destino.id : null);
+  // Si esta cuenta tiene los avisos activados y el navegador ya dio permiso, siguen llegando.
+  if (leerPreferencias().notificaciones !== false && pushDisponible() && Notification.permission === 'granted') {
+    try { await activarPush(); } catch (e) { /* se activan después desde Notificaciones */ }
+  }
+  location.href = destino.rol === 'artista' ? 'panel-artista.html' : 'inicio-fan.html';
+}
+
+// «Volver» en iniciar sesión (al agregar otra cuenta): regresa a la cuenta
+// en uso. Si su sesión se perdió en el camino, la recupera con sus llaves.
+async function volverACuentaEnUso() {
+  const sesion = leerSesion();
+  const cuenta = sesion && leerCuentas().find(c => c.id === sesion.id);
+  let enUso = null;
+  try { enUso = (await baseDatos.auth.getSession()).data.session; } catch (e) { /* sin conexión */ }
+  if (sesion && enUso && (!cuenta || cuenta.usuarioId === enUso.user.id)) {
+    location.href = sesion.rol === 'artista' ? 'panel-artista.html' : 'inicio-fan.html';
+  } else if (cuenta && cuenta.sesion) {
+    cambiarACuenta(cuenta.usuarioId);
+  } else {
+    location.href = 'bienvenida.html';
+  }
+}
+
+// Filas de las cuentas guardadas (diálogo «Cambiar de cuenta» y Configuración).
+function htmlFilasCuentas() {
+  const sesion = leerSesion();
+  return leerCuentas().map(cuenta => {
+    const datos = datosDeCuenta(cuenta.rol, cuenta.id) || cuenta;
+    const nombre = datos.nombre || cuenta.correo;
+    const enUso = Boolean(sesion && cuenta.id === sesion.id);
+    const avatar = datos.foto
+      ? `<span class="avatar"><img src="${escapar(rutaRecurso(datos.foto))}" alt=""></span>`
+      : `<span class="avatar avatar--acento" aria-hidden="true">${escapar(iniciales(nombre))}</span>`;
+    return `
+      <button type="button" class="fila-lista" data-cuenta="${escapar(cuenta.usuarioId)}"${enUso ? ' aria-current="true"' : ''}>
+        ${avatar}
+        <span class="fila-lista__info">
+          <b class="fila-lista__titulo">${escapar(nombre)}</b>
+          <span class="fila-lista__detalle">${cuenta.rol === 'artista' ? 'Artista' : 'Fan'}${datos.usuario ? ' · @' + escapar(datos.usuario) : ''}</span>
+        </span>
+        ${enUso ? '<span class="etiqueta etiqueta--acento">En uso</span>' : ''}
+      </button>`;
+  }).join('');
+}
+
+// Pinta la lista en un contenedor y la hace tocable: tocar otra cuenta cambia a ella.
+function pintarCuentas(contenedor, alTocarLaEnUso) {
+  contenedor.innerHTML = htmlFilasCuentas();
+  contenedor.querySelectorAll('[data-cuenta]').forEach(fila => {
+    fila.addEventListener('click', () => {
+      if (fila.hasAttribute('aria-current')) {
+        if (alTocarLaEnUso) alTocarLaEnUso();
+        return;
+      }
+      contenedor.querySelectorAll('[data-cuenta]').forEach(otra => { otra.disabled = true; });
+      fila.querySelector('.fila-lista__detalle').textContent = 'Cambiando de cuenta…';
+      cambiarACuenta(fila.dataset.cuenta);
+    });
+  });
+}
+
+// Diálogo «Cambiar de cuenta» (desde los perfiles). Se crea la primera vez.
+async function abrirCambiarCuenta(botonQueAbre) {
+  await asegurarCuentaEnUso();
+  let velo = document.querySelector('[data-velo-cuentas]');
+  if (!velo) {
+    velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.hidden = true;
+    velo.setAttribute('data-velo-cuentas', '');
+    velo.innerHTML = `
+      <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-cuentas-titulo">
+        <h2 class="dialogo__titulo" id="dialogo-cuentas-titulo">Cambiar de cuenta</h2>
+        <div class="ajustes__lista" data-lista-cuentas></div>
+        <div class="dialogo__acciones">
+          <a class="boton boton--secundario" href="iniciar-sesion.html?agregar=1">Agregar otra cuenta</a>
+          <button type="button" class="boton boton--terciario" data-cerrar-cuentas>Cerrar</button>
+        </div>
+      </div>`;
+    document.body.append(velo);
+    const cerrar = () => {
+      velo.hidden = true;
+      if (velo.botonQueAbre) velo.botonQueAbre.focus(); // el foco vuelve al botón
+    };
+    velo.querySelector('[data-cerrar-cuentas]').addEventListener('click', cerrar);
+    velo.addEventListener('click', evento => { if (evento.target === velo) cerrar(); });
+    document.addEventListener('keydown', evento => {
+      if (evento.key === 'Escape' && !velo.hidden) cerrar();
+    });
+    velo.cerrar = cerrar;
+  }
+  velo.botonQueAbre = botonQueAbre;
+  pintarCuentas(velo.querySelector('[data-lista-cuentas]'), velo.cerrar);
+  velo.hidden = false;
+  // El foco empieza en la primera cuenta que no está en uso (o en «Agregar otra cuenta»).
+  (velo.querySelector('[data-cuenta]:not([aria-current])') || velo.querySelector('.dialogo__acciones .boton')).focus();
+}
+
+// Mantener presionado (medio segundo) un enlace o botón: llama a
+// alPresionar y evita que, al soltar, el enlace navegue. Si el dedo se
+// mueve (para desplazar la pantalla), se cancela. En computador, el clic
+// derecho hace lo mismo.
+function activarPresionLarga(elemento, alPresionar) {
+  elemento.classList.add('presion-larga');
+  let espera = null;
+  let inicio = null;
+  let abierto = false;
+  const disparar = () => {
+    abierto = true;
+    if (navigator.vibrate) navigator.vibrate(15); // un toque suave, donde se pueda
+    alPresionar();
+  };
+  const cancelar = () => clearTimeout(espera);
+  elemento.addEventListener('pointerdown', evento => {
+    if (evento.button !== 0) return;
+    abierto = false;
+    inicio = { x: evento.clientX, y: evento.clientY };
+    cancelar();
+    espera = setTimeout(disparar, 500);
+  });
+  elemento.addEventListener('pointermove', evento => {
+    if (inicio && Math.hypot(evento.clientX - inicio.x, evento.clientY - inicio.y) > 10) cancelar();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(tipo => elemento.addEventListener(tipo, cancelar));
+  elemento.addEventListener('click', evento => {
+    if (!abierto) return;
+    evento.preventDefault(); // se mantuvo presionado: no navega
+    abierto = false;
+  });
+  elemento.addEventListener('contextmenu', evento => {
+    evento.preventDefault();
+    cancelar();
+    if (!abierto) disparar(); // clic derecho, o Android si se adelantó al temporizador
+  });
+}
+
+// Atajo para cambiar de cuenta (decisión 12, como en Instagram): mantener
+// presionada la pestaña «Perfil» del fan o la foto de la sesión arriba.
+function iniciarAtajoCuentas() {
+  const sesion = leerSesion();
+  if (!sesion || typeof baseDatos === 'undefined') return;
+  const pestanaPerfil = sesion.rol === 'fan' && document.querySelector('.navegacion__pestana[href="perfil-fan.html"]');
+  if (pestanaPerfil) activarPresionLarga(pestanaPerfil, () => abrirCambiarCuenta(pestanaPerfil));
+  const fotoSesion = document.querySelector('[data-avatar-sesion]');
+  if (fotoSesion) activarPresionLarga(fotoSesion, () => abrirCambiarCuenta(fotoSesion));
+}
+
 // ---------- Cerrar sesión ----------
 // REAL: deja de recibir avisos aquí, detiene la música, cierra la sesión
-// en Supabase y borra las copias de este navegador. Vuelve a la bienvenida.
+// de la cuenta en uso solo en este dispositivo y borra sus copias del
+// navegador. Si queda otra cuenta guardada, entra a esa (decisión 12); si
+// no, vuelve a la bienvenida. «Borrar datos de este dispositivo» saca todas.
 // No borra la cuenta: todo sigue en Supabase al volver a entrar.
 // («looped-perfil» es una copia vieja que ya no se usa: se borra si quedó.)
 async function cerrarSesion({ borrarTodo = false } = {}) {
   await desactivarPush();
   detenerMusica();
-  try { await baseDatos.auth.signOut(); } catch (e) { /* sin conexión: se borra lo local igual */ }
+  const sesion = leerSesion();
+  let usuarioId = null;
+  try {
+    const { data } = await baseDatos.auth.getSession();
+    if (data.session) usuarioId = data.session.user.id;
+  } catch (e) { /* sin conexión */ }
+  try { await baseDatos.auth.signOut({ scope: 'local' }); } catch (e) { /* sin conexión: se borra lo local igual */ }
+  const otras = leerCuentas().filter(c => c.usuarioId !== usuarioId && !(sesion && c.id === sesion.id));
+  guardarCuentas(otras);
   try {
     ['looped-sesion', 'looped-perfil', CLAVE_REPRODUCTOR].forEach(clave => localStorage.removeItem(clave));
     sessionStorage.removeItem('looped-registro');
@@ -4112,6 +4391,10 @@ async function cerrarSesion({ borrarTodo = false } = {}) {
       sessionStorage.clear();
     }
   } catch (e) { /* sin almacenamiento */ }
+  if (!borrarTodo && otras.length) {
+    cambiarACuenta(otras[0].usuarioId);
+    return;
+  }
   location.replace('bienvenida.html');
 }
 
@@ -4135,6 +4418,9 @@ function pantallaConfiguracion() {
   document.querySelector('[data-volver]').href = artista ? 'panel-artista.html' : 'perfil-fan.html';
   document.querySelector('[data-volver]').setAttribute('aria-label', artista ? 'Volver al panel' : 'Volver a tu perfil');
   document.querySelector('[data-editar-perfil]').href = artista ? 'editar-perfil-artista.html' : 'editar-perfil-fan.html';
+
+  // Cuentas guardadas en este dispositivo (decisión 12).
+  asegurarCuentaEnUso().catch(() => {}).then(() => pintarCuentas(document.querySelector('[data-lista-cuentas]')));
 
   const salir = document.querySelector('[data-cerrar-sesion]');
   salir.addEventListener('click', () => {
@@ -5169,5 +5455,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const pantalla = PANTALLAS[document.body.dataset.pantalla];
   if (pantalla) pantalla();
+  iniciarAtajoCuentas(); // mantener presionado «Perfil» o la foto: cambiar de cuenta
   iniciarReproductor(); // solo aparece en las pantallas con navegación
 });

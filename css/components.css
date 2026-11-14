@@ -555,6 +555,13 @@ button, input, textarea { font: inherit; color: inherit; }
 }
 /* En la pestaña activa solo queda el ícono, como en el manual */
 .navegacion__pestana[aria-current="page"] span { display: none; }
+/* Mantener presionado (p. ej. la pestaña «Perfil» para cambiar de cuenta):
+   el celular no abre su menú de enlaces ni selecciona el texto. */
+.presion-larga {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
 /* Navegación adaptable: abajo en celular y tablet; en computador (1024 px
    o más) se vuelve una barra lateral con el logo y los nombres visibles. */

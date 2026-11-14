@@ -30,6 +30,8 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
 
 12. **Varias cuentas en el mismo dispositivo** (decisión del equipo del 14-11-2026): una persona puede entrar con varias cuentas en el mismo celular o computador y cambiar entre ellas sin escribir la contraseña cada vez.
     - Se cambia desde el perfil (Perfil del fan y Perfil propio del artista) y desde Configuración.
+    - Atajo, como en Instagram: mantener presionada la pestaña «Perfil» del fan (en cualquier pantalla con navegación) o la foto de la sesión en la barra de arriba (el artista no tiene pestaña de perfil: es su foto en el panel). En computador, el clic derecho hace lo mismo. Los botones visibles se mantienen porque el gesto no se puede hacer con teclado ni lector de pantalla.
+    - La pestaña «Perfil» conserva su ícono: la foto de la persona ya se ve en la barra de arriba.
     - Las cuentas pueden ser de los dos roles: un artista puede tener también una cuenta de fan. Al cambiar, la app toma el color y la navegación del rol de esa cuenta.
     - «Cerrar sesión» saca solo la cuenta actual y solo en este dispositivo: si queda otra cuenta guardada, entra a esa; si no, vuelve a la bienvenida. Nunca borra la cuenta de Supabase.
     - «Borrar datos de este dispositivo» saca todas las cuentas.
@@ -940,10 +942,12 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   2. Una fila (`.fila-lista`) por cada cuenta guardada: foto (`.avatar`), nombre y «Fan» o «Artista». La activa va marcada.
   3. «Agregar otra cuenta»: abre Iniciar sesión sin cerrar la cuenta actual (desde ahí también se puede crear una cuenta).
   4. Botón para cerrar el diálogo.
+- **Cómo se abre:** con los botones «Cambiar de cuenta» (perfiles) o manteniendo presionada la pestaña «Perfil» del fan o la foto de la sesión en la barra de arriba (decisión 12). Al soltar, la pestaña no navega.
 - **Qué funciona de verdad:**
   - Lista de cuentas y cambio de cuenta: Real (sesiones de Supabase guardadas en el navegador; no se guardan contraseñas).
   - Agregar otra cuenta: Real.
 - **Está lista cuando:**
+  - Mantener presionado medio segundo abre el diálogo; si el dedo se mueve (para desplazar la pantalla), no se abre. El celular no muestra su menú de enlaces.
   - Al elegir otra cuenta, se detiene la música y se abre el inicio del fan o el panel del artista, con el color de ese rol.
   - Si la sesión de esa cuenta venció, lleva a Iniciar sesión con el correo ya escrito.
   - Con una sola cuenta guardada, el diálogo muestra esa cuenta y «Agregar otra cuenta».

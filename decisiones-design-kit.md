@@ -105,3 +105,4 @@ Cuando cambie algo del kit, se anota aquí: qué cambió, por qué y en qué fec
 | 2026-11-09 | Reproductor, minirreproductor, barra de avance, botón de ícono prendido e íconos del reproductor | Construcción del reproductor (tramo 4) |
 | 2026-11-09 | Ícono `opciones` (⋯) | Construcción de la cola de reproducción (menú en cada fila, aprobado por el equipo) |
 | 2026-11-10 | Accesibilidad desde la app: `data-movimiento="reducido"` y `data-transparencia="reducida"`, con sus selectores en componentes.html | Construcción de accesibilidad (F12 / R12): «Reducir movimiento» y «Reducir transparencia» |
+| 2026-11-14 | Mantener presionado (`.presion-larga`). La pestaña «Perfil» conserva su ícono: la foto ya sale arriba | Pedido del equipo: cambiar de cuenta como en Instagram (decisión 12) |

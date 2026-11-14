@@ -64,6 +64,14 @@
           <svg class="icono icono--pequeno" aria-hidden="true"><use href="#icono-siguiente"></use></svg>
         </a>
     </nav>
+    <section class="ajustes__seccion" aria-labelledby="titulo-cuentas">
+      <div class="encabezado-seccion"><h2 class="encabezado-seccion__titulo" id="titulo-cuentas">Cuentas</h2></div>
+      <p class="texto texto--suave">Las cuentas que entraron en este dispositivo. Toca una para cambiar a ella.</p>
+      <div class="tarjeta ajustes__lista" data-lista-cuentas></div>
+      <div class="pregunta__acciones">
+        <a class="boton boton--secundario" href="iniciar-sesion.html?agregar=1">Agregar otra cuenta</a>
+      </div>
+    </section>
     <div class="pregunta__acciones">
       <button type="button" class="boton boton--secundario" data-cerrar-sesion>Cerrar sesión</button>
       <button type="button" class="boton boton--terciario" data-borrar-dispositivo>Borrar datos de este dispositivo</button>
@@ -74,7 +82,7 @@
   <div class="velo" hidden data-velo-borrar>
     <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-borrar-titulo" aria-describedby="dialogo-borrar-texto">
       <h2 class="dialogo__titulo" id="dialogo-borrar-titulo">¿Borrar los datos de este dispositivo?</h2>
-      <p class="dialogo__texto" id="dialogo-borrar-texto">Se cerrará tu sesión y se borrarán tus preferencias y la música guardadas en este navegador. Tu cuenta y lo que hay en Looped no se borran.</p>
+      <p class="dialogo__texto" id="dialogo-borrar-texto">Se cerrarán todas las cuentas guardadas en este dispositivo y se borrarán tus preferencias y la música guardadas en este navegador. Tu cuenta y lo que hay en Looped no se borran.</p>
       <div class="dialogo__acciones">
         <button type="button" class="boton boton--peligro" data-confirmar-borrar>Borrar datos</button>
         <button type="button" class="boton boton--terciario" data-cancelar-borrar>Cancelar</button>
