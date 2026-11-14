@@ -605,13 +605,18 @@ create trigger preguntas_avisar after insert on preguntas
 -- Borra la cuenta de quien la pide (y, en cascada, su perfil y todo lo suyo).
 -- «security definer»: corre con permisos de administrador, pero solo puede
 -- borrar la cuenta de la sesión (auth.uid()), nunca la de otra persona.
-create function eliminar_mi_cuenta() returns void
+-- Con solo_revisar = true no borra nada: la app la llama así primero, para
+-- confirmar que la función existe antes de borrar los archivos.
+create function eliminar_mi_cuenta(solo_revisar boolean default false) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then
     raise exception 'sin-sesion';
   end if;
+  if solo_revisar then
+    return;
+  end if;
   delete from auth.users where id = auth.uid();
 end $$;
-revoke execute on function eliminar_mi_cuenta() from public, anon;
-grant execute on function eliminar_mi_cuenta() to authenticated;
+revoke execute on function eliminar_mi_cuenta(boolean) from public, anon;
+grant execute on function eliminar_mi_cuenta(boolean) to authenticated;

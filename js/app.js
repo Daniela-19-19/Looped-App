@@ -691,6 +691,10 @@ function activarEliminarCuenta(sesion) {
 // SQL) y después su cuenta con eliminar_mi_cuenta() (cambio 08), que borra
 // en cascada el perfil y todo lo suyo. Si borrar un archivo falla, se sigue.
 async function eliminarMiCuenta(sesion) {
+  // Primero se confirma que la función existe (cambio 08 corrido en
+  // Supabase). Si no, no se borra ningún archivo.
+  const revision = await baseDatos.rpc('eliminar_mi_cuenta', { solo_revisar: true });
+  if (revision.error) throw revision.error;
   await desactivarPush(); // mientras la sesión todavía existe
   const enlaces = [];
   if (sesion.rol === 'artista') {
@@ -704,7 +708,7 @@ async function eliminarMiCuenta(sesion) {
     if (fan) enlaces.push(fan.foto);
   }
   await Promise.all(enlaces.filter(Boolean).map(enlace => borrarArchivoSubido(enlace).catch(() => {})));
-  const { error } = await baseDatos.rpc('eliminar_mi_cuenta');
+  const { error } = await baseDatos.rpc('eliminar_mi_cuenta', { solo_revisar: false });
   if (error) throw error;
 }
 
