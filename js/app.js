@@ -4677,7 +4677,9 @@ function pintarCuentas(contenedor, alTocarLaEnUso) {
   });
 }
 
-// Diálogo «Cambiar de cuenta» (desde los perfiles). Se crea la primera vez.
+// Diálogo «Tu cuenta»: cambiar de cuenta, agregar otra y cerrar sesión.
+// Lo abren la foto de arriba, la pestaña «Perfil» (manteniéndola
+// presionada) y los botones «Cambiar de cuenta». Se crea la primera vez.
 async function abrirCambiarCuenta(botonQueAbre) {
   await asegurarCuentaEnUso();
   let velo = document.querySelector('[data-velo-cuentas]');
@@ -4688,10 +4690,12 @@ async function abrirCambiarCuenta(botonQueAbre) {
     velo.setAttribute('data-velo-cuentas', '');
     velo.innerHTML = `
       <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-cuentas-titulo">
-        <h2 class="dialogo__titulo" id="dialogo-cuentas-titulo">Cambiar de cuenta</h2>
+        <h2 class="dialogo__titulo" id="dialogo-cuentas-titulo">Tu cuenta</h2>
         <div class="ajustes__lista" data-lista-cuentas></div>
         <div class="dialogo__acciones">
+          ${leerSesion() && leerSesion().rol === 'artista' ? '<a class="boton boton--secundario" href="perfil-propio-artista.html">Ver tu perfil</a>' : ''}
           <a class="boton boton--secundario" href="iniciar-sesion.html?agregar=1">Agregar otra cuenta</a>
+          <button type="button" class="boton boton--terciario" data-salir-cuenta>Cerrar sesión</button>
           <button type="button" class="boton boton--terciario" data-cerrar-cuentas>Cerrar</button>
         </div>
       </div>`;
@@ -4701,6 +4705,13 @@ async function abrirCambiarCuenta(botonQueAbre) {
       if (velo.botonQueAbre) velo.botonQueAbre.focus(); // el foco vuelve al botón
     };
     velo.querySelector('[data-cerrar-cuentas]').addEventListener('click', cerrar);
+    // Cerrar sesión: solo esta cuenta; si hay otra guardada, entra a esa.
+    const salir = velo.querySelector('[data-salir-cuenta]');
+    salir.addEventListener('click', () => {
+      salir.disabled = true;
+      salir.textContent = 'Cerrando sesión…';
+      cerrarSesion();
+    });
     velo.addEventListener('click', evento => { if (evento.target === velo) cerrar(); });
     document.addEventListener('keydown', evento => {
       if (evento.key === 'Escape' && !velo.hidden) cerrar();
@@ -4752,15 +4763,22 @@ function activarPresionLarga(elemento, alPresionar) {
   });
 }
 
-// Atajo para cambiar de cuenta (decisión 12, como en Instagram): mantener
-// presionada la pestaña «Perfil» del fan o la foto de la sesión arriba.
+// Acceso a «Tu cuenta» (decisión 12): tocar la foto de la sesión arriba
+// abre el diálogo (cambiar de cuenta, cerrar sesión). Atajo como en
+// Instagram: mantener presionada la pestaña «Perfil» del fan.
 function iniciarAtajoCuentas() {
   const sesion = leerSesion();
   if (!sesion || typeof baseDatos === 'undefined') return;
   const pestanaPerfil = sesion.rol === 'fan' && document.querySelector('.navegacion__pestana[href="perfil-fan.html"]');
   if (pestanaPerfil) activarPresionLarga(pestanaPerfil, () => abrirCambiarCuenta(pestanaPerfil));
+  // Sin JavaScript, la foto sigue llevando al perfil (su href).
   const fotoSesion = document.querySelector('[data-avatar-sesion]');
-  if (fotoSesion) activarPresionLarga(fotoSesion, () => abrirCambiarCuenta(fotoSesion));
+  if (fotoSesion) {
+    fotoSesion.addEventListener('click', evento => {
+      evento.preventDefault();
+      abrirCambiarCuenta(fotoSesion);
+    });
+  }
 }
 
 // ---------- Cerrar sesión ----------

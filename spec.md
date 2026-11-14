@@ -30,7 +30,8 @@ Plano de construcción: qué se construye, en qué orden y cuándo está lista c
 
 12. **Varias cuentas en el mismo dispositivo** (decisión del equipo del 14-11-2026): una persona puede entrar con varias cuentas en el mismo celular o computador y cambiar entre ellas sin escribir la contraseña cada vez.
     - Se cambia desde el perfil (Perfil del fan y Perfil propio del artista) y desde Configuración.
-    - Atajo, como en Instagram: mantener presionada la pestaña «Perfil» del fan (en cualquier pantalla con navegación) o la foto de la sesión en la barra de arriba (el artista no tiene pestaña de perfil: es su foto en el panel). En computador, el clic derecho hace lo mismo. Los botones visibles se mantienen porque el gesto no se puede hacer con teclado ni lector de pantalla.
+    - Tocar la foto de la sesión en la barra de arriba (Inicio y Explorar del fan, panel del artista) abre el diálogo «Tu cuenta», con cambiar de cuenta y cerrar sesión; ya no lleva al perfil, porque al perfil se llega con la pestaña de abajo (decisión del equipo del 14-11-2026). Como el artista no tiene pestaña «Perfil», su diálogo trae «Ver tu perfil».
+    - Atajo, como en Instagram: mantener presionada la pestaña «Perfil» del fan (en cualquier pantalla con navegación). En computador, el clic derecho hace lo mismo. Los botones visibles se mantienen porque el gesto no se puede hacer con teclado ni lector de pantalla.
     - La pestaña «Perfil» conserva su ícono: la foto de la persona ya se ve en la barra de arriba.
     - Las cuentas pueden ser de los dos roles: un artista puede tener también una cuenta de fan. Al cambiar, la app toma el color y la navegación del rol de esa cuenta.
     - «Cerrar sesión» saca solo la cuenta actual y solo en este dispositivo: si queda otra cuenta guardada, entra a esa; si no, vuelve a la bienvenida. Nunca borra la cuenta de Supabase.
@@ -382,7 +383,7 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
 ### F01a · Inicio (fan)
 - **Objetivo:** Esta pantalla existe para que el fan pueda descubrir artistas y lanzamientos nuevos y retomar sus conexiones. Sabemos que funciona si desde aquí llega al perfil de un artista o a escuchar un lanzamiento.
 - **Contenido:**
-  1. Barra de marca: logo, tema y perfil.
+  1. Barra de marca: logo, tema y foto (abre el diálogo «Tu cuenta», decisión 12).
   2. «Descubre algo nuevo».
   3. Lanzamiento destacado: «En sus primeras 48 h» o «Último lanzamiento».
   4. «Una conexión real» (tarjeta de un artista).
@@ -963,15 +964,17 @@ Decisión del equipo del 07-11-2026: todas las pantallas deben servir en celular
   - La elección se guarda (Real).
   - Funciona en celular (375 px) y en computador (1280 px), sin romperse en los anchos de en medio (ver «Criterios para todas las pantallas»).
 
-### Cambiar de cuenta (diálogo nuevo, sin diseño todavía)
+### Tu cuenta: cambiar de cuenta (diálogo nuevo, sin diseño todavía)
 - **Archivo:** no es una página: es un diálogo (`.velo` + `.dialogo`) que se abre desde Perfil del fan, Perfil propio del artista y Configuración. Lo pone `js/app.js`.
 - **Objetivo:** Este diálogo existe para que una persona con varias cuentas pueda pasar de una a otra sin escribir la contraseña (decisión 12). Sabemos que funciona si cambia de cuenta y llega al inicio del rol de esa cuenta.
 - **Contenido:**
-  1. Título «Cambiar de cuenta».
+  1. Título «Tu cuenta».
   2. Una fila (`.fila-lista`) por cada cuenta guardada: foto (`.avatar`), nombre y «Fan» o «Artista». La activa va marcada.
-  3. «Agregar otra cuenta»: abre Iniciar sesión sin cerrar la cuenta actual (desde ahí también se puede crear una cuenta).
-  4. Botón para cerrar el diálogo.
-- **Cómo se abre:** con los botones «Cambiar de cuenta» (perfiles) o manteniendo presionada la pestaña «Perfil» del fan o la foto de la sesión en la barra de arriba (decisión 12). Al soltar, la pestaña no navega.
+  3. Solo para el artista: «Ver tu perfil» (no tiene pestaña «Perfil»).
+  4. «Agregar otra cuenta»: abre Iniciar sesión sin cerrar la cuenta actual (desde ahí también se puede crear una cuenta).
+  5. «Cerrar sesión»: saca la cuenta en uso (si queda otra guardada, entra a esa).
+  6. Botón para cerrar el diálogo.
+- **Cómo se abre:** tocando la foto de la sesión en la barra de arriba, con los botones «Cambiar de cuenta» (perfiles) o manteniendo presionada la pestaña «Perfil» del fan (decisión 12). Al soltar, la pestaña no navega.
 - **Qué funciona de verdad:**
   - Lista de cuentas y cambio de cuenta: Real (sesiones de Supabase guardadas en el navegador; no se guardan contraseñas).
   - Agregar otra cuenta: Real.

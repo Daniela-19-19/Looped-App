@@ -123,7 +123,7 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| — | Cambiar de cuenta (diálogo, decisión 12) | capa sobre Perfil del fan, Perfil propio del artista y Configuración (`js/app.js`) | ✅ | ✅ | ✅ |
+| — | Tu cuenta: cambiar de cuenta y cerrar sesión (diálogo, decisión 12) | capa que abre la foto de arriba (Inicio, Explorar, panel), los perfiles y la pestaña «Perfil» (`js/app.js`) | ✅ | ✅ | |
 
 ### 11 · Spotify
 
