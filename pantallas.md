@@ -129,4 +129,4 @@ Los nombres de archivo llevan `-fan` o `-artista` cuando la pantalla es de un so
 
 | Código | Pantalla | Archivo | Con kit | Datos en data.js | Revisada vs spec |
 |---|---|---|---|---|---|
-| — | Spotify con links (decisión 13) | en P01, P02 / P03, F02, F07a y P04 (`js/app.js`) | ✅ | ✅ | |
+| — | Spotify con links (decisión 13) | en P01, P02 / P03, F02, F07a y P04 (`js/app.js`) | ✅ | ✅ | ✅ |
