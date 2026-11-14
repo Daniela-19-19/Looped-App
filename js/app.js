@@ -619,6 +619,85 @@ async function pantallaCuenta() {
     nueva.value = '';
     mostrarAviso('Tu contraseña quedó cambiada.');
   });
+
+  // Eliminar la cuenta: diálogo que pide la contraseña.
+  const botonEliminar = document.querySelector('[data-eliminar-cuenta]');
+  const velo = document.querySelector('[data-velo-eliminar]');
+  const claveEliminar = document.getElementById('contrasena-eliminar');
+  const botonConfirmar = document.querySelector('[data-confirmar-eliminar]');
+  function cerrarDialogo() {
+    velo.hidden = true;
+    claveEliminar.value = '';
+    mostrarError('contrasena-eliminar', '');
+    botonEliminar.focus();
+  }
+  botonEliminar.addEventListener('click', () => {
+    velo.hidden = false;
+    claveEliminar.focus();
+  });
+  document.querySelector('[data-cancelar-eliminar]').addEventListener('click', cerrarDialogo);
+  velo.addEventListener('click', evento => { if (evento.target === velo && !botonConfirmar.disabled) cerrarDialogo(); });
+  document.addEventListener('keydown', evento => {
+    if (evento.key === 'Escape' && !velo.hidden && !botonConfirmar.disabled) cerrarDialogo();
+  });
+  claveEliminar.addEventListener('input', () => mostrarError('contrasena-eliminar', ''));
+  document.getElementById('formulario-eliminar').addEventListener('submit', async evento => {
+    evento.preventDefault();
+    if (botonConfirmar.disabled) return;
+    if (!claveEliminar.value) {
+      mostrarError('contrasena-eliminar', 'Escribe tu contraseña.');
+      claveEliminar.focus();
+      return;
+    }
+    botonConfirmar.disabled = true;
+    botonConfirmar.textContent = 'Eliminando…';
+    const fallar = mensaje => {
+      botonConfirmar.disabled = false;
+      botonConfirmar.textContent = 'Eliminar para siempre';
+      mostrarError('contrasena-eliminar', mensaje);
+      claveEliminar.focus();
+    };
+    let revision;
+    try { revision = await baseDatos.auth.signInWithPassword({ email: usuario.email, password: claveEliminar.value }); }
+    catch (e) { revision = { error: { code: 'sin_conexion' } }; }
+    if (revision.error) {
+      return fallar(revision.error.code === 'invalid_credentials'
+        ? 'La contraseña no es correcta.'
+        : 'No pudimos revisarla. Revisa tu conexión e inténtalo otra vez.');
+    }
+    try {
+      await eliminarMiCuenta(sesion);
+    } catch (e) {
+      // PGRST202: la función no existe porque falta el cambio 08 en Supabase.
+      return fallar(e.code === 'PGRST202'
+        ? 'Esta opción todavía no está activa en Looped. Inténtalo más tarde.'
+        : 'No pudimos eliminar tu cuenta. Revisa tu conexión e inténtalo otra vez.');
+    }
+    // La cuenta ya no existe: sale de este dispositivo como al cerrar sesión
+    // (si hay otra cuenta guardada, entra a esa).
+    cerrarSesion();
+  });
+}
+
+// REAL: borra los archivos de la persona (Supabase no deja borrarlos desde
+// SQL) y después su cuenta con eliminar_mi_cuenta() (cambio 08), que borra
+// en cascada el perfil y todo lo suyo. Si borrar un archivo falla, se sigue.
+async function eliminarMiCuenta(sesion) {
+  await desactivarPush(); // mientras la sesión todavía existe
+  const enlaces = [];
+  if (sesion.rol === 'artista') {
+    const artista = artistaActual();
+    if (artista) enlaces.push(artista.foto);
+    obtenerDatos('lanzamientos').filter(l => l.artista === sesion.id).forEach(l => enlaces.push(l.audio, l.portada));
+    const suyas = obtenerDatos('preguntas').filter(p => p.artista === sesion.id).map(p => p.id);
+    obtenerDatos('respuestas').filter(r => suyas.includes(r.pregunta)).forEach(r => enlaces.push(r.audio));
+  } else {
+    const fan = fanActual();
+    if (fan) enlaces.push(fan.foto);
+  }
+  await Promise.all(enlaces.filter(Boolean).map(enlace => borrarArchivoSubido(enlace).catch(() => {})));
+  const { error } = await baseDatos.rpc('eliminar_mi_cuenta');
+  if (error) throw error;
 }
 
 // ---------- A03 · Crear cuenta: elegir experiencia ----------

@@ -598,3 +598,20 @@ end $$;
 
 create trigger preguntas_avisar after insert on preguntas
   for each row execute function avisar_pregunta_nueva();
+
+-- ----------------------------------------------------------
+-- Eliminar mi cuenta (cambio 08, decisión 14)
+-- ----------------------------------------------------------
+-- Borra la cuenta de quien la pide (y, en cascada, su perfil y todo lo suyo).
+-- «security definer»: corre con permisos de administrador, pero solo puede
+-- borrar la cuenta de la sesión (auth.uid()), nunca la de otra persona.
+create function eliminar_mi_cuenta() returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then
+    raise exception 'sin-sesion';
+  end if;
+  delete from auth.users where id = auth.uid();
+end $$;
+revoke execute on function eliminar_mi_cuenta() from public, anon;
+grant execute on function eliminar_mi_cuenta() to authenticated;
