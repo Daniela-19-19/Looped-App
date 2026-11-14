@@ -635,9 +635,22 @@ function activarEliminarCuenta(sesion) {
     mostrarError('contrasena-eliminar', '');
     botonEliminar.focus();
   }
-  botonEliminar.addEventListener('click', () => {
+  // La cuenta de Supabase de esta sesión. Debe ser la misma que se ve en
+  // pantalla; si no (varias cuentas en el navegador), no se borra nada.
+  async function cuentaDeSupabase() {
+    const { data } = await baseDatos.auth.getUser();
+    if (!data.user) return null;
+    const guardada = leerCuentas().find(c => c.id === sesion.id);
+    return { usuario: data.user, coincide: !guardada || guardada.usuarioId === data.user.id };
+  }
+  botonEliminar.addEventListener('click', async () => {
     velo.hidden = false;
     claveEliminar.focus();
+    // Muestra de qué correo se pide la contraseña.
+    try {
+      const cuenta = await cuentaDeSupabase();
+      if (cuenta) document.querySelector('[data-correo-eliminar]').textContent = ` de ${cuenta.usuario.email}`;
+    } catch (e) { /* sin conexión: queda «Contraseña» */ }
   });
   document.querySelector('[data-cancelar-eliminar]').addEventListener('click', cerrarDialogo);
   velo.addEventListener('click', evento => { if (evento.target === velo && !botonConfirmar.disabled) cerrarDialogo(); });
@@ -663,9 +676,12 @@ function activarEliminarCuenta(sesion) {
     };
     let revision;
     try {
-      const { data } = await baseDatos.auth.getUser();
-      if (!data.user) throw new Error('sin-sesion');
-      revision = await baseDatos.auth.signInWithPassword({ email: data.user.email, password: claveEliminar.value });
+      const cuenta = await cuentaDeSupabase();
+      if (!cuenta) throw new Error('sin-sesion');
+      if (!cuenta.coincide) {
+        return fallar('Tu sesión quedó en otra cuenta. Cierra sesión, vuelve a entrar con esta cuenta e inténtalo otra vez.');
+      }
+      revision = await baseDatos.auth.signInWithPassword({ email: cuenta.usuario.email, password: claveEliminar.value });
     }
     catch (e) { revision = { error: { code: 'sin_conexion' } }; }
     if (revision.error) {
