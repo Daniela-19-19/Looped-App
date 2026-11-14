@@ -34,3 +34,6 @@ begin
 end $$;
 revoke execute on function eliminar_mi_cuenta(boolean) from public, anon;
 grant execute on function eliminar_mi_cuenta(boolean) to authenticated;
+
+-- Que la API de Supabase vea la función de inmediato.
+notify pgrst, 'reload schema';
